@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monster Attack Clicker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="title-bar">
+  <h1>⚔ MONSTER ATTACK CLICKER ⚔</h1>
+  <div class="subtitle">clique. destrua. evolua. ascenda.</div>
+</div>
+
+<div class="layout">
+
+  <!-- LEFT: Arena -->
+  <div class="panel">
+    <div class="stat-bar">
+      <div class="stat"><div class="label">Ouro</div><div class="value" id="statGold">0</div></div>
+      <div class="stat"><div class="label">Dano/Clique</div><div class="value" id="statClickDmg">1</div></div>
+      <div class="stat"><div class="label">DPS</div><div class="value" id="statDps">0</div></div>
+      <div class="stat"><div class="label">Crítico</div><div class="value" id="statCrit">5%</div></div>
+    </div>
+
+    <div class="arena-frame">
+      <div class="tier-label" id="tierLabel">CICLO I · MONSTRO 1</div>
+      <div class="monster-name" id="monsterName">SLIME</div>
+      <div class="monster-stage" id="monsterStage">
+        <canvas id="monsterCanvas" width="128" height="128"></canvas>
+      </div>
+      <div class="hp-wrap">
+        <div class="hp-fill" id="hpFill"></div>
+        <div class="hp-text" id="hpText">100 / 100</div>
+      </div>
+      <div class="timer-wrap">
+        <div class="timer-fill" id="timerFill"></div>
+        <div class="timer-text" id="timerText">15s</div>
+      </div>
+      <div class="golden-tag" id="goldenTag">✨ MONSTRO DOURADO! CLIQUE RÁPIDO! ✨</div>
+    </div>
+    <div class="footer-note">Clique no monstro para atacar manualmente.</div>
+  </div>
+
+  <!-- RIGHT: Shops -->
+  <div class="panel">
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="upgrades">UPGRADES</button>
+      <button class="tab-btn" data-tab="troops">TROPAS</button>
+      <button class="tab-btn" data-tab="prestige">ASCENSÃO</button>
+    </div>
+
+    <div class="tab-content active" id="tab-upgrades">
+      <div class="panel-title">Upgrades de Combate</div>
+      <div id="upgradeList"></div>
+    </div>
+
+    <div class="tab-content" id="tab-troops">
+      <div class="panel-title">Tropas Automáticas</div>
+      <div id="troopList"></div>
+    </div>
+
+    <div class="tab-content" id="tab-prestige">
+      <div class="panel-title">Ascensão (Prestígio)</div>
+      <div class="prestige-box">
+        <div>Essência atual: <b id="essenceCount">0</b></div>
+        <div class="gain">Ganho ao ascender agora: +<span id="essenceGain">0</span></div>
+        <button class="ascend-btn" id="ascendBtn">ASCENDER</button>
+      </div>
+      <div id="prestigeUpgradeList"></div>
+    </div>
+
+    <div style="margin-top:10px; text-align:right;">
+      <button class="small-btn" id="resetBtn">Apagar progresso</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Ordem importa: cada módulo depende de globais definidos nos anteriores -->
+<script src="js/config.js"></script>
+<script src="js/progression.js"></script>
+<script src="js/state.js"></script>
+<script src="js/save.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/monster.js"></script>
+<script src="js/player.js"></script>
+<script src="js/troops.js"></script>
+<script src="js/upgrades.js"></script>
+<script src="js/prestige.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
