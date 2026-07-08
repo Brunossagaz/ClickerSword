@@ -40,8 +40,9 @@ const UI = {
   renderMonsterInfo(){
     const t = MonsterModule.current.type;
     const posInCycle = state.killCount % CONFIG.cycleLength;
+    const mapName = (MAPS.slimes.cycles[state.loop] ? MAPS.slimes.name : MAPS.wilds.name);
     document.getElementById('monsterName').textContent = (MonsterModule.current.isBoss ? '★ CHEFE: ' : '') + t.name;
-    document.getElementById('tierLabel').textContent = `CICLO ${state.loop} · MONSTRO ${posInCycle+1}/${CONFIG.cycleLength} (ABATIDOS: ${state.totalKillsAll})`;
+    document.getElementById('tierLabel').textContent = `${mapName} · CICLO ${state.loop} · MONSTRO ${posInCycle+1}/${CONFIG.cycleLength} (ABATIDOS: ${state.totalKillsAll})`;
   },
   renderHpBar(){
     const pct = Math.max(0, (state.monsterHp/state.monsterMaxHp)*100);

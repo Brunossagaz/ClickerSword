@@ -13,7 +13,6 @@ Como usar:
 Requer Pillow (pip install pillow). Edite as paletas/formas abaixo e rode de
 novo para regenerar os PNGs — não precisa mexer em nenhum JS.
 """
-import math
 import os
 from PIL import Image
 
@@ -141,47 +140,56 @@ class Creature:
 
 
 # ---------------------------------------------------------------------
-# SLIME — silhueta "blob" por função de meia-largura por linha (mesma forma
-# do slime original slime.js, agora congelada em PNG). Reaproveitada para o
-# Slime normal (verde) e o Slime Azul (mais forte, com cristais de gelo).
+# SLIME v2 — silhueta em "lóbulos" (3 elipses no topo + corpo principal),
+# o que dá aquele contorno recortado no topo. Olhos grandes e simétricos
+# (os dois com brilho branco no canto superior-esquerdo), boca reta neutra
+# (ou feroz nas variantes fortes), manchas escuras espalhadas pelo corpo e
+# sombra elíptica no chão. Essa base é compartilhada por TODOS os slimes —
+# só paleta e acessórios (spikes/crown/scar/fierce_mouth) mudam por variante.
 # ---------------------------------------------------------------------
-def slime_half_width(r):
-    top, bottom_start = 7, 25
-    if r <= top:
-        k = (top - r) / top
-        return math.sqrt(max(0, 1 - k * k)) * 13
-    if r >= bottom_start:
-        k2 = (r - bottom_start) / 6
-        return 13 - k2 * 4
-    return 13
+SLIME_BODY = new_grid()
+set_ellipse(SLIME_BODY, 16, 19, 13, 11)   # corpo principal (deixa espaço embaixo pra sombra aparecer)
+set_ellipse(SLIME_BODY, 16, 7, 7, 6)      # lóbulo superior central
+set_ellipse(SLIME_BODY, 9, 10, 5.5, 5)    # lóbulo superior esquerdo
+set_ellipse(SLIME_BODY, 23, 10, 5.5, 5)   # lóbulo superior direito
+
+# Manchas escuras espalhadas pelo corpo (linha, coluna, largura, altura),
+# além do contorno automático — dão a aparência "manchada" da referência.
+SLIME_BLOTCHES = [
+    (9, 20, 4, 2), (14, 23, 3, 3), (22, 7, 3, 3), (24, 20, 6, 4), (17, 9, 2, 2),
+]
 
 
-SLIME_INSIDE = []
-for r in range(GRID):
-    hw = slime_half_width(r)
-    SLIME_INSIDE.append([abs((c + 0.5) - GRID / 2) <= hw for c in range(GRID)])
+def render_slime(palette, spikes=False, fierce_mouth=False, crown=False, scar=False):
+    grid = SLIME_BODY
 
-
-def slime_is_inside(r, c):
-    return 0 <= r < GRID and 0 <= c < GRID and SLIME_INSIDE[r][c]
-
-
-def render_slime(palette, spikes=False, fierce_mouth=False):
     def frame(eyes_closed=False, flash_white=False):
         img = Image.new('RGBA', (FRAME, FRAME), (0, 0, 0, 0))
         px = img.load()
+
+        # sombra elíptica no chão, desenhada antes do corpo (fica por baixo,
+        # e aparece só nas bordas onde o corpo não a cobre)
+        if not flash_white:
+            for r in range(28, 32):
+                for c in range(GRID):
+                    dx = (c + 0.5 - 16) / 10.0
+                    dy = (r + 0.5 - 30.5) / 1.3
+                    if dx * dx + dy * dy <= 1.0:
+                        put(px, r, c, (0, 0, 0, 90))
+
         for r in range(GRID):
             for c in range(GRID):
-                if not SLIME_INSIDE[r][c]:
+                if not grid[r][c]:
                     continue
-                is_edge = not (slime_is_inside(r - 1, c) and slime_is_inside(r + 1, c) and
-                               slime_is_inside(r, c - 1) and slime_is_inside(r, c + 1))
-                dx = (c + 0.5) - GRID / 2
+                is_edge = not (is_in(grid, r - 1, c) and is_in(grid, r + 1, c) and
+                               is_in(grid, r, c - 1) and is_in(grid, r, c + 1))
                 color = palette['outline'] if is_edge else palette['body']
-                if not is_edge and 3 <= r <= 10 and -11 < dx < -3:
+                if not is_edge and 3 <= r <= 9 and 8 <= c <= 13:
                     color = palette['highlight']
-                if not is_edge and r >= 17 and dx > 4:
-                    color = palette['shadow']
+                if not is_edge:
+                    for (br, bc, bw, bh) in SLIME_BLOTCHES:
+                        if br <= r < br + bh and bc <= c < bc + bw:
+                            color = palette['shadow']
                 if flash_white:
                     color = WHITE
                 put(px, r, c, color)
@@ -200,19 +208,38 @@ def render_slime(palette, spikes=False, fierce_mouth=False):
                         if 0 <= col < GRID:
                             put(px, row, col, color)
 
+        # coroa (Slime Rei Vermelho): 5 pontas largas cobrindo quase todo o topo
+        if crown and not flash_white:
+            for sc in (7, 11.5, 16, 20.5, 25):
+                sc = int(round(sc))
+                height = 5 if sc == 16 else (4 if sc in (11, 12, 20, 21) else 3)
+                for i in range(height):
+                    width = height - i
+                    row = 0 - i + (0 if sc == 16 else 1)
+                    if row < 0:
+                        continue
+                    color = palette.get('crown', hexc('#ffd54a')) if i < height - 1 else palette.get('crown_dark', hexc('#c9941f'))
+                    for w in range(-((width - 1) // 2 + (width % 2)), (width - 1) // 2 + 1):
+                        col = sc + w
+                        if 0 <= col < GRID:
+                            put(px, row, col, color)
+
         if flash_white:
             return img
 
+        # olhos grandes e simétricos — os dois ganham o brilho branco
         if eyes_closed:
-            for cols in ((9, 10, 11), (19, 20, 21)):
+            for cols in ((10, 11, 12), (20, 21, 22)):
                 for cc in cols:
-                    put(px, 13, cc, palette['outline'])
+                    put(px, 14, cc, palette['outline'])
         else:
-            for ri, rr in enumerate((12, 13, 14)):
-                for ci, (lc, rc) in enumerate(zip((9, 10, 11), (19, 20, 21))):
-                    color = WHITE if (ri == 0 and ci == 0) else palette['pupil']
-                    put(px, rr, lc, color)
-                    put(px, rr, rc, color)
+            for rr in (12, 13, 14):
+                for cc in (10, 11, 12):
+                    put(px, rr, cc, palette['pupil'])
+                for cc in (20, 21, 22):
+                    put(px, rr, cc, palette['pupil'])
+            put(px, 12, 10, WHITE)
+            put(px, 12, 20, WHITE)
 
         if fierce_mouth:
             for cc in (14, 15, 16, 17):
@@ -220,10 +247,16 @@ def render_slime(palette, spikes=False, fierce_mouth=False):
             for cc in (14, 17):
                 put(px, 20, cc, WHITE)
         else:
-            for cc, rr in ((14, 19), (17, 19)):
-                put(px, rr, cc, palette['outline'])
-            for cc, rr in ((15, 20), (16, 20)):
-                put(px, rr, cc, palette['outline'])
+            for cc in range(13, 19):
+                put(px, 19, cc, palette['outline'])
+                put(px, 20, cc, palette['outline'])
+
+        # cicatriz (Slime Azul Bárbaro): risco diagonal por cima do olho esquerdo
+        if scar:
+            scar_color = palette.get('scar', hexc('#7a1414'))
+            for (r, c) in ((9, 8), (10, 9), (11, 10), (12, 11), (13, 12)):
+                put(px, r, c, scar_color)
+
         return img
 
     idle, blink, flash = frame(False, False), frame(True, False), frame(False, True)
@@ -246,6 +279,40 @@ def make_slime_blue():
            'highlight': hexc('#c4e8ff'), 'shadow': hexc('#1c4aa8'), 'pupil': hexc('#14ebff'),
            'spike': hexc('#96ebff'), 'spike_dark': hexc('#5abee6')}
     return render_slime(pal, spikes=True, fierce_mouth=True)
+
+
+def make_slime_green_warrior():
+    # verde mais escuro/robusto + crista tipo moicano (reaproveita o desenho de
+    # "spikes" com cores de guerra) e boca feroz — chefe do Ciclo 1.
+    pal = {'outline': hexc('#0f3d14'), 'body': hexc('#4fae4f'),
+           'highlight': hexc('#8fe08f'), 'shadow': hexc('#2d7a35'), 'pupil': hexc('#1a1a1a'),
+           'spike': hexc('#d94f2b'), 'spike_dark': hexc('#a8371c')}
+    return render_slime(pal, spikes=True, fierce_mouth=True)
+
+
+def make_slime_red():
+    # variante "padrão" como o slime verde, só recolorida — não é chefe.
+    pal = {'outline': hexc('#5c1414'), 'body': hexc('#e0574a'),
+           'highlight': hexc('#ffb3a8'), 'shadow': hexc('#b8322a'), 'pupil': hexc('#1a1a1a')}
+    return render_slime(pal, spikes=False, fierce_mouth=False)
+
+
+def make_slime_blue_barbarian():
+    # azul mais escuro/intenso + cristais de gelo + cicatriz de batalha + olhos
+    # âmbar (raiva) — chefe do Ciclo 2, mais forte que o Slime Verde Guerreiro.
+    pal = {'outline': hexc('#061029'), 'body': hexc('#2f6bc0'),
+           'highlight': hexc('#a8d4ff'), 'shadow': hexc('#123a80'), 'pupil': hexc('#ff8a3d'),
+           'spike': hexc('#96ebff'), 'spike_dark': hexc('#5abee6'), 'scar': hexc('#7a1414')}
+    return render_slime(pal, spikes=True, fierce_mouth=True, scar=True)
+
+
+def make_slime_red_king():
+    # vermelho profundo + coroa dourada — o mais forte de todos os slimes,
+    # chefe do Ciclo 3.
+    pal = {'outline': hexc('#3d0a0a'), 'body': hexc('#b8272a'),
+           'highlight': hexc('#ff8a70'), 'shadow': hexc('#7a1414'), 'pupil': hexc('#ffd54a'),
+           'crown': hexc('#ffd54a'), 'crown_dark': hexc('#c9941f')}
+    return render_slime(pal, spikes=False, fierce_mouth=True, crown=True)
 
 
 def make_goblin():
@@ -372,8 +439,14 @@ def make_demon():
 
 
 MONSTERS = {
+    # Mapa 1: Pântano dos Slimes (ciclos 1-3)
     'slime': make_slime_green,
     'slime_blue': make_slime_blue,
+    'slime_green_warrior': make_slime_green_warrior,
+    'slime_red': make_slime_red,
+    'slime_blue_barbarian': make_slime_blue_barbarian,
+    'slime_red_king': make_slime_red_king,
+    # Mapa 2: Terras Selvagens (ciclo 4 em diante)
     'goblin': make_goblin,
     'orc': make_orc,
     'troll': make_troll,

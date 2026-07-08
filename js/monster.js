@@ -3,9 +3,10 @@
 --------------------------------------------------------------------- */
 const MonsterModule = {
   current:null,
-  typeFor(posInCycle){
-    const key = CYCLE_MONSTER_ORDER[posInCycle];
-    return MONSTER_TYPES.find(t=>t.key===key);
+  typeFor(cycleNum, posInCycle){
+    const slimesMap = MAPS.slimes;
+    const order = slimesMap.cycles[cycleNum] || MAPS.wilds.order;
+    return MONSTER_TYPES.find(t=>t.key===order[posInCycle]);
   },
   hpFor(killIndexInRun, isBoss, hpMult){
     let hp = CONFIG.baseHp * Math.pow(CONFIG.hpGrowth, killIndexInRun);
@@ -45,9 +46,10 @@ const MonsterModule = {
     const cycleLen = CONFIG.cycleLength;
     const killIdx = state.killCount;
     const posInCycle = killIdx % cycleLen;
+    const cycleNum = Math.floor(killIdx / cycleLen) + 1;
     const isBoss = (!isFirst) && posInCycle === cycleLen - 1; // último monstro do ciclo = chefe
-    const type = this.typeFor(posInCycle);
-    state.loop = Math.floor(killIdx / cycleLen) + 1;
+    const type = this.typeFor(cycleNum, posInCycle);
+    state.loop = cycleNum;
 
     this.current = { type, isBoss };
 

@@ -20,26 +20,48 @@ const CONFIG = {
   monsterTimeLimitMs: 15000 // tempo pra derrotar cada monstro antes de reiniciar o ciclo
 };
 
-// Ordem fixa dos monstros dentro de cada ciclo de CONFIG.cycleLength (10).
-// A posição 10 (índice 9) é sempre o chefe do ciclo (HP/recompensa multiplicados).
-const CYCLE_MONSTER_ORDER = [
-  'slime', 'goblin', 'slimeBlue', 'orc', 'troll',
-  'dragon', 'demon', 'goblin', 'orc', 'demon'
-];
-
 // Todo monstro é um spritesheet PNG (3 frames de 128x128: idle, piscando,
 // flash de dano) gerado por tools/gen_sprites.py. Para mudar a arte de um
 // monstro, edite o gerador Python e rode `python tools/gen_sprites.py` de
 // novo — não precisa mexer neste arquivo nem em sprites.js.
+//
+// hpMult reflete a força relativa da criatura (afeta o HP, multiplica junto
+// com o bônus de chefe quando a criatura cai na última posição do ciclo).
 const MONSTER_TYPES = [
-  { key:'slime',     name:'SLIME',      image:'assets/sprites/slime.png',      frameW:128, frameH:128, blinkCapable:true },
-  { key:'slimeBlue', name:'SLIME AZUL', image:'assets/sprites/slime_blue.png', frameW:128, frameH:128, spriteScale:0.7, hpMult:1.8, blinkCapable:true },
+  // --- Mapa 1: Pântano dos Slimes (ciclos 1-3) ---
+  { key:'slime',              name:'SLIME',               image:'assets/sprites/slime.png',              frameW:128, frameH:128, blinkCapable:true },
+  { key:'slimeBlue',          name:'SLIME AZUL',          image:'assets/sprites/slime_blue.png',          frameW:128, frameH:128, spriteScale:0.7, hpMult:1.8, blinkCapable:true },
+  { key:'slimeGreenWarrior',  name:'SLIME VERDE GUERREIRO', image:'assets/sprites/slime_green_warrior.png', frameW:128, frameH:128, hpMult:2.4, blinkCapable:true },
+  { key:'slimeRed',           name:'SLIME VERMELHO',      image:'assets/sprites/slime_red.png',           frameW:128, frameH:128, hpMult:3.2, blinkCapable:true },
+  { key:'slimeBlueBarbarian', name:'SLIME AZUL BÁRBARO',  image:'assets/sprites/slime_blue_barbarian.png',frameW:128, frameH:128, hpMult:4.2, blinkCapable:true },
+  { key:'slimeRedKing',       name:'SLIME REI VERMELHO',  image:'assets/sprites/slime_red_king.png',      frameW:128, frameH:128, hpMult:6.0, blinkCapable:true },
+  // --- Mapa 2: Terras Selvagens (ciclo 4 em diante) ---
   { key:'goblin',    name:'GOBLIN',     image:'assets/sprites/goblin.png',     frameW:128, frameH:128, blinkCapable:true },
   { key:'orc',       name:'ORC',        image:'assets/sprites/orc.png',        frameW:128, frameH:128, blinkCapable:true },
   { key:'troll',     name:'TROLL',      image:'assets/sprites/troll.png',      frameW:128, frameH:128, blinkCapable:true },
   { key:'dragon',    name:'DRAGÃO',     image:'assets/sprites/dragon.png',     frameW:128, frameH:128, blinkCapable:true },
   { key:'demon',     name:'DEMÔNIO',    image:'assets/sprites/demon.png',      frameW:128, frameH:128, blinkCapable:true },
 ];
+
+// Mapas: cada ciclo (CONFIG.cycleLength monstros) usa a ordem de monstros de
+// um mapa. Mapa 1 cobre os ciclos 1-3, com força crescente entre as 6
+// variantes de slime; o 10º monstro de cada ciclo (índice 9) é sempre o
+// chefe (ver MonsterModule.spawn). A partir do ciclo 4 (fora do Mapa 1), o
+// Mapa 2 se repete infinitamente até definirmos um limite/mapa novo.
+const MAPS = {
+  slimes: {
+    name: 'Mapa 1: Pântano dos Slimes',
+    cycles: {
+      1: ['slime','slime','slimeBlue','slime','slimeBlue','slime','slimeBlue','slime','slimeBlue','slimeGreenWarrior'],
+      2: ['slimeBlue','slimeRed','slime','slimeBlue','slimeRed','slimeBlue','slimeRed','slimeBlue','slimeRed','slimeBlueBarbarian'],
+      3: ['slimeRed','slimeBlueBarbarian','slimeRed','slimeGreenWarrior','slimeRed','slimeBlueBarbarian','slimeRed','slimeGreenWarrior','slimeRed','slimeRedKing'],
+    }
+  },
+  wilds: {
+    name: 'Mapa 2: Terras Selvagens',
+    order: ['goblin','orc','troll','dragon','demon','goblin','orc','troll','dragon','demon']
+  }
+};
 
 // Tropas (DPS) crescem de custo bem mais rápido que upgrades — elas não têm
 // nível máximo (dá pra comprar infinitas), então o custo precisa subir rápido
