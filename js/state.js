@@ -32,6 +32,10 @@ function freshState(){
     // prestige permanent upgrades
     prestige:{ pClick:0, pDps:0, pGold:0, pCrit:0 },
     pClickMult:0, pDpsMult:0, pGoldMult:0, pCritChance:0,
+    // preferências do menu de configurações — áudio/idioma ainda não têm
+    // efeito real no jogo (não existe sistema de áudio/tradução ainda),
+    // só ficam guardadas pra quando essas features forem implementadas
+    settings:{ audioEnabled:true, volume:70, language:'pt-BR' },
     // meta
     goldEarnedThisRun:0,
     lastSave:Date.now()

@@ -25,8 +25,26 @@
   }
   h1,h2,.pixel{font-family:'Press Start 2P', monospace;}
   .title-bar{
+    position:relative;
     text-align:center;
     margin-bottom:14px;
+  }
+  .gear-btn{
+    position:absolute;
+    top:0; right:0;
+    width:38px; height:38px;
+    background:var(--stone-dark);
+    border:2px solid var(--stone);
+    border-radius:6px;
+    color:var(--parchment);
+    font-size:18px;
+    cursor:pointer;
+    transition:transform .15s ease, border-color .15s ease;
+  }
+  .gear-btn:hover{
+    transform:rotate(25deg);
+    border-color:var(--ember);
+    color:var(--ember);
   }
   .title-bar h1{
     font-size:22px;
@@ -439,3 +457,84 @@
     padding:4px 8px;
     cursor:pointer;
   }
+
+  /* ---- Modal de Configurações / Conquistas ---- */
+  .modal-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(10,8,14,0.72);
+    z-index:1000;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-box{
+    background:linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-panel-2) 100%);
+    border:2px solid var(--stone);
+    border-radius:6px;
+    box-shadow: inset 0 0 0 2px var(--stone-dark), 0 8px 24px rgba(0,0,0,0.6);
+    width:100%;
+    max-width:420px;
+    max-height:90vh;
+    overflow-y:auto;
+  }
+  .modal-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:12px 14px;
+    border-bottom:2px dashed var(--stone);
+  }
+  .modal-header .pixel{font-size:12px; color:var(--ember); letter-spacing:1px;}
+  .modal-close{
+    background:var(--stone-dark);
+    border:1px solid var(--stone);
+    color:var(--parchment-dim);
+    border-radius:4px;
+    width:26px; height:26px;
+    cursor:pointer;
+    font-size:14px;
+    line-height:1;
+  }
+  .modal-close:hover{color:var(--blood); border-color:var(--blood);}
+  .modal-body{padding:14px;}
+  .settings-row{
+    background:var(--stone-dark);
+    border:2px solid var(--stone);
+    border-radius:4px;
+    padding:10px;
+    margin-bottom:10px;
+  }
+  .settings-label{
+    font-size:15px;
+    color:var(--parchment-dim);
+    text-transform:uppercase;
+    letter-spacing:1px;
+    margin-bottom:8px;
+  }
+  .settings-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .settings-toggle{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:15px;
+    cursor:pointer;
+  }
+  .settings-toggle input{width:16px; height:16px;}
+  .settings-select{
+    background:var(--stone-dark);
+    color:var(--parchment);
+    border:1px solid var(--stone);
+    border-radius:3px;
+    font-family:'VT323',monospace;
+    font-size:15px;
+    padding:4px 6px;
+  }
+  #volumeSlider{flex:1; min-width:80px;}

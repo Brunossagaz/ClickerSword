@@ -6,19 +6,26 @@ const SaveModule = {
     state.lastSave = Date.now();
     try{ localStorage.setItem(CONFIG.saveKey, JSON.stringify(state)); }catch(e){ console.warn('Falha ao salvar', e); }
   },
+  // Aplica um objeto de save já parseado ao estado atual do jogo. Usado tanto
+  // por load() (localStorage) quanto por SettingsModule.uploadSaveFromFile()
+  // (arquivo baixado pelo jogador) — mesma lógica de compatibilidade nos dois casos.
+  applyLoaded(loaded){
+    state = Object.assign(freshState(), loaded);
+    // guard against missing nested keys from older saves (ou de novos
+    // upgrades/tropas/mineradores adicionados depois que o save foi criado)
+    state.troops = Object.assign(Object.fromEntries(TROOP_DEFS.map(d => [d.key, 0])), loaded.troops||{});
+    state.miners = Object.assign(Object.fromEntries(MINER_DEFS.map(d => [d.key, 0])), loaded.miners||{});
+    state.upgrades = Object.assign(Object.fromEntries(UPGRADE_DEFS.map(d => [d.key, 0])), loaded.upgrades||{});
+    state.prestige = Object.assign({pClick:0,pDps:0,pGold:0,pCrit:0}, loaded.prestige||{});
+    state.settings = Object.assign({audioEnabled:true, volume:70, language:'pt-BR'}, loaded.settings||{});
+  },
   load(){
     let raw;
     try{ raw = localStorage.getItem(CONFIG.saveKey); }catch(e){ raw = null; }
     if(!raw) return false;
     try{
       const loaded = JSON.parse(raw);
-      state = Object.assign(freshState(), loaded);
-      // guard against missing nested keys from older saves (ou de novos
-      // upgrades/tropas adicionados depois que o save foi criado)
-      state.troops = Object.assign(Object.fromEntries(TROOP_DEFS.map(d => [d.key, 0])), loaded.troops||{});
-      state.miners = Object.assign(Object.fromEntries(MINER_DEFS.map(d => [d.key, 0])), loaded.miners||{});
-      state.upgrades = Object.assign(Object.fromEntries(UPGRADE_DEFS.map(d => [d.key, 0])), loaded.upgrades||{});
-      state.prestige = Object.assign({pClick:0,pDps:0,pGold:0,pCrit:0}, loaded.prestige||{});
+      this.applyLoaded(loaded);
       return true;
     }catch(e){ console.warn('Save corrompido', e); return false; }
   },

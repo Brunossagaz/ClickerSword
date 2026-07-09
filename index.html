@@ -11,8 +11,67 @@
 <body>
 
 <div class="title-bar">
+  <button class="gear-btn" id="settingsGearBtn" title="Configurações">⚙</button>
   <h1>⚔ MONSTER ATTACK CLICKER ⚔</h1>
   <div class="subtitle">clique. destrua. evolua. ascenda.</div>
+</div>
+
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="pixel">⚙ CONFIGURAÇÕES</span>
+      <button class="modal-close" id="settingsCloseBtn">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="settings-row">
+        <div class="settings-label">Salvamento</div>
+        <div class="settings-actions">
+          <button class="small-btn" id="downloadSaveBtn">⬇ Baixar save</button>
+          <button class="small-btn" id="uploadSaveBtn">⬆ Carregar save</button>
+          <input type="file" id="uploadSaveInput" accept="application/json" style="display:none;">
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">Conquistas</div>
+        <div class="settings-actions">
+          <button class="small-btn" id="achievementsBtn">🏆 Ver conquistas</button>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">Áudio</div>
+        <div class="settings-actions">
+          <label class="settings-toggle">
+            <input type="checkbox" id="audioToggle" checked>
+            <span id="audioToggleLabel">Ativado</span>
+          </label>
+          <input type="range" id="volumeSlider" min="0" max="100" value="70">
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">Idioma</div>
+        <div class="settings-actions">
+          <select id="languageSelect" class="settings-select">
+            <option value="pt-BR">Português (BR)</option>
+            <option value="en-US">English</option>
+          </select>
+        </div>
+      </div>
+      <div class="footer-note" style="margin-top:6px;">Áudio e idioma ainda não fazem nada além de guardar sua preferência — reservados para uma próxima atualização.</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="achievementsModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="pixel">🏆 CONQUISTAS</span>
+      <button class="modal-close" id="achievementsCloseBtn">✕</button>
+    </div>
+    <div class="modal-body" style="text-align:center; padding:10px 6px 16px;">
+      <div style="font-size:40px; margin-bottom:10px;">🏆</div>
+      <div>Em breve! Suas conquistas vão aparecer aqui conforme forem lançadas.</div>
+    </div>
+  </div>
 </div>
 
 <div class="layout">
@@ -105,6 +164,7 @@
 <script src="js/mining.js"></script>
 <script src="js/upgrades.js"></script>
 <script src="js/prestige.js"></script>
+<script src="js/settings.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/main.js"></script>
 </body>

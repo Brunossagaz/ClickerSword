@@ -116,7 +116,56 @@ novo). Campos disponíveis por monstro em `config.js`:
   que é mais forte que o Slime normal).
 - `blinkCapable` — ativa a animação periódica de piscar.
 
-## Próximos passos sugeridos
+## Roadmap / Ideias futuras
+
+### ✅ Já implementado (referência rápida)
+
+- Mapas temáticos com tiers de força (Mapa 1: Slimes, Mapa 2: Reino Goblin,
+  Mapa 3: Terras Selvagens)
+- Timer de 15s por monstro + reset de ciclo em caso de falha no chefe
+- Corrente de desbloqueio (`PROGRESSION_CHAIN`) intercalando upgrades e tropas
+- Caverna de Mineração (fonte de ouro passiva, separada do combate)
+- Árvore radial de upgrades (aba "UPGRADES"), com upgrade de sinergia
+  (Ressonância de Combate: DPS ganha % do dano por clique)
+- Ascensão baseada em mortes vitalícias (`totalKillsAll`), com limiar
+  crescente a cada ascensão
+
+### Novos mapas (seguindo o padrão: 3 ciclos, 6 variantes, 3 chefes)
+
+- **Mapa 4 — Necrópole**: mortos-vivos (Zumbi, Esqueleto Arqueiro, Zumbi
+  Podre, Cavaleiro da Morte *(chefe)*, Necromante *(chefe)*, Lich Supremo
+  *(chefe)*)
+- **Mapa 5 — Floresta Élfica**: Elfo Batedor, Dríade, Elfo Arqueiro, Guardião
+  Ancestral *(chefe)*, Rainha Dríade *(chefe)*, Ent Milenar *(chefe)*
+- **Mapa 6 — Abismo Demoníaco**: tier de dificuldade bem mais alta, pensado
+  pra pós-Mapa 3 (Imp, Súcubo, Cão do Inferno, Barão Infernal *(chefe)*,
+  Arquidemônio *(chefe)*, Senhor do Abismo *(chefe)*)
+- Dar tiers pro Mapa 3 atual (orc/troll/dragão/demônio), que hoje só
+  reaproveita os monstros antigos sem variantes — mesma ideia dos
+  slimes/goblins
+
+### Novos monstros/mecânicas de combate
+
+- **Resistência elemental**: monstros com fraqueza/resistência a um tipo de
+  dano, incentivando variar upgrades/tropas
+- **Elite raro**: chance pequena de um monstro normal (não só o 10º da
+  fileira) spawnar como versão "elite" com HP/recompensa maior
+- **Chefe com fases**: muda de forma/ataque na metade da vida
+- **Monstro que foge**: se não for abatido rápido, foge e soma um bônus
+  acumulado pro próximo — outro uso pro timer de 15s além da penalidade
+
+### Sistemas novos
+
+- **Equipamentos/loot**: chefes derrubam itens com bônus permanentes na run
+- **Achievements**: conquistas com recompensas pequenas de essência/ouro (ex:
+  "mate 500 slimes", "ascenda 10 vezes")
+- **Expansão da mineração**: minério virar um recurso próprio (Gemas) que
+  compra upgrades exclusivos, em vez de virar ouro direto
+- **Auto-upgrade/auto-buy**: desbloqueável tarde, compra upgrades sozinho
+- **2ª camada de prestígio**: acima da Ascensão (ex: "Transcendência"), só
+  libera depois de X ascensões, com bônus mais fortes e raros
+
+### Técnico
 
 - Separar `config.js` em `config/monsters.js`, `config/troops.js`,
   `config/upgrades.js` se a lista crescer muito

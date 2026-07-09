@@ -21,6 +21,55 @@ const UI = {
     document.getElementById('resetBtn').addEventListener('click', ()=>{
       if(confirm('Tem certeza que deseja apagar todo o progresso?')) SaveModule.reset();
     });
+
+    this.initSettingsModal();
+  },
+  initSettingsModal(){
+    const settingsModal = document.getElementById('settingsModal');
+    const achievementsModal = document.getElementById('achievementsModal');
+    const openModal = (modal)=> modal.classList.add('open');
+    const closeModal = (modal)=> modal.classList.remove('open');
+
+    document.getElementById('settingsGearBtn').addEventListener('click', ()=>{
+      // reflete as preferências salvas nos controles toda vez que abre
+      document.getElementById('audioToggle').checked = state.settings.audioEnabled;
+      document.getElementById('audioToggleLabel').textContent = state.settings.audioEnabled ? 'Ativado' : 'Desativado';
+      document.getElementById('volumeSlider').value = state.settings.volume;
+      document.getElementById('languageSelect').value = state.settings.language;
+      openModal(settingsModal);
+    });
+    document.getElementById('settingsCloseBtn').addEventListener('click', ()=>closeModal(settingsModal));
+    settingsModal.addEventListener('click', (e)=>{ if(e.target === settingsModal) closeModal(settingsModal); });
+
+    document.getElementById('achievementsBtn').addEventListener('click', ()=>{
+      closeModal(settingsModal);
+      openModal(achievementsModal);
+    });
+    document.getElementById('achievementsCloseBtn').addEventListener('click', ()=>closeModal(achievementsModal));
+    achievementsModal.addEventListener('click', (e)=>{ if(e.target === achievementsModal) closeModal(achievementsModal); });
+
+    document.getElementById('downloadSaveBtn').addEventListener('click', ()=>SettingsModule.downloadSave());
+
+    const uploadInput = document.getElementById('uploadSaveInput');
+    document.getElementById('uploadSaveBtn').addEventListener('click', ()=>uploadInput.click());
+    uploadInput.addEventListener('change', ()=>{
+      const file = uploadInput.files[0];
+      SettingsModule.uploadSaveFromFile(file).then(()=>{
+        closeModal(settingsModal);
+        this.showToast('SAVE CARREGADO', 'Seu progresso foi importado com sucesso!');
+      }).catch(msg=>{
+        alert(msg);
+      }).finally(()=>{
+        uploadInput.value = '';
+      });
+    });
+
+    document.getElementById('audioToggle').addEventListener('change', (e)=>{
+      SettingsModule.setAudioEnabled(e.target.checked);
+      document.getElementById('audioToggleLabel').textContent = e.target.checked ? 'Ativado' : 'Desativado';
+    });
+    document.getElementById('volumeSlider').addEventListener('input', (e)=>SettingsModule.setVolume(Number(e.target.value)));
+    document.getElementById('languageSelect').addEventListener('change', (e)=>SettingsModule.setLanguage(e.target.value));
   },
   fmt(n){
     n = Math.floor(n);
