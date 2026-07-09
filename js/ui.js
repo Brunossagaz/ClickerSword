@@ -23,6 +23,16 @@ const UI = {
     });
     document.getElementById('leaveDungeonBtn').addEventListener('click', ()=>DungeonModule.leaveToCity());
 
+    document.getElementById('cycleContinueBtn').addEventListener('click', ()=>{
+      document.getElementById('cycleCompleteModal').classList.remove('open');
+      MonsterModule.spawn(false);
+      UI.renderAll();
+    });
+    document.getElementById('cycleLeaveBtn').addEventListener('click', ()=>{
+      document.getElementById('cycleCompleteModal').classList.remove('open');
+      DungeonModule.leaveToCity();
+    });
+
     this.initSettingsModal();
   },
   showCityView(){
@@ -32,6 +42,17 @@ const UI = {
   showDungeonView(){
     document.getElementById('view-city').classList.remove('active');
     document.getElementById('view-dungeon').classList.add('active');
+  },
+  // Chamado pelo MonsterModule.onDeath() quando o chefe de um ciclo é
+  // derrotado — pausa o jogo (MonsterModule.current fica null) até o
+  // jogador escolher continuar pro próximo ciclo ou voltar pra cidade.
+  showCycleCompleteModal(){
+    const d = state.dungeons[state.currentDungeon];
+    const justFinishedCycle = Math.floor((d.killCount - 1) / CONFIG.cycleLength) + 1;
+    const nextCycle = Math.floor(d.killCount / CONFIG.cycleLength) + 1;
+    document.getElementById('cycleCompleteText').textContent =
+      `Você derrotou o chefe do Ciclo ${justFinishedCycle} de ${MAPS[state.currentDungeon].name}! Quer continuar para o Ciclo ${nextCycle}?`;
+    document.getElementById('cycleCompleteModal').classList.add('open');
   },
   initSettingsModal(){
     const settingsModal = document.getElementById('settingsModal');

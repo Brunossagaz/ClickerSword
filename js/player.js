@@ -12,6 +12,7 @@ const PlayerModule = {
     // isGolden/monsterMaxHp) antes da checagem do bônus dourado abaixo.
     const wasGolden = state.isGolden;
     const goldenMaxHp = state.monsterMaxHp;
+    const goldenDropQty = (MonsterModule.current && MonsterModule.current.type.dropQty) || 1;
 
     let dmg = this.clickDamage();
     let isCrit = Math.random() < (state.critChance + state.pCritChance);
@@ -28,7 +29,7 @@ const PlayerModule = {
     if(wasGolden){
       const itemKey = MAPS[state.currentDungeon].dropsItem;
       if(itemKey){
-        const qty = Math.max(1, Math.round(goldenMaxHp / CONFIG.baseHp * 0.02));
+        const qty = Math.max(1, Math.round(goldenDropQty * 0.1));
         state.inventory[itemKey] += qty;
         UI.showFloatingItemAt(qty, ITEM_DEFS.find(i=>i.key===itemKey), evt);
       } else {

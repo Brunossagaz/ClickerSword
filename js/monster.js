@@ -88,11 +88,11 @@ const MonsterModule = {
     base *= state.goldMult * (1+state.pGoldMult);
     return Math.max(1, Math.floor(base));
   },
-  // Quantidade de item dropada — mesma escala relativa do ouro (chefe e
-  // monstro dourado rendem mais), só que em unidades de item em vez de ouro.
+  // Quantidade de item dropada — FIXA por tipo de monstro (type.dropQty),
+  // sem escalar com HP/posição no ciclo, pra ficar previsível (ver tabela em
+  // config.js). Monstro dourado ainda multiplica, como bônus de evento.
   itemRewardQty(){
-    let qty = Math.max(1, Math.round(state.monsterMaxHp / CONFIG.baseHp));
-    if(state.isBoss) qty *= CONFIG.bossRewardMult;
+    let qty = (this.current && this.current.type.dropQty) || 1;
     if(state.isGolden) qty *= CONFIG.goldenRewardMult;
     return Math.max(1, Math.floor(qty));
   },
@@ -105,6 +105,7 @@ const MonsterModule = {
   },
   onDeath(){
     const d = state.dungeons[state.currentDungeon];
+    const wasBoss = this.current.isBoss; // captura antes do spawn() sobrescrever this.current
     const itemKey = MAPS[state.currentDungeon].dropsItem;
     if(itemKey){
       const qty = this.itemRewardQty();
@@ -118,7 +119,16 @@ const MonsterModule = {
     }
     d.killCount += 1;
     state.totalKillsAll += 1; // continua vitalício e global, alimenta a Ascensão
-    this.spawn(false);
-    UI.renderAll();
+
+    if(wasBoss){
+      // fim de ciclo: pausa e pergunta se o jogador quer seguir pro próximo
+      // ciclo ou voltar pra cidade, em vez de continuar sozinho
+      this.current = null;
+      UI.renderAll();
+      UI.showCycleCompleteModal();
+    } else {
+      this.spawn(false);
+      UI.renderAll();
+    }
   }
 };

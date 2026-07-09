@@ -74,6 +74,23 @@
   </div>
 </div>
 
+<!-- Sem botão de fechar de propósito: o jogador precisa escolher continuar
+     ou voltar pra cidade, não só fechar e ficar sem monstro ativo. -->
+<div class="modal-overlay" id="cycleCompleteModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="pixel">🎉 CICLO CONCLUÍDO</span>
+    </div>
+    <div class="modal-body" style="text-align:center;">
+      <div id="cycleCompleteText" style="margin-bottom:14px;"></div>
+      <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+        <button class="ascend-btn" id="cycleContinueBtn">CONTINUAR</button>
+        <button class="small-btn" id="cycleLeaveBtn">🏘 Voltar pra cidade</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="layout">
 
   <!-- LEFT: Cidade (seleção de Dungeon) ou Arena (dentro de uma Dungeon) -->

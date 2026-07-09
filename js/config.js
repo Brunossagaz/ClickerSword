@@ -32,14 +32,22 @@ const CONFIG = {
 //
 // hpMult reflete a força relativa da criatura (afeta o HP, multiplica junto
 // com o bônus de chefe quando a criatura cai na última posição do ciclo).
+//
+// Slimes seguem um padrão fixo agora: cada tier tem exatamente 1.5x o hpMult
+// do anterior (1.0 → 1.5 → 2.25 → 3.375 → 5.0625 → 7.59375, arredondado a 2
+// casas). `dropQty` é a quantidade FIXA de item dropada por esse tipo (só
+// usado em Dungeons com `dropsItem` — ver MAPS/MonsterModule.itemRewardQty),
+// sem escalar com HP/posição no ciclo — segue a MESMA razão 1.5x do hpMult
+// (arredondada pra cima), então nunca fica fora de ordem com a força real
+// da criatura (1 → 2 → 3 → 4 → 6 → 8).
 const MONSTER_TYPES = [
   // --- Mapa 1: Pântano dos Slimes (ciclos 1-3) ---
-  { key:'slime',              name:'SLIME',               image:'assets/sprites/slime.png',              frameW:128, frameH:128, blinkCapable:true },
-  { key:'slimeBlue',          name:'SLIME AZUL',          image:'assets/sprites/slime_blue.png',          frameW:128, frameH:128, spriteScale:0.7, hpMult:1.8, blinkCapable:true },
-  { key:'slimeGreenWarrior',  name:'SLIME VERDE GUERREIRO', image:'assets/sprites/slime_green_warrior.png', frameW:128, frameH:128, hpMult:2.4, blinkCapable:true },
-  { key:'slimeRed',           name:'SLIME VERMELHO',      image:'assets/sprites/slime_red.png',           frameW:128, frameH:128, hpMult:3.2, blinkCapable:true },
-  { key:'slimeBlueBarbarian', name:'SLIME AZUL BÁRBARO',  image:'assets/sprites/slime_blue_barbarian.png',frameW:128, frameH:128, hpMult:4.2, blinkCapable:true },
-  { key:'slimeRedKing',       name:'SLIME REI VERMELHO',  image:'assets/sprites/slime_red_king.png',      frameW:128, frameH:128, hpMult:6.0, blinkCapable:true },
+  { key:'slime',              name:'SLIME',               image:'assets/sprites/slime.png',              frameW:128, frameH:128, dropQty:1,  blinkCapable:true },
+  { key:'slimeBlue',          name:'SLIME AZUL',          image:'assets/sprites/slime_blue.png',          frameW:128, frameH:128, spriteScale:0.7, hpMult:1.5,  dropQty:2,  blinkCapable:true },
+  { key:'slimeGreenWarrior',  name:'SLIME VERDE GUERREIRO', image:'assets/sprites/slime_green_warrior.png', frameW:128, frameH:128, hpMult:2.25, dropQty:3,  blinkCapable:true },
+  { key:'slimeRed',           name:'SLIME VERMELHO',      image:'assets/sprites/slime_red.png',           frameW:128, frameH:128, hpMult:3.38, dropQty:4,  blinkCapable:true },
+  { key:'slimeBlueBarbarian', name:'SLIME AZUL BÁRBARO',  image:'assets/sprites/slime_blue_barbarian.png',frameW:128, frameH:128, hpMult:5.06, dropQty:6,  blinkCapable:true },
+  { key:'slimeRedKing',       name:'SLIME REI VERMELHO',  image:'assets/sprites/slime_red_king.png',      frameW:128, frameH:128, hpMult:7.59, dropQty:8,  blinkCapable:true },
   // --- Mapa 2: Reino Goblin (ciclos 4-6) ---
   { key:'goblinGreen',   name:'GOBLIN VERDE',     image:'assets/sprites/goblin_green.png',   frameW:128, frameH:128, blinkCapable:true },
   { key:'goblinRed',     name:'GOBLIN VERMELHO',  image:'assets/sprites/goblin_red.png',     frameW:128, frameH:128, hpMult:1.6, blinkCapable:true },
