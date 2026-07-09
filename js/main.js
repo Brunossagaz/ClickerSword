@@ -23,7 +23,17 @@ function boot(){
   UI.init();
   Sprites.startBlinkLoop();
   const hadSave = SaveModule.load();
-  MonsterModule.spawn(true);
+
+  // Se o save trazia uma Dungeon ativa, retoma direto nela; senão (jogo novo,
+  // ou o jogador tinha voltado pra cidade antes de fechar) mostra a cidade,
+  // sem spawnar monstro nenhum.
+  if(state.currentDungeon){
+    MonsterModule.spawn(false);
+    UI.showDungeonView();
+  } else {
+    UI.showCityView();
+  }
+
   if(hadSave){
     const off = SaveModule.computeOfflineEarnings();
     if(off && off.earned > 0){

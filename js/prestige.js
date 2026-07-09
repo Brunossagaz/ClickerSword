@@ -36,9 +36,12 @@ const PrestigeModule = {
     state.pCritChance = keepMultipliers.pCritChance;
     state.totalKillsAll = keepTotalKills;
     state.ascensionCount = keepAscensionCount;
-    // killCount volta a 0 (freshState) — ciclo e HP dos monstros reiniciam do zero
-
-    MonsterModule.spawn(true);
+    // killCount de todas as Dungeons volta a 0 (freshState) — ciclo e HP dos
+    // monstros reiniciam do zero, e as Dungeons desbloqueadas por progresso
+    // (Goblin, Selvagens) voltam a ficar trancadas. Sem Dungeon ativa, o
+    // jogador volta pra cidade e escolhe de novo por onde começar.
+    MonsterModule.current = null;
+    UI.showCityView();
     UI.renderAll();
     UI.showToast('✨ ASCENSÃO ✨', `Você ganhou ${gained} de Essência! Multiplicadores permanentes aplicados.`);
   },

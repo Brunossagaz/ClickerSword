@@ -55,15 +55,21 @@ const MONSTER_TYPES = [
   { key:'demon',     name:'DEMÔNIO',    image:'assets/sprites/demon.png',      frameW:128, frameH:128, blinkCapable:true },
 ];
 
-// Mapas: cada ciclo (CONFIG.cycleLength monstros) usa a ordem de monstros de
-// um mapa. Mapa 1 (ciclos 1-3) e Mapa 2 (ciclos 4-6) têm força crescente
-// dentro de cada ciclo; o 10º monstro de cada ciclo (índice 9) é sempre o
-// chefe (ver MonsterModule.spawn). A partir do ciclo 7 (fora dos mapas com
-// ciclos definidos), o Mapa 3 se repete infinitamente até definirmos um
-// limite/mapa novo.
+// Dungeons: cada uma tem seu próprio progresso (state.dungeons[key].killCount,
+// contado do zero, independente das outras) — o jogador escolhe em qual
+// entrar na tela da cidade (ver DungeonModule). Cada ciclo (CONFIG.cycleLength
+// monstros) usa a ordem de `cycles[cicloLocal]`; o 10º monstro do ciclo
+// (índice 9) é sempre o chefe (ver MonsterModule.spawn). Dungeons sem
+// `cycles` definidos (ex: wilds) usam `order` e repetem pra sempre.
+//
+// `unlockRequirement` (opcional): quantas mortes a Dungeon indicada precisa
+// ter pra esta desbloquear. Sem isso, a Dungeon já começa desbloqueada.
+// `dropsItem` (opcional): se definido, monstros dessa Dungeon dão item em vez
+// de ouro (ver MonsterModule.onDeath e ITEM_DEFS).
 const MAPS = {
   slimes: {
-    name: 'Mapa 1: Pântano dos Slimes',
+    name: 'Dungeon do Pântano dos Slimes',
+    dropsItem: 'slimeGel',
     cycles: {
       1: ['slime','slime','slimeBlue','slime','slimeBlue','slime','slimeBlue','slime','slimeBlue','slimeGreenWarrior'],
       2: ['slimeBlue','slimeRed','slime','slimeBlue','slimeRed','slimeBlue','slimeRed','slimeBlue','slimeRed','slimeBlueBarbarian'],
@@ -71,18 +77,26 @@ const MAPS = {
     }
   },
   goblins: {
-    name: 'Mapa 2: Reino Goblin',
+    name: 'Dungeon do Reino Goblin',
+    unlockRequirement: { dungeon:'slimes', kills:30 },
     cycles: {
-      4: ['goblinGreen','goblinGreen','goblinRed','goblinGreen','goblinRed','goblinGreen','goblinRed','goblinGreen','goblinRed','goblinPriest'],
-      5: ['goblinRed','goblinMage','goblinGreen','goblinRed','goblinWarrior','goblinRed','goblinMage','goblinWarrior','goblinRed','goblinMaster'],
-      6: ['goblinWarrior','goblinPriest','goblinMage','goblinWarrior','goblinPriest','goblinMage','goblinWarrior','goblinPriest','goblinWarrior','goblinGreater'],
+      1: ['goblinGreen','goblinGreen','goblinRed','goblinGreen','goblinRed','goblinGreen','goblinRed','goblinGreen','goblinRed','goblinPriest'],
+      2: ['goblinRed','goblinMage','goblinGreen','goblinRed','goblinWarrior','goblinRed','goblinMage','goblinWarrior','goblinRed','goblinMaster'],
+      3: ['goblinWarrior','goblinPriest','goblinMage','goblinWarrior','goblinPriest','goblinMage','goblinWarrior','goblinPriest','goblinWarrior','goblinGreater'],
     }
   },
   wilds: {
-    name: 'Mapa 3: Terras Selvagens',
+    name: 'Dungeon das Terras Selvagens',
+    unlockRequirement: { dungeon:'goblins', kills:30 },
     order: ['orc','troll','dragon','orc','troll','demon','orc','troll','dragon','demon']
   }
 };
+
+// Itens (drop alternativo ao ouro — ver campo `dropsItem` em MAPS). Simples
+// por enquanto: sem raridade, só um preço fixo de venda na Loja da cidade.
+const ITEM_DEFS = [
+  { key:'slimeGel', name:'Geleia de Slime', icon:'🧪', sellPrice:8 },
+];
 
 // Tropas (DPS) crescem de custo bem mais rápido que upgrades — elas não têm
 // nível máximo (dá pra comprar infinitas), então o custo precisa subir rápido

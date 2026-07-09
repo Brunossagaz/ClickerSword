@@ -14,13 +14,16 @@ monster-attack-clicker/
 │   ├── state.js           → estado do jogador (freshState()) — a "fonte da verdade" do save
 │   ├── save.js             → localStorage: salvar, carregar, resetar, calcular ganhos offline
 │   ├── sprites.js           → desenha no <canvas> os spritesheets PNG de assets/sprites/
-│   ├── monster.js            → spawn de monstro, escala de HP, chefes, monstro dourado, morte/drop
+│   ├── monster.js            → spawn de monstro (escopado à Dungeon ativa), escala de HP, chefes, monstro dourado, morte/drop (ouro ou item)
+│   ├── dungeons.js            → escolha de Dungeon na cidade: desbloqueio, entrar, voltar
 │   ├── player.js               → dano por clique, crítico, disparo do ataque manual
 │   ├── troops.js                → compra de tropas, custo exponencial, cálculo de DPS total
+│   ├── mining.js                 → Caverna de Mineração: mineradores rendem ouro passivamente
 │   ├── upgrades.js               → compra de upgrades de combate (loja de ouro)
 │   ├── prestige.js                → lógica de Ascensão: cálculo de Essência, reset, upgrades permanentes
-│   ├── ui.js                       → toda renderização/DOM: barras, listas, textos flutuantes, toasts
-│   └── main.js                      → game loop (tick de DPS, autosave) e boot() inicial
+│   ├── settings.js                 → menu de configurações: baixar/carregar save, áudio/idioma (placeholders)
+│   ├── ui.js                        → toda renderização/DOM: barras, listas, textos flutuantes, toasts, views
+│   └── main.js                       → game loop (tick de DPS, autosave) e boot() inicial
 ├── assets/
 │   └── sprites/                     → um PNG por monstro (spritesheet: idle | piscar | dano, 128x128
 │                                        por frame), referenciado em `js/config.js` (campo `image`)
@@ -85,6 +88,31 @@ rodar o jogo (arquivo local vs. servidor, ou mudar de porta) começa um save
 novo. Para apagar o progresso, use o botão "Apagar progresso" na aba de
 Ascensão dentro do próprio jogo.
 
+## Cidade, Dungeons e Itens
+
+O jogador começa numa **Cidade Abandonada** (tela de seleção) e escolhe em
+qual **Dungeon** entrar — cada uma é uma família de monstros (`MAPS` em
+`js/config.js`: `slimes`, `goblins`, `wilds`), com progresso independente
+(`state.dungeons[key].killCount`). Dungeons desbloqueiam em sequência via
+`unlockRequirement` (ex.: Goblin exige 30 mortes na Slime) — a lógica de
+desbloqueio é **computada**, não guardada em flag (mesmo padrão de
+`ProgressionModule`), então nunca dessincroniza.
+
+Uma vez que os ciclos definidos de uma Dungeon acabam (hoje, 3 por Dungeon),
+o padrão de monstros **repete** (`MonsterModule.typeFor` faz o wrap) — o HP
+continua subindo normalmente, então nenhuma Dungeon "termina" de verdade, só
+fica mais difícil.
+
+Dungeons marcadas com `dropsItem` (hoje só `slimes`) dão **itens**
+(`ITEM_DEFS`) em vez de ouro — vendidos na aba "🏪 LOJA" por um preço fixo.
+As demais abas (Ferreiro/Guilda/Caverna/Ascensão) são as mesmas
+mecânicas de sempre, só "vestidas" com nomes de locais da cidade.
+
+Saves de antes dessa atualização (com `killCount`/`loop` únicos, sem conceito
+de Dungeon) são migrados automaticamente em `SaveModule.applyLoaded()` —
+o progresso linear antigo vira o progresso da Dungeon correspondente, sem
+perder nada.
+
 ## Sprites dos monstros
 
 Todos os monstros (`js/config.js` → `MONSTER_TYPES`) apontam para um PNG em
@@ -129,20 +157,25 @@ novo). Campos disponíveis por monstro em `config.js`:
   (Ressonância de Combate: DPS ganha % do dano por clique)
 - Ascensão baseada em mortes vitalícias (`totalKillsAll`), com limiar
   crescente a cada ascensão
+- Cidade Abandonada + Dungeons selecionáveis (progresso independente por
+  Dungeon, desbloqueio sequencial) + itens vendidos na Loja (Dungeon Slime)
+- Menu de configurações (⚙): baixar/carregar save como arquivo, placeholders
+  de áudio/idioma/conquistas
 
-### Novos mapas (seguindo o padrão: 3 ciclos, 6 variantes, 3 chefes)
+### Novas Dungeons (seguindo o padrão: 3 ciclos, 6 variantes, 3 chefes)
 
-- **Mapa 4 — Necrópole**: mortos-vivos (Zumbi, Esqueleto Arqueiro, Zumbi
+- **Dungeon da Necrópole**: mortos-vivos (Zumbi, Esqueleto Arqueiro, Zumbi
   Podre, Cavaleiro da Morte *(chefe)*, Necromante *(chefe)*, Lich Supremo
   *(chefe)*)
-- **Mapa 5 — Floresta Élfica**: Elfo Batedor, Dríade, Elfo Arqueiro, Guardião
+- **Dungeon da Floresta Élfica**: Elfo Batedor, Dríade, Elfo Arqueiro, Guardião
   Ancestral *(chefe)*, Rainha Dríade *(chefe)*, Ent Milenar *(chefe)*
-- **Mapa 6 — Abismo Demoníaco**: tier de dificuldade bem mais alta, pensado
-  pra pós-Mapa 3 (Imp, Súcubo, Cão do Inferno, Barão Infernal *(chefe)*,
+- **Dungeon do Abismo Demoníaco**: tier de dificuldade bem mais alta, pensado
+  pra pós-Selvagens (Imp, Súcubo, Cão do Inferno, Barão Infernal *(chefe)*,
   Arquidemônio *(chefe)*, Senhor do Abismo *(chefe)*)
-- Dar tiers pro Mapa 3 atual (orc/troll/dragão/demônio), que hoje só
-  reaproveita os monstros antigos sem variantes — mesma ideia dos
+- Dar tiers pra Dungeon das Terras Selvagens atual (orc/troll/dragão/demônio),
+  que hoje só reaproveita os monstros antigos sem variantes — mesma ideia dos
   slimes/goblins
+- Expandir itens/loot pra outras Dungeons além da Slime (hoje só ela dropa item)
 
 ### Novos monstros/mecânicas de combate
 

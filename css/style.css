@@ -399,6 +399,11 @@
   }
   .tab-content{display:none;}
   .tab-content.active{display:block;}
+  /* mesma ideia do .tab-content, mas classe própria — a troca de abas da
+     direita faz querySelectorAll('.tab-content') pra esconder tudo, e isso
+     não pode arrastar junto as views de cidade/dungeon do painel esquerdo */
+  .view-content{display:none;}
+  .view-content.active{display:block;}
 
   .prestige-box{
     text-align:center;

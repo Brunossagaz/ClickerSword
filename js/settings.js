@@ -35,7 +35,15 @@ const SettingsModule = {
         }
         SaveModule.applyLoaded(loaded);
         SaveModule.save();
-        MonsterModule.spawn(true);
+        // igual ao boot(): só spawna monstro se o save trazia uma Dungeon
+        // ativa, senão mostra a cidade (currentDungeon fica null)
+        if(state.currentDungeon){
+          MonsterModule.spawn(false);
+          UI.showDungeonView();
+        } else {
+          MonsterModule.current = null;
+          UI.showCityView();
+        }
         UI.renderAll();
         resolve();
       };

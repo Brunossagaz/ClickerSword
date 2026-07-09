@@ -21,8 +21,17 @@ const UI = {
     document.getElementById('resetBtn').addEventListener('click', ()=>{
       if(confirm('Tem certeza que deseja apagar todo o progresso?')) SaveModule.reset();
     });
+    document.getElementById('leaveDungeonBtn').addEventListener('click', ()=>DungeonModule.leaveToCity());
 
     this.initSettingsModal();
+  },
+  showCityView(){
+    document.getElementById('view-city').classList.add('active');
+    document.getElementById('view-dungeon').classList.remove('active');
+  },
+  showDungeonView(){
+    document.getElementById('view-city').classList.remove('active');
+    document.getElementById('view-dungeon').classList.add('active');
   },
   initSettingsModal(){
     const settingsModal = document.getElementById('settingsModal');
@@ -87,15 +96,16 @@ const UI = {
     this.canvas.style.height = big ? '256px' : '224px';
   },
   renderMonsterInfo(){
+    if(!MonsterModule.current) return; // sem monstro ativo (jogador está na cidade)
     const t = MonsterModule.current.type;
-    const posInCycle = state.killCount % CONFIG.cycleLength;
-    const mapName = MAPS.slimes.cycles[state.loop] ? MAPS.slimes.name
-      : MAPS.goblins.cycles[state.loop] ? MAPS.goblins.name
-      : MAPS.wilds.name;
+    const d = state.dungeons[state.currentDungeon];
+    const posInCycle = d.killCount % CONFIG.cycleLength;
+    const loop = Math.floor(d.killCount / CONFIG.cycleLength) + 1;
     document.getElementById('monsterName').textContent = (MonsterModule.current.isBoss ? '★ CHEFE: ' : '') + t.name;
-    document.getElementById('tierLabel').textContent = `${mapName} · CICLO ${state.loop} · MONSTRO ${posInCycle+1}/${CONFIG.cycleLength} (ABATIDOS NO TOTAL: ${state.totalKillsAll})`;
+    document.getElementById('tierLabel').textContent = `${MAPS[state.currentDungeon].name} · CICLO ${loop} · MONSTRO ${posInCycle+1}/${CONFIG.cycleLength} (ABATIDOS NO TOTAL: ${state.totalKillsAll})`;
   },
   renderHpBar(){
+    if(!MonsterModule.current) return;
     const pct = Math.max(0, (state.monsterHp/state.monsterMaxHp)*100);
     document.getElementById('hpFill').style.width = pct+'%';
     document.getElementById('hpText').textContent = `${Math.max(0,Math.ceil(state.monsterHp))} / ${state.monsterMaxHp}`;
@@ -120,6 +130,57 @@ const UI = {
     document.getElementById('statDps').textContent = this.fmt(TroopsModule.totalDps());
     document.getElementById('statCrit').textContent = Math.round((state.critChance+state.pCritChance)*100)+'%';
     document.getElementById('statMiningGps').textContent = this.fmt(MiningModule.totalGoldPerSecond());
+  },
+  renderDungeonList(){
+    const el = document.getElementById('dungeonList');
+    el.innerHTML = '';
+    for(const key of Object.keys(MAPS)){
+      const map = MAPS[key];
+      const row = document.createElement('div');
+      if(!DungeonModule.isUnlocked(key)){
+        const req = map.unlockRequirement;
+        row.className = 'shop-row locked';
+        row.innerHTML = `
+          <div class="shop-info">
+            <div class="name">🔒 ${map.name}</div>
+            <div class="desc">Requer ${req.kills} mortes na ${MAPS[req.dungeon].name}</div>
+          </div>`;
+        el.appendChild(row);
+        continue;
+      }
+      row.className = 'shop-row';
+      row.innerHTML = `
+        <div class="shop-info">
+          <div class="name">${map.name}</div>
+          <div class="desc">${DungeonModule.progressLabel(key)}${map.dropsItem ? ' · dropa itens em vez de ouro' : ''}</div>
+        </div>
+        <button class="buy-btn">ENTRAR</button>`;
+      row.querySelector('button').addEventListener('click', ()=>DungeonModule.enter(key));
+      el.appendChild(row);
+    }
+  },
+  renderShop(){
+    const el = document.getElementById('shopList');
+    el.innerHTML = '';
+    for(const def of ITEM_DEFS){
+      const qty = state.inventory[def.key];
+      const hasAny = qty > 0;
+      const row = document.createElement('div');
+      row.className = 'shop-row'+(hasAny?'':' disabled');
+      row.innerHTML = `
+        <div class="shop-info">
+          <div class="name">${def.icon} ${def.name}</div>
+          <div class="desc">Vende por ${def.sellPrice} ouro cada</div>
+          <div class="owned">Possui: ${qty}</div>
+        </div>
+        <button class="buy-btn" ${hasAny?'':'disabled'}>💰 Vender tudo</button>`;
+      if(hasAny) row.querySelector('button').addEventListener('click', ()=>{
+        state.gold += qty * def.sellPrice;
+        state.inventory[def.key] = 0;
+        UI.renderAll();
+      });
+      el.appendChild(row);
+    }
   },
   renderMinerList(){
     const el = document.getElementById('minerList');
@@ -296,8 +357,10 @@ const UI = {
     this.renderMonsterInfo();
     this.renderHpBar();
     this.renderTimer();
+    this.renderDungeonList();
     this.renderTroopList();
     this.renderMinerList();
+    this.renderShop();
     this.renderUpgradeTree();
     this.renderPrestigeTab();
   },
@@ -330,6 +393,30 @@ const UI = {
     div.className = 'float-dmg';
     div.style.color = '#ffd54a';
     div.textContent = '+'+this.fmt(amount)+' 🪙';
+    const rect = stage.getBoundingClientRect();
+    const relX = evt && evt.clientX ? (evt.clientX-rect.left) : rect.width/2;
+    div.style.left = relX+'px';
+    div.style.top = (evt && evt.clientY ? (evt.clientY-rect.top+10) : rect.height/2)+'px';
+    stage.appendChild(div);
+    setTimeout(()=>div.remove(), 850);
+  },
+  showFloatingItem(qty, itemDef){
+    const stage = document.getElementById('monsterStage');
+    const div = document.createElement('div');
+    div.className = 'float-dmg';
+    div.style.color = '#8fe0c8';
+    div.textContent = '+'+qty+' '+itemDef.icon+' '+itemDef.name;
+    div.style.left = '50%';
+    div.style.top = '50%';
+    stage.appendChild(div);
+    setTimeout(()=>div.remove(), 850);
+  },
+  showFloatingItemAt(qty, itemDef, evt){
+    const stage = document.getElementById('monsterStage');
+    const div = document.createElement('div');
+    div.className = 'float-dmg';
+    div.style.color = '#8fe0c8';
+    div.textContent = '+'+qty+' '+itemDef.icon;
     const rect = stage.getBoundingClientRect();
     const relX = evt && evt.clientX ? (evt.clientX-rect.left) : rect.width/2;
     div.style.left = relX+'px';

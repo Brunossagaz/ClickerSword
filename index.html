@@ -76,7 +76,7 @@
 
 <div class="layout">
 
-  <!-- LEFT: Arena -->
+  <!-- LEFT: Cidade (seleção de Dungeon) ou Arena (dentro de uma Dungeon) -->
   <div class="panel">
     <div class="stat-bar">
       <div class="stat"><div class="label">Ouro</div><div class="value" id="statGold">0</div></div>
@@ -85,36 +85,45 @@
       <div class="stat"><div class="label">Crítico</div><div class="value" id="statCrit">5%</div></div>
     </div>
 
-    <div class="arena-frame">
-      <div class="tier-label" id="tierLabel">CICLO I · MONSTRO 1</div>
-      <div class="monster-name" id="monsterName">SLIME</div>
-      <div class="monster-stage" id="monsterStage">
-        <canvas id="monsterCanvas" width="128" height="128"></canvas>
-      </div>
-      <div class="hp-wrap">
-        <div class="hp-fill" id="hpFill"></div>
-        <div class="hp-text" id="hpText">100 / 100</div>
-      </div>
-      <div class="timer-wrap">
-        <div class="timer-fill" id="timerFill"></div>
-        <div class="timer-text" id="timerText">15s</div>
-      </div>
-      <div class="golden-tag" id="goldenTag">✨ MONSTRO DOURADO! CLIQUE RÁPIDO! ✨</div>
+    <div class="view-content active" id="view-city">
+      <div class="panel-title">🏘 Cidade Abandonada — Escolha uma Dungeon</div>
+      <div id="dungeonList"></div>
     </div>
-    <div class="footer-note">Clique no monstro para atacar manualmente.</div>
+
+    <div class="view-content" id="view-dungeon">
+      <button class="small-btn" id="leaveDungeonBtn" style="margin-bottom:10px;">🏘 Voltar pra cidade</button>
+      <div class="arena-frame">
+        <div class="tier-label" id="tierLabel">CICLO I · MONSTRO 1</div>
+        <div class="monster-name" id="monsterName">SLIME</div>
+        <div class="monster-stage" id="monsterStage">
+          <canvas id="monsterCanvas" width="128" height="128"></canvas>
+        </div>
+        <div class="hp-wrap">
+          <div class="hp-fill" id="hpFill"></div>
+          <div class="hp-text" id="hpText">100 / 100</div>
+        </div>
+        <div class="timer-wrap">
+          <div class="timer-fill" id="timerFill"></div>
+          <div class="timer-text" id="timerText">15s</div>
+        </div>
+        <div class="golden-tag" id="goldenTag">✨ MONSTRO DOURADO! CLIQUE RÁPIDO! ✨</div>
+      </div>
+      <div class="footer-note">Clique no monstro para atacar manualmente.</div>
+    </div>
   </div>
 
   <!-- RIGHT: Shops -->
   <div class="panel">
     <div class="tabs">
-      <button class="tab-btn active" data-tab="upgrades">UPGRADES</button>
-      <button class="tab-btn" data-tab="troops">TROPAS</button>
+      <button class="tab-btn active" data-tab="upgrades">⚒ FERREIRO</button>
+      <button class="tab-btn" data-tab="troops">🛡 GUILDA</button>
       <button class="tab-btn" data-tab="mining">⛏ CAVERNA</button>
+      <button class="tab-btn" data-tab="shop">🏪 LOJA</button>
       <button class="tab-btn" data-tab="prestige">ASCENSÃO</button>
     </div>
 
     <div class="tab-content active" id="tab-upgrades">
-      <div class="panel-title">Árvore de Upgrades</div>
+      <div class="panel-title">Ferreiro — Árvore de Upgrades</div>
       <div class="tree-wrap" id="upgradeTreeWrap">
         <svg class="tree-lines" id="upgradeTreeLines"></svg>
         <div class="tree-hub">🌳<br>ÁRVORE</div>
@@ -123,7 +132,7 @@
     </div>
 
     <div class="tab-content" id="tab-troops">
-      <div class="panel-title">Tropas Automáticas</div>
+      <div class="panel-title">Guilda — Tropas Automáticas</div>
       <div id="troopList"></div>
     </div>
 
@@ -132,6 +141,12 @@
       <div class="footer-note" style="margin:0 0 10px;">Mineradores rendem ouro sozinhos, sem precisar clicar.</div>
       <div class="stat" style="margin-bottom:12px;"><div class="label">Ouro/seg da caverna</div><div class="value" id="statMiningGps">0</div></div>
       <div id="minerList"></div>
+    </div>
+
+    <div class="tab-content" id="tab-shop">
+      <div class="panel-title">Loja da Cidade</div>
+      <div class="footer-note" style="margin:0 0 10px;">Venda os itens coletados nas Dungeons por ouro.</div>
+      <div id="shopList"></div>
     </div>
 
     <div class="tab-content" id="tab-prestige">
@@ -159,6 +174,7 @@
 <script src="js/save.js"></script>
 <script src="js/sprites.js"></script>
 <script src="js/monster.js"></script>
+<script src="js/dungeons.js"></script>
 <script src="js/player.js"></script>
 <script src="js/troops.js"></script>
 <script src="js/mining.js"></script>

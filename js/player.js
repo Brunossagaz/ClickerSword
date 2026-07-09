@@ -22,13 +22,21 @@ const PlayerModule = {
     UI.screenShake();
     UI.hitFlash();
 
-    // Monstro Dourado: cada clique já rende ouro na hora, sem precisar
-    // terminar de matá-lo dentro da janela dourada.
+    // Monstro Dourado: cada clique já rende ouro (ou item, em Dungeons que
+    // dropam item) na hora, sem precisar terminar de matá-lo dentro da
+    // janela dourada.
     if(wasGolden){
-      const bonus = Math.max(1, Math.floor(goldenMaxHp * CONFIG.goldPerHpFactor * 0.02 * state.goldMult * (1+state.pGoldMult)));
-      state.gold += bonus;
-      state.goldEarnedThisRun += bonus;
-      UI.showFloatingGoldAt(bonus, evt);
+      const itemKey = MAPS[state.currentDungeon].dropsItem;
+      if(itemKey){
+        const qty = Math.max(1, Math.round(goldenMaxHp / CONFIG.baseHp * 0.02));
+        state.inventory[itemKey] += qty;
+        UI.showFloatingItemAt(qty, ITEM_DEFS.find(i=>i.key===itemKey), evt);
+      } else {
+        const bonus = Math.max(1, Math.floor(goldenMaxHp * CONFIG.goldPerHpFactor * 0.02 * state.goldMult * (1+state.pGoldMult)));
+        state.gold += bonus;
+        state.goldEarnedThisRun += bonus;
+        UI.showFloatingGoldAt(bonus, evt);
+      }
       UI.renderStats();
     }
   }

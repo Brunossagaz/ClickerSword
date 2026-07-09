@@ -12,12 +12,36 @@ const SaveModule = {
   applyLoaded(loaded){
     state = Object.assign(freshState(), loaded);
     // guard against missing nested keys from older saves (ou de novos
-    // upgrades/tropas/mineradores adicionados depois que o save foi criado)
+    // upgrades/tropas/mineradores/itens adicionados depois que o save foi criado)
     state.troops = Object.assign(Object.fromEntries(TROOP_DEFS.map(d => [d.key, 0])), loaded.troops||{});
     state.miners = Object.assign(Object.fromEntries(MINER_DEFS.map(d => [d.key, 0])), loaded.miners||{});
     state.upgrades = Object.assign(Object.fromEntries(UPGRADE_DEFS.map(d => [d.key, 0])), loaded.upgrades||{});
+    state.inventory = Object.assign(Object.fromEntries(ITEM_DEFS.map(d => [d.key, 0])), loaded.inventory||{});
     state.prestige = Object.assign({pClick:0,pDps:0,pGold:0,pCrit:0}, loaded.prestige||{});
     state.settings = Object.assign({audioEnabled:true, volume:70, language:'pt-BR'}, loaded.settings||{});
+
+    // Save de antes da atualização de Dungeons: tinha um killCount/loop
+    // globais (Mapa 1 ciclos 1-3, Mapa 2 ciclos 4-6, Mapa 3 ciclo 7+), sem
+    // conceito de Dungeon escolhida. Migra esse progresso linear pra dentro
+    // da Dungeon correspondente, preservando exatamente onde o jogador
+    // estava (e desbloqueando as Dungeons que ele já tinha alcançado).
+    if(loaded.dungeons === undefined){
+      const cycleLen = CONFIG.cycleLength;
+      const cap = 3 * cycleLen; // 30 — tamanho de Slime e de Goblin no sistema antigo
+      const oldKill = loaded.killCount || 0;
+      const dungeons = { slimes:{killCount:0}, goblins:{killCount:0}, wilds:{killCount:0} };
+      let current;
+      if(oldKill <= cap){
+        dungeons.slimes.killCount = oldKill; current = 'slimes';
+      } else if(oldKill <= cap*2){
+        dungeons.slimes.killCount = cap; dungeons.goblins.killCount = oldKill - cap; current = 'goblins';
+      } else {
+        dungeons.slimes.killCount = cap; dungeons.goblins.killCount = cap;
+        dungeons.wilds.killCount = oldKill - cap*2; current = 'wilds';
+      }
+      state.dungeons = dungeons;
+      state.currentDungeon = current;
+    }
   },
   load(){
     let raw;
@@ -32,7 +56,8 @@ const SaveModule = {
   reset(){
     try{ localStorage.removeItem(CONFIG.saveKey); }catch(e){}
     state = freshState();
-    MonsterModule.spawn(true);
+    MonsterModule.current = null; // freshState() não tem Dungeon ativa — volta pra cidade
+    UI.showCityView();
     UI.renderAll();
   },
   computeOfflineEarnings(){
