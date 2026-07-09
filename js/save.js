@@ -16,6 +16,7 @@ const SaveModule = {
       // guard against missing nested keys from older saves (ou de novos
       // upgrades/tropas adicionados depois que o save foi criado)
       state.troops = Object.assign(Object.fromEntries(TROOP_DEFS.map(d => [d.key, 0])), loaded.troops||{});
+      state.miners = Object.assign(Object.fromEntries(MINER_DEFS.map(d => [d.key, 0])), loaded.miners||{});
       state.upgrades = Object.assign(Object.fromEntries(UPGRADE_DEFS.map(d => [d.key, 0])), loaded.upgrades||{});
       state.prestige = Object.assign({pClick:0,pDps:0,pGold:0,pCrit:0}, loaded.prestige||{});
       return true;
@@ -33,7 +34,8 @@ const SaveModule = {
     const seconds = Math.max(0, cappedMs/1000);
     if(seconds < 5) return 0;
     const dps = TroopsModule.totalDps();
-    const earned = Math.floor(dps * seconds * CONFIG.offlineEfficiency);
+    const gps = MiningModule.totalGoldPerSecond();
+    const earned = Math.floor((dps + gps) * seconds * CONFIG.offlineEfficiency);
     if(earned > 0){
       state.gold += earned;
       state.goldEarnedThisRun += earned;

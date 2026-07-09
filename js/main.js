@@ -9,6 +9,12 @@ function tick(){
   if(dps > 0 && MonsterModule.current){
     MonsterModule.applyDamage(dps * (CONFIG.tickMs/1000));
   }
+  const gps = MiningModule.totalGoldPerSecond();
+  if(gps > 0){
+    const earned = gps * (CONFIG.tickMs/1000);
+    state.gold += earned;
+    state.goldEarnedThisRun += earned;
+  }
   UI.renderStats();
   UI.renderTimer();
 }

@@ -16,7 +16,12 @@ const CONFIG = {
   goldenChancePerTick: 0.0025, // per 200ms tick
   goldenDurationMs: 8000,
   goldenRewardMult: 20,
-  ascendKillThreshold: 60,  // min kills this run to ascend
+  // mín. de mortes NESTE run pra poder ascender. Cresce um pouco a cada
+  // ascensão já feita (ver PrestigeModule.currentAscendThreshold): a 1ª
+  // ascensão pede ascendKillThresholdBase, a 2ª pede +ascendKillThresholdGrowth,
+  // a 3ª +2x isso, e assim por diante — sem exagero.
+  ascendKillThresholdBase: 100,
+  ascendKillThresholdGrowth: 15,
   monsterTimeLimitMs: 15000 // tempo pra derrotar cada monstro antes de reiniciar o ciclo
 };
 
@@ -91,6 +96,16 @@ const TROOP_DEFS = [
   { key:'dragon',  name:'Dragão Aliado',     desc:'+1000 DPS', baseCost:150000,costGrowth:1.45, dps:1000 },
 ];
 
+// Caverna de Mineração: fonte de ouro passiva, separada da corrente de
+// progressão principal — não desbloqueia por nível de upgrade/tropa, só por
+// ouro mesmo. Mineradores não lutam, só rendem ouro/seg o tempo todo.
+const MINER_DEFS = [
+  { key:'digger',       name:'Escavador',          desc:'+2 ouro/seg',   baseCost:200,   costGrowth:1.30, goldPerSec:2 },
+  { key:'pickaxeGoblin',name:'Goblin Picareta',    desc:'+10 ouro/seg',  baseCost:1500,  costGrowth:1.30, goldPerSec:10 },
+  { key:'drillCart',    name:'Vagonete Perfurador',desc:'+50 ouro/seg',  baseCost:10000, costGrowth:1.30, goldPerSec:50 },
+  { key:'crystalGolem', name:'Golem de Cristal',   desc:'+250 ouro/seg', baseCost:60000, costGrowth:1.35, goldPerSec:250 },
+];
+
 // Ordem aqui é só organizacional — quem manda na ordem de exibição da loja é
 // a PROGRESSION_CHAIN (ver abaixo). Mesmo assim, mantenha as duas em sincronia
 // pra não confundir quem estiver lendo o arquivo.
@@ -104,6 +119,11 @@ const UPGRADE_DEFS = [
   { key:'goldFind',  name:'Bolsa Encantada',    desc:'+10% de ouro dos monstros', baseCost:6000, costGrowth:1.15, apply:s=>s.goldMult+=0.10, maxLevel:20 },
   { key:'clickDmg5', name:'Punho Divino',       desc:'+1000 dano por clique', baseCost:400000,  costGrowth:1.15, apply:s=>s.clickDamageFlat+=1000, maxLevel:20 },
   { key:'clickDmg6', name:'Fúria do Caos',      desc:'+6000 dano por clique', baseCost:2000000, costGrowth:1.15, apply:s=>s.clickDamageFlat+=6000, maxLevel:20 },
+  // Sinergia: converte uma fração do dano por clique em DPS extra (somado
+  // depois do multiplicador de tropas). Bônus moderado — até 40% no nível
+  // máximo (20 níveis x 2%), pra não substituir tropas/mineração como fonte
+  // principal de DPS, só complementar quem investiu em dano por clique.
+  { key:'dpsSynergy',name:'Ressonância de Combate', desc:'DPS ganha +2% do dano por clique', baseCost:8000000, costGrowth:1.18, apply:s=>s.dpsSynergyRatio+=0.02, maxLevel:20 },
 ];
 
 // Corrente única de progressão (upgrades + tropas intercalados). Cada item só
@@ -129,7 +149,38 @@ const PROGRESSION_CHAIN = [
   { type:'troop',   key:'catapult' },
   { type:'upgrade', key:'clickDmg6' },
   { type:'troop',   key:'dragon' },
+  { type:'upgrade', key:'dpsSynergy' },
 ];
+
+// Layout visual da árvore de Upgrades (aba "UPGRADES"). Puramente
+// apresentacional — não afeta a lógica de desbloqueio (isso é sempre
+// PROGRESSION_CHAIN). hub = círculo central; cada branch é uma lista
+// ordenada de nós (do centro pra fora) com posição em % do container
+// .tree-wrap. Pra adicionar um upgrade novo numa branch existente, só
+// acrescente um item em `nodes`; pra criar uma branch nova, copie o padrão.
+const UPGRADE_TREE = {
+  hub: { x:50, y:52 },
+  branches: [
+    { label:'Dano por Clique', color:'#e8974a', nodes:[
+      { key:'clickDmg1',  x:50,   y:42 },
+      { key:'clickDmg2',  x:37,   y:35.7 },
+      { key:'clickDmg3',  x:63,   y:29.3 },
+      { key:'clickDmg4',  x:37,   y:23 },
+      { key:'clickDmg5',  x:63,   y:16.7 },
+      { key:'clickDmg6',  x:37,   y:10.3 },
+      { key:'dpsSynergy', x:63,   y:4 },
+    ]},
+    { label:'Crítico', color:'#4fd1c5', nodes:[
+      { key:'critChance', x:80, y:52 },
+    ]},
+    { label:'Dano Crítico', color:'#c9432f', nodes:[
+      { key:'critMult', x:50, y:84 },
+    ]},
+    { label:'Ouro', color:'#ffd54a', nodes:[
+      { key:'goldFind', x:20, y:52 },
+    ]},
+  ]
+};
 
 const PRESTIGE_UPGRADE_DEFS = [
   { key:'pClick', name:'Bênção do Guerreiro', desc:'+15% dano por clique (permanente)', baseCost:1, costGrowth:1.8, apply:s=>s.pClickMult+=0.15 },

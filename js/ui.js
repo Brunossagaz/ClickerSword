@@ -44,7 +44,7 @@ const UI = {
       : MAPS.goblins.cycles[state.loop] ? MAPS.goblins.name
       : MAPS.wilds.name;
     document.getElementById('monsterName').textContent = (MonsterModule.current.isBoss ? '★ CHEFE: ' : '') + t.name;
-    document.getElementById('tierLabel').textContent = `${mapName} · CICLO ${state.loop} · MONSTRO ${posInCycle+1}/${CONFIG.cycleLength} (ABATIDOS: ${state.totalKillsAll})`;
+    document.getElementById('tierLabel').textContent = `${mapName} · CICLO ${state.loop} · MONSTRO ${posInCycle+1}/${CONFIG.cycleLength} (ABATIDOS NO TOTAL: ${state.totalKillsAll})`;
   },
   renderHpBar(){
     const pct = Math.max(0, (state.monsterHp/state.monsterMaxHp)*100);
@@ -70,6 +70,27 @@ const UI = {
     document.getElementById('statClickDmg').textContent = this.fmt(PlayerModule.clickDamage());
     document.getElementById('statDps').textContent = this.fmt(TroopsModule.totalDps());
     document.getElementById('statCrit').textContent = Math.round((state.critChance+state.pCritChance)*100)+'%';
+    document.getElementById('statMiningGps').textContent = this.fmt(MiningModule.totalGoldPerSecond());
+  },
+  renderMinerList(){
+    const el = document.getElementById('minerList');
+    el.innerHTML = '';
+    for(const def of MINER_DEFS){
+      const owned = state.miners[def.key];
+      const cost = MiningModule.costFor(def);
+      const canAfford = state.gold >= cost;
+      const row = document.createElement('div');
+      row.className = 'shop-row'+(canAfford?'':' disabled');
+      row.innerHTML = `
+        <div class="shop-info">
+          <div class="name">${def.name}</div>
+          <div class="desc">${def.desc} cada</div>
+          <div class="owned">Possui: ${owned}</div>
+        </div>
+        <button class="buy-btn" ${canAfford?'':'disabled'}>💰 ${UI.fmt(cost)}</button>`;
+      row.querySelector('button').addEventListener('click', ()=>MiningModule.buy(def.key));
+      el.appendChild(row);
+    }
   },
   renderTroopList(){
     const el = document.getElementById('troopList');
@@ -104,46 +125,104 @@ const UI = {
       el.appendChild(row);
     }
   },
-  renderUpgradeList(){
-    const el = document.getElementById('upgradeList');
-    el.innerHTML = '';
-    // mesma ideia: ordem de exibição vem da PROGRESSION_CHAIN
-    const orderedDefs = PROGRESSION_CHAIN.filter(e=>e.type==='upgrade').map(e=>UPGRADE_DEFS.find(u=>u.key===e.key));
-    for(const def of orderedDefs){
-      const row = document.createElement('div');
-      if(!ProgressionModule.isUnlocked('upgrade', def.key)){
-        row.className = 'shop-row locked';
-        row.innerHTML = `
-          <div class="shop-info">
-            <div class="name">🔒 ${def.name}</div>
-            <div class="desc">${ProgressionModule.lockLabel('upgrade', def.key)}</div>
-          </div>`;
-        el.appendChild(row);
-        continue;
+  // Desenha a árvore de upgrades (aba UPGRADES) a partir dos dados puramente
+  // visuais em UPGRADE_TREE (config.js). O desbloqueio continua sendo
+  // decidido só pela PROGRESSION_CHAIN via ProgressionModule — esta função
+  // só posiciona os mesmos nós que renderUpgradeList() desenhava em lista.
+  renderUpgradeTree(){
+    const linesEl = document.getElementById('upgradeTreeLines');
+    const nodesEl = document.getElementById('upgradeTreeNodes');
+    linesEl.innerHTML = '';
+    nodesEl.innerHTML = '';
+
+    const hub = UPGRADE_TREE.hub;
+    const svgLine = (x1,y1,x2,y2,color)=>{
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1', x1+'%'); line.setAttribute('y1', y1+'%');
+      line.setAttribute('x2', x2+'%'); line.setAttribute('y2', y2+'%');
+      line.setAttribute('stroke', color);
+      line.setAttribute('stroke-width', '2');
+      line.setAttribute('opacity', '0.7');
+      linesEl.appendChild(line);
+    };
+
+    for(const branch of UPGRADE_TREE.branches){
+      // rótulo da branch, um pouco além do último nó (o mais afastado do hub)
+      // — perto do primeiro nó ele colidia com o círculo (fica perto demais do hub)
+      const outer = branch.nodes[branch.nodes.length-1];
+      const labelX = Math.max(6, Math.min(94, outer.x + (outer.x-hub.x)*0.22));
+      const labelY = Math.max(4, Math.min(96, outer.y + (outer.y-hub.y)*0.22));
+      const label = document.createElement('div');
+      label.className = 'tree-branch-label';
+      label.style.left = labelX+'%';
+      label.style.top = labelY+'%';
+      label.style.color = branch.color;
+      label.textContent = branch.label;
+      nodesEl.appendChild(label);
+
+      // linhas conectando hub -> nó1 -> nó2 -> ...
+      let prev = hub;
+      for(const node of branch.nodes){
+        svgLine(prev.x, prev.y, node.x, node.y, branch.color);
+        prev = node;
       }
-      const lvl = state.upgrades[def.key];
-      const maxed = lvl >= def.maxLevel;
-      const cost = UpgradesModule.costFor(def);
-      const canAfford = !maxed && state.gold >= cost;
-      row.className = 'shop-row'+(canAfford?'':' disabled');
-      row.innerHTML = `
-        <div class="shop-info">
-          <div class="name">${def.name}</div>
-          <div class="desc">${def.desc}</div>
-          <div class="owned">Nível: ${lvl}/${def.maxLevel}</div>
-        </div>
-        <button class="buy-btn" ${canAfford?'':'disabled'}>${maxed?'MÁX':'💰 '+UI.fmt(cost)}</button>`;
-      if(!maxed) row.querySelector('button').addEventListener('click', ()=>UpgradesModule.buy(def.key));
-      el.appendChild(row);
+
+      for(const node of branch.nodes){
+        const def = UPGRADE_DEFS.find(u=>u.key===node.key);
+        const el = document.createElement('div');
+        el.className = 'tree-node';
+        el.style.left = node.x+'%';
+        el.style.top = node.y+'%';
+        el.style.borderColor = branch.color;
+
+        if(!ProgressionModule.isUnlocked('upgrade', node.key)){
+          el.classList.add('locked');
+          el.innerHTML = `<div class="node-name">🔒 ${def.name}</div>`;
+          el.title = ProgressionModule.lockLabel('upgrade', node.key);
+          nodesEl.appendChild(el);
+          continue;
+        }
+
+        const lvl = state.upgrades[node.key];
+        const maxed = lvl >= def.maxLevel;
+        const cost = UpgradesModule.costFor(def);
+        const canAfford = !maxed && state.gold >= cost;
+        if(maxed) el.classList.add('maxed');
+        else if(!canAfford) el.classList.add('disabled');
+
+        el.innerHTML = `
+          <div class="node-name">${def.name}</div>
+          <div class="node-level">${lvl}/${def.maxLevel}</div>
+          <div class="node-cost">${maxed ? 'MÁX' : '💰'+UI.fmt(cost)}</div>`;
+        el.title = def.desc;
+        if(!maxed) el.addEventListener('click', ()=>UpgradesModule.buy(node.key));
+        nodesEl.appendChild(el);
+      }
     }
   },
   renderPrestigeTab(){
     document.getElementById('essenceCount').textContent = UI.fmt(state.essence);
     const gain = PrestigeModule.potentialEssence();
     document.getElementById('essenceGain').textContent = gain;
+
+    // state.totalKillsAll (vitalício, o mesmo "ABATIDOS NO TOTAL" da arena) é
+    // o que conta pra ascender — nunca reseta, nem por timeout de chefe nem
+    // por ascensão. Assim o progresso mostrado aqui bate com o que a arena
+    // já exibe, sem depender de mortes só desta run.
+    const threshold = PrestigeModule.currentAscendThreshold();
+    const killsSoFar = Math.min(state.totalKillsAll, threshold);
+    document.getElementById('ascendProgress').textContent = `Abatidos no total: ${killsSoFar}/${threshold}`;
+
     const btn = document.getElementById('ascendBtn');
+    const killsOk = state.totalKillsAll >= threshold;
     btn.disabled = !PrestigeModule.canAscend();
-    btn.textContent = PrestigeModule.canAscend() ? 'ASCENDER' : `MATE ${CONFIG.ascendKillThreshold} MONSTROS PARA ASCENDER`;
+    if(PrestigeModule.canAscend()){
+      btn.textContent = 'ASCENDER';
+    } else if(!killsOk){
+      btn.textContent = `MATE ${threshold} MONSTROS NO TOTAL PARA ASCENDER`;
+    } else {
+      btn.textContent = 'GANHE MAIS OURO NESTE RUN PARA ASCENDER';
+    }
 
     const el = document.getElementById('prestigeUpgradeList');
     el.innerHTML = '';
@@ -169,7 +248,8 @@ const UI = {
     this.renderHpBar();
     this.renderTimer();
     this.renderTroopList();
-    this.renderUpgradeList();
+    this.renderMinerList();
+    this.renderUpgradeTree();
     this.renderPrestigeTab();
   },
   showFloatingDamage(dmg, isCrit, evt){

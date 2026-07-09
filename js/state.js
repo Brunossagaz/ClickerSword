@@ -5,6 +5,7 @@ function freshState(){
   return {
     gold:0,
     essence:0,
+    ascensionCount:0, // quantas vezes já ascendeu (vitalício) — usado pra escalar o limiar da próxima ascensão
     // run progress
     killCount:0,
     totalKillsAll:0,
@@ -20,9 +21,12 @@ function freshState(){
     critChance:0,
     critMult:2,
     goldMult:1,
+    dpsSynergyRatio:0, // fração do dano por clique somada como DPS extra (upgrade Ressonância de Combate)
     // troops owned — derivado de TROOP_DEFS, então tropa nova nunca fica de
     // fora daqui (era a causa do bug de "Nível: undefined" / "NaN" na loja)
     troops: Object.fromEntries(TROOP_DEFS.map(d => [d.key, 0])),
+    // mineradores da Caverna de Mineração — mesmo motivo, derivado de MINER_DEFS
+    miners: Object.fromEntries(MINER_DEFS.map(d => [d.key, 0])),
     // upgrades owned (levels) — mesmo motivo, derivado de UPGRADE_DEFS
     upgrades: Object.fromEntries(UPGRADE_DEFS.map(d => [d.key, 0])),
     // prestige permanent upgrades

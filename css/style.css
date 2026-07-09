@@ -266,6 +266,102 @@
     background:#4a4458; color:#8a839a; border-color:#3a3550; cursor:not-allowed; box-shadow:none;
   }
 
+  /* ---- Árvore de Upgrades (radial) ---- */
+  .tree-wrap{
+    position:relative;
+    width:100%;
+    height:640px;
+    background:radial-gradient(circle at 50% 52%, #241a30 0%, #150f1e 75%);
+    border:2px solid var(--stone);
+    border-radius:6px;
+    overflow:hidden;
+  }
+  .tree-lines{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+  }
+  .tree-hub{
+    position:absolute;
+    left:50%; top:52%;
+    transform:translate(-50%,-50%);
+    width:84px; height:84px;
+    border-radius:50%;
+    background:radial-gradient(circle, #3a2e1a 0%, var(--stone-dark) 100%);
+    border:3px solid var(--ember);
+    display:flex; align-items:center; justify-content:center;
+    flex-direction:column;
+    font-family:'Press Start 2P', monospace;
+    font-size:8px;
+    color:var(--ember);
+    text-align:center;
+    line-height:1.6;
+    box-shadow:0 0 16px rgba(232,151,74,0.35);
+    z-index:2;
+  }
+  .tree-nodes{
+    position:absolute;
+    inset:0;
+  }
+  .tree-node{
+    position:absolute;
+    width:78px; height:78px;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+    background:var(--stone-dark);
+    border:3px solid var(--stone);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+    padding:4px;
+    cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease;
+    z-index:2;
+  }
+  .tree-node:hover{transform:translate(-50%,-50%) scale(1.06);}
+  .tree-node .node-name{
+    font-size:10px;
+    line-height:1.15;
+    color:var(--parchment);
+  }
+  .tree-node .node-level{
+    font-size:10px;
+    color:var(--arcane);
+    margin-top:2px;
+  }
+  .tree-node .node-cost{
+    font-family:'Press Start 2P', monospace;
+    font-size:8px;
+    color:var(--gold-glow);
+    margin-top:2px;
+  }
+  .tree-node.locked{
+    cursor:not-allowed;
+    opacity:0.4;
+    border-color:var(--stone);
+    background:repeating-linear-gradient(135deg, var(--stone-dark) 0 8px, #1a1522 8px 16px);
+  }
+  .tree-node.locked:hover{transform:translate(-50%,-50%);}
+  .tree-node.locked .node-name{color:var(--parchment-dim);}
+  .tree-node.disabled{opacity:0.55; cursor:not-allowed;}
+  .tree-node.disabled:hover{transform:translate(-50%,-50%);}
+  .tree-node.maxed{
+    border-color:var(--gold-glow);
+    box-shadow:0 0 12px rgba(255,213,74,0.5);
+  }
+  .tree-node.maxed .node-cost{color:var(--gold-glow);}
+  .tree-branch-label{
+    position:absolute;
+    transform:translate(-50%,-50%);
+    font-family:'Press Start 2P', monospace;
+    font-size:9px;
+    letter-spacing:1px;
+    text-shadow:1px 1px 0 #000;
+    z-index:2;
+    white-space:nowrap;
+  }
+
   .tabs{display:flex; gap:6px; margin-bottom:12px;}
   .tab-btn{
     flex:1;

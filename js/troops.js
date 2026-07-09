@@ -22,6 +22,9 @@ const TroopsModule = {
       total += def.dps * state.troops[def.key];
     }
     total *= (1+state.pDpsMult);
+    // Ressonância de Combate: soma uma fração do dano por clique como DPS
+    // extra, à parte do multiplicador de tropas (que é só "+15% DPS das tropas").
+    total += PlayerModule.clickDamage() * state.dpsSynergyRatio;
     return total;
   }
 };

@@ -2,12 +2,21 @@
    PRESTIGE / ASCENSION MODULE
 --------------------------------------------------------------------- */
 const PrestigeModule = {
+  // Limiar de mortes VITALÍCIAS (totalKillsAll, nunca reseta) pra poder
+  // ascender. Cresce um pouco a cada ascensão já feita (ascensionCount
+  // também é vitalício), então as próximas ascensões demoram um pouco mais
+  // sem virar exagero. Usar totalKillsAll em vez de killCount (mortes só
+  // desta run) evita o problema de o timer de chefe zerar o progresso: o
+  // contador vitalício só sobe, nunca é derrubado por um timeout de ciclo.
+  currentAscendThreshold(){
+    return CONFIG.ascendKillThresholdBase + state.ascensionCount * CONFIG.ascendKillThresholdGrowth;
+  },
   potentialEssence(){
-    if(state.killCount < CONFIG.ascendKillThreshold) return 0;
+    if(state.totalKillsAll < this.currentAscendThreshold()) return 0;
     return Math.floor(Math.sqrt(state.goldEarnedThisRun/500));
   },
   canAscend(){
-    return state.killCount >= CONFIG.ascendKillThreshold && this.potentialEssence() > 0;
+    return state.totalKillsAll >= this.currentAscendThreshold() && this.potentialEssence() > 0;
   },
   ascend(){
     if(!this.canAscend()) return;
@@ -16,6 +25,7 @@ const PrestigeModule = {
     const keepPrestige = state.prestige;
     const keepMultipliers = { pClickMult:state.pClickMult, pDpsMult:state.pDpsMult, pGoldMult:state.pGoldMult, pCritChance:state.pCritChance };
     const keepTotalKills = state.totalKillsAll;
+    const keepAscensionCount = state.ascensionCount + 1;
 
     state = freshState();
     state.essence = keepEssence;
@@ -25,6 +35,7 @@ const PrestigeModule = {
     state.pGoldMult = keepMultipliers.pGoldMult;
     state.pCritChance = keepMultipliers.pCritChance;
     state.totalKillsAll = keepTotalKills;
+    state.ascensionCount = keepAscensionCount;
     // killCount volta a 0 (freshState) — ciclo e HP dos monstros reiniciam do zero
 
     MonsterModule.spawn(true);

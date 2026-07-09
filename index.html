@@ -50,12 +50,17 @@
     <div class="tabs">
       <button class="tab-btn active" data-tab="upgrades">UPGRADES</button>
       <button class="tab-btn" data-tab="troops">TROPAS</button>
+      <button class="tab-btn" data-tab="mining">⛏ CAVERNA</button>
       <button class="tab-btn" data-tab="prestige">ASCENSÃO</button>
     </div>
 
     <div class="tab-content active" id="tab-upgrades">
-      <div class="panel-title">Upgrades de Combate</div>
-      <div id="upgradeList"></div>
+      <div class="panel-title">Árvore de Upgrades</div>
+      <div class="tree-wrap" id="upgradeTreeWrap">
+        <svg class="tree-lines" id="upgradeTreeLines"></svg>
+        <div class="tree-hub">🌳<br>ÁRVORE</div>
+        <div class="tree-nodes" id="upgradeTreeNodes"></div>
+      </div>
     </div>
 
     <div class="tab-content" id="tab-troops">
@@ -63,11 +68,19 @@
       <div id="troopList"></div>
     </div>
 
+    <div class="tab-content" id="tab-mining">
+      <div class="panel-title">Caverna de Mineração</div>
+      <div class="footer-note" style="margin:0 0 10px;">Mineradores rendem ouro sozinhos, sem precisar clicar.</div>
+      <div class="stat" style="margin-bottom:12px;"><div class="label">Ouro/seg da caverna</div><div class="value" id="statMiningGps">0</div></div>
+      <div id="minerList"></div>
+    </div>
+
     <div class="tab-content" id="tab-prestige">
       <div class="panel-title">Ascensão (Prestígio)</div>
       <div class="prestige-box">
         <div>Essência atual: <b id="essenceCount">0</b></div>
         <div class="gain">Ganho ao ascender agora: +<span id="essenceGain">0</span></div>
+        <div class="gain" id="ascendProgress">Mortes neste run: 0/60</div>
         <button class="ascend-btn" id="ascendBtn">ASCENDER</button>
       </div>
       <div id="prestigeUpgradeList"></div>
@@ -89,6 +102,7 @@
 <script src="js/monster.js"></script>
 <script src="js/player.js"></script>
 <script src="js/troops.js"></script>
+<script src="js/mining.js"></script>
 <script src="js/upgrades.js"></script>
 <script src="js/prestige.js"></script>
 <script src="js/ui.js"></script>
