@@ -315,12 +315,29 @@ def make_slime_red_king():
     return render_slime(pal, spikes=False, fierce_mouth=True, crown=True)
 
 
-def make_goblin():
-    pal = {'outline': hexc('#122b0d'), 'body': hexc('#8FBF5B'),
-           'highlight': hexc('#c8f0a0'), 'shadow': hexc('#5C8A3A')}
+# ---------------------------------------------------------------------
+# GOBLIN v2 — base compartilhada (cabeça arredondada, corpo curvado, orelhas
+# pontudas, presa) reaproveitada pelas 7 variantes do Mapa 2. Cada variante
+# só muda paleta/pupila/presa e chama add_overlay pra acessórios extras
+# (chapéu, elmo, robe, coroa, etc.) — mesmo espírito do motor dos slimes.
+# ---------------------------------------------------------------------
+def cone_cells(top_row, center_col, height, base_width):
+    """Lista de células formando um triângulo (chapéu/coroa): ponta em cima, base larga embaixo."""
+    cells = []
+    for i in range(height):
+        row = top_row + i
+        w = max(1, base_width - (height - 1 - i) * 2)
+        half = w // 2
+        for c in range(center_col - half, center_col - half + w):
+            cells.append((row, c))
+    return cells
+
+
+def build_goblin(pal, pupil=None, tusk=True, big=False):
+    scale = 1.15 if big else 1.0
     cr = Creature(pal)
-    set_ellipse(cr.body_grid, 16, 11, 7.5, 7)
-    set_ellipse(cr.body_grid, 16, 24, 7, 7)
+    set_ellipse(cr.body_grid, 16, 11, 7.5 * scale, 7 * scale)
+    set_ellipse(cr.body_grid, 16, 24, 7 * scale, 7 * scale)
     set_rect(cr.body_grid, 16, 9, 25, 23)
     cr.highlight_rule = lambda r, c: 5 <= r <= 10 and 10 <= c <= 13
     cr.shadow_rule = lambda r, c: r >= 20 and c >= 20
@@ -330,13 +347,89 @@ def make_goblin():
     cr.add_overlay(ear_r, pal['body'])
     cr.add_overlay([(r, 3) for r in range(7, 12)] + [(6, 4), (12, 4)], pal['outline'])
     cr.add_overlay([(r, 28) for r in range(7, 12)] + [(6, 27), (12, 27)], pal['outline'])
-    cr.add_overlay([(16, 15), (17, 15)], WHITE)
+    if tusk:
+        cr.add_overlay([(16, 15), (17, 15)], WHITE)
+    pupil_color = pupil or hexc('#111111')
     cr.eye_clusters = [
-        {'row': 10, 'left_col': 12, 'right_col': 12, 'pupil': hexc('#111111')},
-        {'row': 10, 'left_col': 20, 'right_col': 20, 'pupil': hexc('#111111')},
+        {'row': 10, 'left_col': 12, 'right_col': 12, 'pupil': pupil_color},
+        {'row': 10, 'left_col': 20, 'right_col': 20, 'pupil': pupil_color},
     ]
     cr.mouth_cells_open = [(13, 14), (14, 13), (14, 14), (14, 15), (14, 16), (13, 17)]
     cr.mouth_cells_closed = [(13, 13), (13, 14), (13, 17), (13, 18)]
+    return cr
+
+
+def make_goblin_green():
+    # o goblin "padrão" — mais fraco do Mapa 2.
+    pal = {'outline': hexc('#122b0d'), 'body': hexc('#8FBF5B'),
+           'highlight': hexc('#c8f0a0'), 'shadow': hexc('#5C8A3A')}
+    return build_goblin(pal).sheet()
+
+
+def make_goblin_red():
+    # tribo vermelha, um pouco mais forte que a verde.
+    pal = {'outline': hexc('#3d0f0a'), 'body': hexc('#c9583f'),
+           'highlight': hexc('#f0a888'), 'shadow': hexc('#8a3420')}
+    return build_goblin(pal).sheet()
+
+
+def make_goblin_mage():
+    # chapéu de mago roxo com ponta dourada + túnica roxa + olhos brilhantes.
+    pal = {'outline': hexc('#171426'), 'body': hexc('#7a9a5b'),
+           'highlight': hexc('#b8d494'), 'shadow': hexc('#4f6a3a')}
+    cr = build_goblin(pal, pupil=hexc('#66e0ff'))
+    cr.add_overlay(cone_cells(1, 16, 5, 9), hexc('#4a2e7a'))
+    cr.add_overlay([(1, 15), (1, 16)], hexc('#d4af37'))
+    cr.add_overlay([(r, c) for r in range(17, 24) for c in range(13, 20)], hexc('#4a2e7a'))
+    return cr.sheet()
+
+
+def make_goblin_warrior():
+    # elmo/faixa de metal na testa + peitoral reforçado, mais robusto.
+    pal = {'outline': hexc('#16240f'), 'body': hexc('#6f9b48'),
+           'highlight': hexc('#a8d47a'), 'shadow': hexc('#455f30')}
+    cr = build_goblin(pal)
+    cr.add_overlay([(6, c) for c in range(11, 22)], hexc('#8a8a8a'))
+    cr.add_overlay([(r, c) for r in range(17, 23) for c in range(13, 20)], hexc('#6a6a6a'))
+    return cr.sheet()
+
+
+def make_goblin_priest():
+    # CHEFE (ciclo 4) — capuz/túnica branca com detalhe dourado, símbolo
+    # sagrado no peito, olhos dourados.
+    pal = {'outline': hexc('#2a1f0a'), 'body': hexc('#7a9a5b'),
+           'highlight': hexc('#b8d494'), 'shadow': hexc('#4f6a3a')}
+    cr = build_goblin(pal, pupil=hexc('#ffd54a'))
+    cr.add_overlay(cone_cells(2, 16, 4, 8), hexc('#e8e0c8'))
+    cr.add_overlay([(r, c) for r in range(17, 25) for c in range(13, 20)], hexc('#e8e0c8'))
+    cr.add_overlay([(19, 16), (20, 15), (20, 16), (20, 17), (21, 16)], hexc('#d4af37'))
+    return cr.sheet()
+
+
+def make_goblin_master():
+    # CHEFE (ciclo 5) — robe roxo escuro com barra dourada + circlete/coroa
+    # pequena, olhos violeta, mais imponente que o Sacerdote.
+    pal = {'outline': hexc('#150a1f'), 'body': hexc('#6a7a5f'),
+           'highlight': hexc('#9cae8e'), 'shadow': hexc('#3f4a38')}
+    cr = build_goblin(pal, pupil=hexc('#c060ff'))
+    cr.add_overlay([(r, c) for r in range(17, 25) for c in range(12, 21)], hexc('#5a2a7a'))
+    cr.add_overlay([(17, c) for c in range(12, 21)], hexc('#d4af37'))
+    for sc in (12, 16, 20):
+        h = 3 if sc == 16 else 2
+        cr.add_overlay(cone_cells(7 - h, sc, h, 3), hexc('#d4af37'))
+    return cr.sheet()
+
+
+def make_goblin_greater():
+    # CHEFE (ciclo 6) — o mais forte do Mapa 2: fisicamente maior, pele
+    # escura, pintura de guerra vermelha, olhos vermelhos brilhantes.
+    pal = {'outline': hexc('#0a1a05'), 'body': hexc('#4a6a35'),
+           'highlight': hexc('#7a9a5f'), 'shadow': hexc('#2c3d20')}
+    cr = build_goblin(pal, pupil=hexc('#ff4a3d'), big=True)
+    cr.add_overlay([(9, 9), (10, 10), (11, 11)], hexc('#c0342a'))
+    cr.add_overlay([(9, 22), (10, 21), (11, 20)], hexc('#c0342a'))
+    cr.mouth_cells_open = [(13, c) for c in range(12, 21)]
+    cr.mouth_cells_closed = cr.mouth_cells_open
     return cr.sheet()
 
 
@@ -446,8 +539,15 @@ MONSTERS = {
     'slime_red': make_slime_red,
     'slime_blue_barbarian': make_slime_blue_barbarian,
     'slime_red_king': make_slime_red_king,
-    # Mapa 2: Terras Selvagens (ciclo 4 em diante)
-    'goblin': make_goblin,
+    # Mapa 2: Reino Goblin (ciclos 4-6)
+    'goblin_green': make_goblin_green,
+    'goblin_red': make_goblin_red,
+    'goblin_mage': make_goblin_mage,
+    'goblin_warrior': make_goblin_warrior,
+    'goblin_priest': make_goblin_priest,
+    'goblin_master': make_goblin_master,
+    'goblin_greater': make_goblin_greater,
+    # Mapa 3: Terras Selvagens (ciclo 7 em diante)
     'orc': make_orc,
     'troll': make_troll,
     'dragon': make_dragon,

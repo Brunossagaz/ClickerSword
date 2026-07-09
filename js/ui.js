@@ -40,7 +40,9 @@ const UI = {
   renderMonsterInfo(){
     const t = MonsterModule.current.type;
     const posInCycle = state.killCount % CONFIG.cycleLength;
-    const mapName = (MAPS.slimes.cycles[state.loop] ? MAPS.slimes.name : MAPS.wilds.name);
+    const mapName = MAPS.slimes.cycles[state.loop] ? MAPS.slimes.name
+      : MAPS.goblins.cycles[state.loop] ? MAPS.goblins.name
+      : MAPS.wilds.name;
     document.getElementById('monsterName').textContent = (MonsterModule.current.isBoss ? '★ CHEFE: ' : '') + t.name;
     document.getElementById('tierLabel').textContent = `${mapName} · CICLO ${state.loop} · MONSTRO ${posInCycle+1}/${CONFIG.cycleLength} (ABATIDOS: ${state.totalKillsAll})`;
   },
@@ -72,7 +74,10 @@ const UI = {
   renderTroopList(){
     const el = document.getElementById('troopList');
     el.innerHTML = '';
-    for(const def of TROOP_DEFS){
+    // ordem de exibição vem da PROGRESSION_CHAIN (não de TROOP_DEFS), pra
+    // sempre bater com a ordem real de desbloqueio — fonte única de verdade
+    const orderedDefs = PROGRESSION_CHAIN.filter(e=>e.type==='troop').map(e=>TROOP_DEFS.find(t=>t.key===e.key));
+    for(const def of orderedDefs){
       const row = document.createElement('div');
       if(!ProgressionModule.isUnlocked('troop', def.key)){
         row.className = 'shop-row locked';
@@ -102,7 +107,9 @@ const UI = {
   renderUpgradeList(){
     const el = document.getElementById('upgradeList');
     el.innerHTML = '';
-    for(const def of UPGRADE_DEFS){
+    // mesma ideia: ordem de exibição vem da PROGRESSION_CHAIN
+    const orderedDefs = PROGRESSION_CHAIN.filter(e=>e.type==='upgrade').map(e=>UPGRADE_DEFS.find(u=>u.key===e.key));
+    for(const def of orderedDefs){
       const row = document.createElement('div');
       if(!ProgressionModule.isUnlocked('upgrade', def.key)){
         row.className = 'shop-row locked';
@@ -185,6 +192,19 @@ const UI = {
     div.textContent = '+'+this.fmt(amount)+' 🪙';
     div.style.left = '50%';
     div.style.top = '50%';
+    stage.appendChild(div);
+    setTimeout(()=>div.remove(), 850);
+  },
+  showFloatingGoldAt(amount, evt){
+    const stage = document.getElementById('monsterStage');
+    const div = document.createElement('div');
+    div.className = 'float-dmg';
+    div.style.color = '#ffd54a';
+    div.textContent = '+'+this.fmt(amount)+' 🪙';
+    const rect = stage.getBoundingClientRect();
+    const relX = evt && evt.clientX ? (evt.clientX-rect.left) : rect.width/2;
+    div.style.left = relX+'px';
+    div.style.top = (evt && evt.clientY ? (evt.clientY-rect.top+10) : rect.height/2)+'px';
     stage.appendChild(div);
     setTimeout(()=>div.remove(), 850);
   },

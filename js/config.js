@@ -35,8 +35,15 @@ const MONSTER_TYPES = [
   { key:'slimeRed',           name:'SLIME VERMELHO',      image:'assets/sprites/slime_red.png',           frameW:128, frameH:128, hpMult:3.2, blinkCapable:true },
   { key:'slimeBlueBarbarian', name:'SLIME AZUL BÁRBARO',  image:'assets/sprites/slime_blue_barbarian.png',frameW:128, frameH:128, hpMult:4.2, blinkCapable:true },
   { key:'slimeRedKing',       name:'SLIME REI VERMELHO',  image:'assets/sprites/slime_red_king.png',      frameW:128, frameH:128, hpMult:6.0, blinkCapable:true },
-  // --- Mapa 2: Terras Selvagens (ciclo 4 em diante) ---
-  { key:'goblin',    name:'GOBLIN',     image:'assets/sprites/goblin.png',     frameW:128, frameH:128, blinkCapable:true },
+  // --- Mapa 2: Reino Goblin (ciclos 4-6) ---
+  { key:'goblinGreen',   name:'GOBLIN VERDE',     image:'assets/sprites/goblin_green.png',   frameW:128, frameH:128, blinkCapable:true },
+  { key:'goblinRed',     name:'GOBLIN VERMELHO',  image:'assets/sprites/goblin_red.png',     frameW:128, frameH:128, hpMult:1.6, blinkCapable:true },
+  { key:'goblinMage',    name:'GOBLIN MAGO',      image:'assets/sprites/goblin_mage.png',    frameW:128, frameH:128, hpMult:2.2, blinkCapable:true },
+  { key:'goblinWarrior', name:'GOBLIN GUERREIRO', image:'assets/sprites/goblin_warrior.png', frameW:128, frameH:128, hpMult:2.8, blinkCapable:true },
+  { key:'goblinPriest',  name:'GOBLIN SACERDOTE', image:'assets/sprites/goblin_priest.png',  frameW:128, frameH:128, hpMult:3.6, blinkCapable:true },
+  { key:'goblinMaster',  name:'GOBLIN MESTRE',    image:'assets/sprites/goblin_master.png',  frameW:128, frameH:128, hpMult:4.8, blinkCapable:true },
+  { key:'goblinGreater', name:'GOBLIN MAIOR',     image:'assets/sprites/goblin_greater.png', frameW:128, frameH:128, hpMult:6.5, blinkCapable:true },
+  // --- Mapa 3: Terras Selvagens (ciclo 7 em diante) ---
   { key:'orc',       name:'ORC',        image:'assets/sprites/orc.png',        frameW:128, frameH:128, blinkCapable:true },
   { key:'troll',     name:'TROLL',      image:'assets/sprites/troll.png',      frameW:128, frameH:128, blinkCapable:true },
   { key:'dragon',    name:'DRAGÃO',     image:'assets/sprites/dragon.png',     frameW:128, frameH:128, blinkCapable:true },
@@ -44,10 +51,11 @@ const MONSTER_TYPES = [
 ];
 
 // Mapas: cada ciclo (CONFIG.cycleLength monstros) usa a ordem de monstros de
-// um mapa. Mapa 1 cobre os ciclos 1-3, com força crescente entre as 6
-// variantes de slime; o 10º monstro de cada ciclo (índice 9) é sempre o
-// chefe (ver MonsterModule.spawn). A partir do ciclo 4 (fora do Mapa 1), o
-// Mapa 2 se repete infinitamente até definirmos um limite/mapa novo.
+// um mapa. Mapa 1 (ciclos 1-3) e Mapa 2 (ciclos 4-6) têm força crescente
+// dentro de cada ciclo; o 10º monstro de cada ciclo (índice 9) é sempre o
+// chefe (ver MonsterModule.spawn). A partir do ciclo 7 (fora dos mapas com
+// ciclos definidos), o Mapa 3 se repete infinitamente até definirmos um
+// limite/mapa novo.
 const MAPS = {
   slimes: {
     name: 'Mapa 1: Pântano dos Slimes',
@@ -57,9 +65,17 @@ const MAPS = {
       3: ['slimeRed','slimeBlueBarbarian','slimeRed','slimeGreenWarrior','slimeRed','slimeBlueBarbarian','slimeRed','slimeGreenWarrior','slimeRed','slimeRedKing'],
     }
   },
+  goblins: {
+    name: 'Mapa 2: Reino Goblin',
+    cycles: {
+      4: ['goblinGreen','goblinGreen','goblinRed','goblinGreen','goblinRed','goblinGreen','goblinRed','goblinGreen','goblinRed','goblinPriest'],
+      5: ['goblinRed','goblinMage','goblinGreen','goblinRed','goblinWarrior','goblinRed','goblinMage','goblinWarrior','goblinRed','goblinMaster'],
+      6: ['goblinWarrior','goblinPriest','goblinMage','goblinWarrior','goblinPriest','goblinMage','goblinWarrior','goblinPriest','goblinWarrior','goblinGreater'],
+    }
+  },
   wilds: {
-    name: 'Mapa 2: Terras Selvagens',
-    order: ['goblin','orc','troll','dragon','demon','goblin','orc','troll','dragon','demon']
+    name: 'Mapa 3: Terras Selvagens',
+    order: ['orc','troll','dragon','orc','troll','demon','orc','troll','dragon','demon']
   }
 };
 
@@ -75,12 +91,19 @@ const TROOP_DEFS = [
   { key:'dragon',  name:'Dragão Aliado',     desc:'+1000 DPS', baseCost:150000,costGrowth:1.45, dps:1000 },
 ];
 
+// Ordem aqui é só organizacional — quem manda na ordem de exibição da loja é
+// a PROGRESSION_CHAIN (ver abaixo). Mesmo assim, mantenha as duas em sincronia
+// pra não confundir quem estiver lendo o arquivo.
 const UPGRADE_DEFS = [
-  { key:'clickDmg1', name:'Lâmina Afiada',   desc:'+1 dano por clique', baseCost:15,   costGrowth:1.15, apply:s=>s.clickDamageFlat+=1, maxLevel:20 },
-  { key:'clickDmg2', name:'Punho de Ferro',  desc:'+5 dano por clique', baseCost:300,  costGrowth:1.15, apply:s=>s.clickDamageFlat+=5, maxLevel:20 },
-  { key:'critChance',name:'Olho Certeiro',   desc:'+3% chance de crítico', baseCost:600,  costGrowth:1.15, apply:s=>s.critChance=Math.min(0.75,s.critChance+0.03), maxLevel:15 },
-  { key:'critMult',  name:'Golpe Mortal',    desc:'+0.5x multiplicador de crítico', baseCost:2000, costGrowth:1.15, apply:s=>s.critMult+=0.5, maxLevel:12 },
-  { key:'goldFind',  name:'Bolsa Encantada', desc:'+10% de ouro dos monstros', baseCost:6000, costGrowth:1.15, apply:s=>s.goldMult+=0.10, maxLevel:20 },
+  { key:'clickDmg1', name:'Lâmina Afiada',      desc:'+1 dano por clique',    baseCost:15,      costGrowth:1.15, apply:s=>s.clickDamageFlat+=1,    maxLevel:20 },
+  { key:'clickDmg2', name:'Punho de Ferro',     desc:'+5 dano por clique',    baseCost:300,     costGrowth:1.15, apply:s=>s.clickDamageFlat+=5,    maxLevel:20 },
+  { key:'critChance',name:'Olho Certeiro',      desc:'+3% chance de crítico', baseCost:600,     costGrowth:1.15, apply:s=>s.critChance=Math.min(0.75,s.critChance+0.03), maxLevel:15 },
+  { key:'clickDmg3', name:'Fúria Berserker',    desc:'+25 dano por clique',   baseCost:20000,   costGrowth:1.15, apply:s=>s.clickDamageFlat+=25,   maxLevel:20 },
+  { key:'critMult',  name:'Golpe Mortal',       desc:'+0.5x multiplicador de crítico', baseCost:2000, costGrowth:1.15, apply:s=>s.critMult+=0.5, maxLevel:12 },
+  { key:'clickDmg4', name:'Lâmina Encantada',   desc:'+150 dano por clique',  baseCost:80000,   costGrowth:1.15, apply:s=>s.clickDamageFlat+=150,  maxLevel:20 },
+  { key:'goldFind',  name:'Bolsa Encantada',    desc:'+10% de ouro dos monstros', baseCost:6000, costGrowth:1.15, apply:s=>s.goldMult+=0.10, maxLevel:20 },
+  { key:'clickDmg5', name:'Punho Divino',       desc:'+1000 dano por clique', baseCost:400000,  costGrowth:1.15, apply:s=>s.clickDamageFlat+=1000, maxLevel:20 },
+  { key:'clickDmg6', name:'Fúria do Caos',      desc:'+6000 dano por clique', baseCost:2000000, costGrowth:1.15, apply:s=>s.clickDamageFlat+=6000, maxLevel:20 },
 ];
 
 // Corrente única de progressão (upgrades + tropas intercalados). Cada item só
@@ -88,18 +111,23 @@ const UPGRADE_DEFS = [
 // níveis (upgrade) ou unidades compradas (tropa). Como a 3ª upgrade
 // (critChance) só desbloqueia depois que as 2 primeiras já passaram desse
 // nível, "recruit" (a 1ª tropa) só fica disponível depois de 3 upgrades
-// conquistados — exatamente a regra pedida.
+// conquistados — exatamente a regra pedida. Os tiers extras de dano por
+// clique (clickDmg3-6) ficam intercalados mais adiante na corrente.
 const UNLOCK_REQUIREMENT = 5;
 const PROGRESSION_CHAIN = [
   { type:'upgrade', key:'clickDmg1' },
   { type:'upgrade', key:'clickDmg2' },
   { type:'upgrade', key:'critChance' },
   { type:'troop',   key:'recruit' },
+  { type:'upgrade', key:'clickDmg3' },
   { type:'upgrade', key:'critMult' },
   { type:'troop',   key:'archer' },
+  { type:'upgrade', key:'clickDmg4' },
   { type:'upgrade', key:'goldFind' },
   { type:'troop',   key:'mage' },
+  { type:'upgrade', key:'clickDmg5' },
   { type:'troop',   key:'catapult' },
+  { type:'upgrade', key:'clickDmg6' },
   { type:'troop',   key:'dragon' },
 ];
 

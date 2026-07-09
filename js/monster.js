@@ -4,8 +4,7 @@
 const MonsterModule = {
   current:null,
   typeFor(cycleNum, posInCycle){
-    const slimesMap = MAPS.slimes;
-    const order = slimesMap.cycles[cycleNum] || MAPS.wilds.order;
+    const order = MAPS.slimes.cycles[cycleNum] || MAPS.goblins.cycles[cycleNum] || MAPS.wilds.order;
     return MONSTER_TYPES.find(t=>t.key===order[posInCycle]);
   },
   hpFor(killIndexInRun, isBoss, hpMult){

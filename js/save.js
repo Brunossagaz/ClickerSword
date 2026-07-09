@@ -13,9 +13,10 @@ const SaveModule = {
     try{
       const loaded = JSON.parse(raw);
       state = Object.assign(freshState(), loaded);
-      // guard against missing nested keys from older saves
-      state.troops = Object.assign({recruit:0,archer:0,mage:0,catapult:0,dragon:0}, loaded.troops||{});
-      state.upgrades = Object.assign({clickDmg1:0,clickDmg2:0,critChance:0,critMult:0,goldFind:0}, loaded.upgrades||{});
+      // guard against missing nested keys from older saves (ou de novos
+      // upgrades/tropas adicionados depois que o save foi criado)
+      state.troops = Object.assign(Object.fromEntries(TROOP_DEFS.map(d => [d.key, 0])), loaded.troops||{});
+      state.upgrades = Object.assign(Object.fromEntries(UPGRADE_DEFS.map(d => [d.key, 0])), loaded.upgrades||{});
       state.prestige = Object.assign({pClick:0,pDps:0,pGold:0,pCrit:0}, loaded.prestige||{});
       return true;
     }catch(e){ console.warn('Save corrompido', e); return false; }
