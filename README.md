@@ -144,6 +144,56 @@ novo). Campos disponíveis por monstro em `config.js`:
   que é mais forte que o Slime normal).
 - `blinkCapable` — ativa a animação periódica de piscar.
 
+## Imagens customizadas na UI (prédios/janelas/menus)
+
+Hoje os prédios da cidade (`.building-card`) e os modais usam só CSS
+(`background: linear-gradient(...)`, emoji como ícone) — nenhuma imagem
+própria ainda, diferente dos monstros (que já usam PNG via `sprites.js`, ver
+seção acima). Formas de trocar isso por imagens de verdade, da mais simples
+pra mais trabalhosa:
+
+1. **Trocar o fundo dos cards existentes**: substitui o `background:
+   linear-gradient(...)` de cada `.building-X` em `css/style.css` por
+   `background-image: url('assets/ui/nome.png')` (+ `background-size: cover`
+   se precisar). Zero mudança de JS/HTML — é só arte nova apontada pelo CSS
+   que já existe.
+2. **Janelas/molduras decoradas** (tipo moldura de pergaminho/RPG): usar
+   `border-image` com um sprite de borda, ou técnica de 9-slice, nos
+   `.modal-box`. Mais trabalho de CSS, mas dá o efeito de "janela desenhada
+   à mão" em vez de caixa lisa.
+3. **Cena de cidade ilustrada com hotspots**: uma imagem de fundo única
+   cobrindo a tela (`<img>` ou `background-image`), com os botões dos
+   prédios virando elementos `position:absolute` invisíveis/transparentes
+   posicionados por `%` em cima de cada prédio na imagem (técnica clássica
+   de "image map" clicável). Visual mais imersivo, mas exige a arte inteira
+   calibrada com as coordenadas dos botões.
+
+Recomendação: começar pela opção 1 (resultado imediato, sem mexer em lógica)
+e evoluir pra opção 3 se quiser algo mais imersivo depois. Se a arte for
+pixel art, manter `image-rendering: pixelated` (já usado no canvas dos
+monstros) pra não borrar ao escalar.
+
+## Empacotar como executável (planos futuros)
+
+Hoje o jogo é HTML/CSS/JS puro sem build (ver "Como rodar" acima). Se um dia
+quiser um `.exe`/instalador pra rodar localmente sem depender de abrir o
+navegador manualmente, as opções realistas:
+
+- **PWA** (manifest.json + service worker): esforço quase zero, dá pra
+  "instalar" pelo Chrome/Edge com ícone próprio. Não é um `.exe` de verdade —
+  ainda depende do navegador instalado, não dá pra distribuir sozinho.
+- **Tauri**: empacota usando o webview nativo do Windows (não embute um
+  Chromium inteiro) → binário bem menor (poucos MB). Exige instalar o
+  toolchain Rust uma vez pra compilar, mas depois disso o empacotamento é
+  simples. Recomendado se o objetivo é um executável leve só pra uso pessoal.
+- **Electron**: mais popular, mais tutorial disponível, empacotamento com
+  `electron-builder` é direto — mas o executável fica bem mais pesado
+  (100MB+) porque embute o Chromium inteiro. Recomendado se preferir a
+  comunidade/documentação maior e não se importar com o tamanho do arquivo.
+
+Nenhuma dessas opções foi implementada ainda — é só a decisão a tomar quando
+for a hora.
+
 ## Roadmap / Ideias futuras
 
 ### ✅ Já implementado (referência rápida)

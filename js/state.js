@@ -3,6 +3,7 @@
 --------------------------------------------------------------------- */
 function freshState(){
   return {
+    playerName:'', // definido na criação do save (Novo Jogo) ou ao nomear um save migrado sem nome — ver MainMenuModule
     gold:0,
     essence:0,
     ascensionCount:0, // quantas vezes já ascendeu (vitalício) — usado pra escalar o limiar da próxima ascensão
@@ -16,8 +17,9 @@ function freshState(){
     isBoss:false,
     isGolden:false,
     goldenExpiresAt:0,
-    // player combat
-    clickDamageFlat:1,
+    // player combat — começa em 0: só sobe com upgrades ou a arma escolhida
+    // com o Clérigo (ver OnboardingModule.finishWeaponChoice)
+    clickDamageFlat:0,
     critChance:0,
     critMult:2,
     goldMult:1,
@@ -29,15 +31,18 @@ function freshState(){
     miners: Object.fromEntries(MINER_DEFS.map(d => [d.key, 0])),
     // itens coletados em Dungeons que dropam item em vez de ouro (ex: Slime)
     inventory: Object.fromEntries(ITEM_DEFS.map(d => [d.key, 0])),
+    // arma inicial escolhida com o Clérigo (0 ou 1 por chave) — também usada
+    // pra saber se o onboarding já passou (ver OnboardingModule.hasChosenWeapon)
+    weapons: Object.fromEntries(WEAPON_DEFS.map(d => [d.key, 0])),
+    // já mostrou o aviso do Clérigo sobre Ferreiro/Guilda/Caverna/Loja
+    // liberados, ao voltar pra cidade pela 1ª vez após enfrentar a dungeon?
+    // (ver OnboardingModule.announceShopUnlockIfNeeded, chamado por DungeonModule.leaveToCity)
+    shopUnlockAnnounced:false,
     // upgrades owned (levels) — mesmo motivo, derivado de UPGRADE_DEFS
     upgrades: Object.fromEntries(UPGRADE_DEFS.map(d => [d.key, 0])),
     // prestige permanent upgrades
     prestige:{ pClick:0, pDps:0, pGold:0, pCrit:0 },
     pClickMult:0, pDpsMult:0, pGoldMult:0, pCritChance:0,
-    // preferências do menu de configurações — áudio/idioma ainda não têm
-    // efeito real no jogo (não existe sistema de áudio/tradução ainda),
-    // só ficam guardadas pra quando essas features forem implementadas
-    settings:{ audioEnabled:true, volume:70, language:'pt-BR' },
     // meta
     goldEarnedThisRun:0,
     lastSave:Date.now()

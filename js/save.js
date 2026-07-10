@@ -1,13 +1,89 @@
 /* ---------------------------------------------------------------------
    SAVE / LOAD  (save.js)
+   Sistema de 3 saves independentes (slots 1-3), cada um sua própria chave
+   no localStorage (CONFIG.saveKeySlot(n)). activeSlot só existe em memória
+   (nunca persistido) — enquanto for null (menu principal/seletor de saves),
+   save() vira no-op. Ver MainMenuModule pra fluxo de criar/continuar/apagar.
 --------------------------------------------------------------------- */
 const SaveModule = {
-  save(){
-    state.lastSave = Date.now();
-    try{ localStorage.setItem(CONFIG.saveKey, JSON.stringify(state)); }catch(e){ console.warn('Falha ao salvar', e); }
+  activeSlot: null, // 1|2|3|null
+
+  getSlotRaw(n){
+    try{ return localStorage.getItem(CONFIG.saveKeySlot(n)); }catch(e){ return null; }
   },
+
+  // Resumo de um slot pro seletor de saves (nome + última data), sem precisar
+  // carregar o save inteiro pro state global.
+  slotSummary(n){
+    const raw = this.getSlotRaw(n);
+    if(!raw) return { slot:n, occupied:false };
+    try{
+      const parsed = JSON.parse(raw);
+      return { slot:n, occupied:true, playerName: parsed.playerName || '', lastSave: parsed.lastSave || 0 };
+    }catch(e){ return { slot:n, occupied:false, corrupted:true }; }
+  },
+
+  saveToSlot(n){
+    state.lastSave = Date.now();
+    try{ localStorage.setItem(CONFIG.saveKeySlot(n), JSON.stringify(state)); }catch(e){ console.warn('Falha ao salvar', e); }
+  },
+
+  // Chamado pelo autosave/tick/beforeunload sem saber de slots — não faz nada
+  // enquanto o jogador ainda está no menu principal ou no seletor de saves.
+  save(){
+    if(this.activeSlot) this.saveToSlot(this.activeSlot);
+  },
+
+  createNewSlot(n, playerName){
+    state = freshState();
+    state.playerName = playerName;
+    this.activeSlot = n;
+    this.saveToSlot(n);
+  },
+
+  loadSlot(n){
+    const raw = this.getSlotRaw(n);
+    if(!raw) return false;
+    try{
+      const loaded = JSON.parse(raw);
+      this.applyLoaded(loaded);
+      this.activeSlot = n;
+      return true;
+    }catch(e){ console.warn('Save corrompido', e); return false; }
+  },
+
+  deleteSlot(n){
+    try{ localStorage.removeItem(CONFIG.saveKeySlot(n)); }catch(e){}
+    if(this.activeSlot === n) this.activeSlot = null;
+  },
+
+  downloadSlot(n){
+    const raw = this.getSlotRaw(n);
+    if(!raw){ alert('Este slot está vazio.'); return; }
+    let name = 'save';
+    try{ name = (JSON.parse(raw).playerName || 'save').replace(/[^a-z0-9\-_]/gi,'_'); }catch(e){}
+    const blob = new Blob([raw], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `monster-attack-clicker-slot${n}-${name}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  },
+
+  // Roda 1x no boot, antes de mostrar qualquer tela. Se o slot 1 já tiver
+  // dado, não faz nada (não sobrescreve). Nunca apaga a chave legada — fica
+  // como backup inofensivo pra sempre.
+  migrateLegacyIfNeeded(){
+    try{
+      if(this.getSlotRaw(1)) return;
+      const legacyRaw = localStorage.getItem(CONFIG.saveKey);
+      if(!legacyRaw) return;
+      localStorage.setItem(CONFIG.saveKeySlot(1), legacyRaw);
+    }catch(e){ console.warn('Falha ao migrar save legado', e); }
+  },
+
   // Aplica um objeto de save já parseado ao estado atual do jogo. Usado tanto
-  // por load() (localStorage) quanto por SettingsModule.uploadSaveFromFile()
+  // por loadSlot() (localStorage) quanto por SettingsModule.uploadSaveFromFile()
   // (arquivo baixado pelo jogador) — mesma lógica de compatibilidade nos dois casos.
   applyLoaded(loaded){
     state = Object.assign(freshState(), loaded);
@@ -17,8 +93,8 @@ const SaveModule = {
     state.miners = Object.assign(Object.fromEntries(MINER_DEFS.map(d => [d.key, 0])), loaded.miners||{});
     state.upgrades = Object.assign(Object.fromEntries(UPGRADE_DEFS.map(d => [d.key, 0])), loaded.upgrades||{});
     state.inventory = Object.assign(Object.fromEntries(ITEM_DEFS.map(d => [d.key, 0])), loaded.inventory||{});
+    state.weapons = Object.assign(Object.fromEntries(WEAPON_DEFS.map(d => [d.key, 0])), loaded.weapons||{});
     state.prestige = Object.assign({pClick:0,pDps:0,pGold:0,pCrit:0}, loaded.prestige||{});
-    state.settings = Object.assign({audioEnabled:true, volume:70, language:'pt-BR'}, loaded.settings||{});
 
     // Save de antes da atualização de Dungeons: tinha um killCount/loop
     // globais (Mapa 1 ciclos 1-3, Mapa 2 ciclos 4-6, Mapa 3 ciclo 7+), sem
@@ -42,24 +118,39 @@ const SaveModule = {
       state.dungeons = dungeons;
       state.currentDungeon = current;
     }
+
+    // Save de antes do onboarding do Clérigo: se já tinha mortes registradas
+    // mas o campo nem existia ainda, é claramente um personagem estabelecido
+    // — não faz sentido mostrar o aviso de "loja liberada" pra quem já joga
+    // há tempos. (Personagem realmente novo sempre tem o campo presente,
+    // mesmo que `false`, desde a criação — ver freshState().)
+    if(loaded.shopUnlockAnnounced === undefined && state.totalKillsAll >= 1){
+      state.shopUnlockAnnounced = true;
+    }
   },
-  load(){
-    let raw;
-    try{ raw = localStorage.getItem(CONFIG.saveKey); }catch(e){ raw = null; }
-    if(!raw) return false;
-    try{
-      const loaded = JSON.parse(raw);
-      this.applyLoaded(loaded);
-      return true;
-    }catch(e){ console.warn('Save corrompido', e); return false; }
-  },
+
+  // Apaga só o slot ativo e volta pro menu principal (não há mais "save
+  // atual" depois disso).
   reset(){
-    try{ localStorage.removeItem(CONFIG.saveKey); }catch(e){}
+    if(!this.activeSlot) return;
+    try{ localStorage.removeItem(CONFIG.saveKeySlot(this.activeSlot)); }catch(e){}
+    this.activeSlot = null;
     state = freshState();
-    MonsterModule.current = null; // freshState() não tem Dungeon ativa — volta pra cidade
-    UI.showCityView();
-    UI.renderAll();
+    MonsterModule.current = null;
+    UI.showMainMenu();
+    UI.renderPlayerName();
   },
+
+  // Troca de personagem SEM apagar nada — só solta o slot ativo e volta pro
+  // menu principal (o save continua intacto no localStorage).
+  switchCharacter(){
+    this.activeSlot = null;
+    state = freshState();
+    MonsterModule.current = null;
+    UI.showMainMenu();
+    UI.renderPlayerName();
+  },
+
   computeOfflineEarnings(){
     const elapsedMs = Date.now() - (state.lastSave || Date.now());
     const cappedMs = Math.min(elapsedMs, CONFIG.offlineCapHours*3600*1000);

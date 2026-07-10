@@ -1,0 +1,100 @@
+/* ---------------------------------------------------------------------
+   ONBOARDING MODULE (onboarding.js)
+   Introdução do Clérigo (1ª vez que clica na Igreja): pede o nome (se ainda
+   não tiver), conta a história da dungeon e deixa escolher uma arma inicial.
+   Também calcula quais prédios da cidade estão liberados — nada disso fica
+   guardado em flag própria, é sempre computado a partir de
+   state.weapons/state.totalKillsAll, no mesmo padrão de
+   DungeonModule/ProgressionModule (nunca dessincroniza, e personagens já
+   estabelecidos de antes desta atualização nunca ficam presos).
+--------------------------------------------------------------------- */
+const OnboardingModule = {
+  hasChosenWeapon(){
+    return Object.values(state.weapons).some(v => v > 0);
+  },
+  hasFacedDungeon(){
+    return state.totalKillsAll >= 1;
+  },
+  // Só personagens realmente novos (sem arma e sem nenhuma morte registrada)
+  // veem a introdução do Clérigo — quem já tinha progresso de antes desta
+  // atualização (ou é um save migrado) cai direto na Ascensão normal.
+  shouldShowClericIntro(){
+    return !this.hasChosenWeapon() && !this.hasFacedDungeon();
+  },
+  isBuildingUnlocked(key){
+    if(key === 'igreja') return true;
+    if(key === 'dungeon' || key === 'inventario') return this.hasChosenWeapon() || this.hasFacedDungeon();
+    return this.hasFacedDungeon(); // ferreiro/guilda/caverna/loja
+  },
+
+  openClericIntro(){
+    document.getElementById('clericModal').classList.add('open');
+    if(state.playerName){
+      this.showStoryStep();
+    } else {
+      document.getElementById('clericNameInput').value = '';
+      this.showStep('clericStepName');
+    }
+  },
+  showStep(stepId){
+    document.querySelectorAll('#clericModal .cleric-step').forEach(el => el.classList.remove('active'));
+    document.getElementById(stepId).classList.add('active');
+  },
+  showStoryStep(){
+    document.getElementById('clericStoryText').textContent =
+      `Prazer, ${state.playerName}. Esta já foi uma cidade próspera, mas há pouco tempo uma dungeon surgiu misteriosamente logo ali fora dos portões. De lá saíram criaturas monstruosas que assustaram quase todos os moradores — os poucos que restaram se trancaram em suas casas. Preciso da sua ajuda pra enfrentar essa ameaça e trazer vida de volta à nossa cidade.`;
+    this.showStep('clericStepStory');
+  },
+  renderWeaponChoices(){
+    const el = document.getElementById('weaponChoiceGrid');
+    el.innerHTML = '';
+    for(const def of WEAPON_DEFS){
+      const btn = document.createElement('button');
+      btn.className = 'weapon-choice-card';
+      btn.innerHTML = `
+        <div class="weapon-icon">${def.icon}</div>
+        <div class="weapon-name">${def.name}</div>
+        <div class="weapon-desc">+${def.clickDamageBonus} dano por clique</div>`;
+      btn.addEventListener('click', () => this.finishWeaponChoice(def.key));
+      el.appendChild(btn);
+    }
+  },
+  finishWeaponChoice(key){
+    const def = WEAPON_DEFS.find(w => w.key === key);
+    state.weapons[key] = 1;
+    state.clickDamageFlat += def.clickDamageBonus;
+    SaveModule.save();
+    document.getElementById('clericModal').classList.remove('open');
+    UI.renderAll();
+  },
+  // Chamado por DungeonModule.leaveToCity() — na 1ª vez que o jogador volta
+  // pra cidade já tendo enfrentado a dungeon (matado ao menos 1 monstro), o
+  // Clérigo avisa que a notícia chegou e libera Ferreiro/Guilda/Caverna/Loja.
+  // Só mostra 1 vez (ver state.shopUnlockAnnounced).
+  announceShopUnlockIfNeeded(){
+    if(!this.hasFacedDungeon() || state.shopUnlockAnnounced) return;
+    state.shopUnlockAnnounced = true;
+    SaveModule.save();
+    document.getElementById('shopUnlockModal').classList.add('open');
+  },
+  init(){
+    const nameInput = document.getElementById('clericNameInput');
+    const confirmName = () => {
+      state.playerName = nameInput.value.trim() || 'Herói';
+      SaveModule.save();
+      UI.renderPlayerName();
+      this.showStoryStep();
+    };
+    document.getElementById('clericNameConfirmBtn').addEventListener('click', confirmName);
+    nameInput.addEventListener('keydown', e => { if(e.key === 'Enter') confirmName(); });
+
+    document.getElementById('clericStoryContinueBtn').addEventListener('click', () => {
+      this.renderWeaponChoices();
+      this.showStep('clericStepWeapon');
+    });
+
+    document.getElementById('shopUnlockOkBtn').addEventListener('click', () => {
+      document.getElementById('shopUnlockModal').classList.remove('open');
+    });
+  }
+};

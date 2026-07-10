@@ -58,14 +58,8 @@
     margin-top:4px;
   }
   .layout{
-    display:grid;
-    grid-template-columns:1.15fr 1fr;
-    gap:16px;
-    max-width:1100px;
+    max-width:640px;
     margin:0 auto;
-  }
-  @media (max-width:820px){
-    .layout{grid-template-columns:1fr;}
   }
   .panel{
     background:linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-panel-2) 100%);
@@ -380,30 +374,112 @@
     white-space:nowrap;
   }
 
-  .tabs{display:flex; gap:6px; margin-bottom:12px;}
-  .tab-btn{
-    flex:1;
-    font-family:'Press Start 2P', monospace;
-    font-size:10px;
-    padding:8px 4px;
-    background:var(--stone-dark);
-    color:var(--parchment-dim);
-    border:2px solid var(--stone);
-    border-radius:4px;
-    cursor:pointer;
-  }
-  .tab-btn.active{
-    background:var(--ember-dim);
-    color:#fff2e0;
-    border-color:var(--ember);
-  }
-  .tab-content{display:none;}
-  .tab-content.active{display:block;}
-  /* mesma ideia do .tab-content, mas classe própria — a troca de abas da
-     direita faz querySelectorAll('.tab-content') pra esconder tudo, e isso
-     não pode arrastar junto as views de cidade/dungeon do painel esquerdo */
   .view-content{display:none;}
   .view-content.active{display:block;}
+
+  /* ---- Prédios da cidade ---- */
+  .city-buildings{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(110px, 1fr));
+    gap:10px;
+    margin-bottom:6px;
+  }
+  .building-card{
+    position:relative;
+    font-family:'Press Start 2P', monospace;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    padding:14px 8px;
+    border-radius:6px;
+    border:2px solid var(--stone);
+    color:#fff2e0;
+    cursor:pointer;
+    box-shadow:0 3px 0 rgba(0,0,0,0.35);
+    transition:transform .1s ease;
+  }
+  .building-card:active{transform:translateY(2px); box-shadow:none;}
+  .building-card .building-icon{font-size:26px;}
+  .building-card .building-name{font-size:10px; letter-spacing:0.5px;}
+  /* prédio ainda trancado (ver OnboardingModule.isBuildingUnlocked) — o
+     atributo `disabled` nativo do <button> já impede o clique */
+  .building-card:disabled{
+    opacity:0.35;
+    filter:grayscale(1);
+    cursor:not-allowed;
+    box-shadow:none;
+  }
+  .building-card:disabled::after{
+    content:'🔒';
+    position:absolute;
+    top:4px; right:6px;
+    font-size:14px;
+  }
+  /* cores só pra diferenciar cada prédio por enquanto — sprites de verdade
+     entram depois */
+  .building-ferreiro{background:linear-gradient(180deg, #8a5a2e, #5c3a1c);}
+  .building-guilda{background:linear-gradient(180deg, #3a5a8a, #23375c);}
+  .building-caverna{background:linear-gradient(180deg, #5a5a5a, #333333);}
+  .building-loja{background:linear-gradient(180deg, #3f8a52, #245c33);}
+  .building-igreja{background:linear-gradient(180deg, #7a4fd1, #4a2f8a);}
+  .building-dungeon{background:linear-gradient(180deg, #8a3a3a, #5c2323);}
+  .building-inventario{background:linear-gradient(180deg, #c9a13f, #8a6a24);}
+
+  /* modal mais largo pro Ferreiro — a árvore radial precisa de espaço horizontal */
+  .modal-box.modal-wide{max-width:720px;}
+
+  /* ---- Menu principal / seletor de saves ---- */
+  .main-menu-actions{ display:flex; flex-direction:column; gap:12px; margin-top:10px; }
+  .menu-btn{
+    font-family:'Press Start 2P', monospace; font-size:12px; padding:14px;
+    background:linear-gradient(180deg, var(--ember), var(--ember-dim));
+    color:#2a1608; border:2px solid var(--ember-dim); border-radius:6px;
+    cursor:pointer; box-shadow:0 3px 0 rgba(0,0,0,0.4);
+  }
+  .menu-btn:active{ transform:translateY(2px); box-shadow:none; }
+
+  .slot-grid{ display:flex; flex-direction:column; gap:12px; }
+  .slot-box{ background:var(--stone-dark); border:2px solid var(--stone); border-radius:6px; padding:14px; }
+  .slot-box.empty{ text-align:center; opacity:0.85; }
+  .slot-name{ font-family:'Press Start 2P', monospace; font-size:12px; color:var(--parchment); margin-bottom:6px; }
+  .slot-date{ font-size:14px; color:var(--parchment-dim); margin-bottom:10px; }
+  .slot-actions{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+
+  .player-name-tag{ color:var(--gold-glow); font-size:15px; margin-top:2px; }
+
+  /* ---- Abas internas de modal (só o Inventário usa por enquanto) — não é o
+     sistema global de tabs (já removido numa reestruturação anterior) ---- */
+  .modal-tabs{ display:flex; gap:8px; margin-bottom:12px; border-bottom:2px dashed var(--stone); padding-bottom:8px; }
+  .modal-tab-btn{
+    font-family:'Press Start 2P', monospace; font-size:10px;
+    background:var(--stone-dark); color:var(--parchment-dim);
+    border:2px solid var(--stone); border-radius:4px; padding:8px 10px; cursor:pointer;
+  }
+  .modal-tab-btn.active{ color:var(--ember); border-color:var(--ember); }
+  .modal-tab-content{ display:none; }
+  .modal-tab-content.active{ display:block; }
+
+  /* ---- Introdução do Clérigo (Igreja, 1ª visita) ---- */
+  .cleric-step{ display:none; }
+  .cleric-step.active{ display:block; }
+  .cleric-text{ font-size:17px; line-height:1.4; text-align:left; }
+
+  .weapon-choice-grid{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:14px; }
+  .weapon-choice-card{
+    font-family:'Press Start 2P', monospace;
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    width:120px; padding:14px 8px;
+    background:var(--stone-dark); border:2px solid var(--stone); border-radius:6px;
+    color:var(--parchment); cursor:pointer;
+    box-shadow:0 3px 0 rgba(0,0,0,0.35);
+    transition:transform .1s ease, border-color .1s ease;
+  }
+  .weapon-choice-card:hover{ border-color:var(--ember); }
+  .weapon-choice-card:active{ transform:translateY(2px); box-shadow:none; }
+  .weapon-choice-card .weapon-icon{ font-size:28px; }
+  .weapon-choice-card .weapon-name{ font-size:10px; text-align:center; }
+  .weapon-choice-card .weapon-desc{ font-family:'VT323', monospace; font-size:13px; color:var(--arcane); }
 
   .prestige-box{
     text-align:center;

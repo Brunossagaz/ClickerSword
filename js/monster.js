@@ -47,13 +47,18 @@ const MonsterModule = {
     }
   },
   onTimeUp(){
+    // pausa o jogo (igual ao fim de ciclo) até o jogador escolher tentar de
+    // novo ou voltar pra cidade, em vez de resetar sozinho
+    this.current = null;
+    UI.renderAll();
+    UI.showTimeUpModal();
+  },
+  retryCycle(){
     const cycleLen = CONFIG.cycleLength;
     const d = state.dungeons[state.currentDungeon];
-    const cycleNum = Math.floor(d.killCount / cycleLen) + 1;
     d.killCount = Math.floor(d.killCount / cycleLen) * cycleLen; // volta pro monstro 1 do ciclo atual
     this.spawn(false);
     UI.renderAll();
-    UI.showToast('⏱ TEMPO ESGOTADO', `Você não derrotou o monstro a tempo! Voltando para o início do Ciclo ${cycleNum} (${MAPS[state.currentDungeon].name}).`);
   },
   spawn(isFirst){
     const cycleLen = CONFIG.cycleLength;

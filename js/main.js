@@ -22,29 +22,18 @@ function tick(){
 function boot(){
   UI.init();
   Sprites.startBlinkLoop();
-  const hadSave = SaveModule.load();
+  MainMenuModule.init();
+  SettingsModule.loadGlobalSettings();
+  SaveModule.migrateLegacyIfNeeded();
 
-  // Se o save trazia uma Dungeon ativa, retoma direto nela; senão (jogo novo,
-  // ou o jogador tinha voltado pra cidade antes de fechar) mostra a cidade,
-  // sem spawnar monstro nenhum.
-  if(state.currentDungeon){
-    MonsterModule.spawn(false);
-    UI.showDungeonView();
-  } else {
-    UI.showCityView();
-  }
-
-  if(hadSave){
-    const off = SaveModule.computeOfflineEarnings();
-    if(off && off.earned > 0){
-      const mins = Math.floor(off.seconds/60);
-      UI.showToast('BEM-VINDO DE VOLTA', `Suas tropas lutaram por ${mins} min enquanto você estava fora e renderam ${UI.fmt(off.earned)} de ouro!`);
-    }
-  }
-  UI.renderAll();
+  // O jogo sempre começa no menu principal — o jogador escolhe Novo Jogo ou
+  // Continuar, que leva pro seletor de saves (ver MainMenuModule). Nenhum
+  // save é carregado automaticamente aqui.
+  UI.showMainMenu();
+  UI.renderAll(); // seguro: state==freshState() aqui, todo render já tolera esse estado
 
   setInterval(tick, CONFIG.tickMs);
-  setInterval(()=>SaveModule.save(), CONFIG.autosaveMs);
+  setInterval(()=>SaveModule.save(), CONFIG.autosaveMs); // no-op enquanto nenhum slot está ativo
   window.addEventListener('beforeunload', ()=>SaveModule.save());
 }
 

@@ -2,7 +2,10 @@
    CONFIG
 --------------------------------------------------------------------- */
 const CONFIG = {
-  saveKey: 'monsterAttackClickerSave',
+  saveKey: 'monsterAttackClickerSave', // LEGADO (pré-slots) — só lido 1x pra migração, nunca mais escrito
+  saveKeySlot(n){ return 'monsterAttackClickerSave_slot' + n; }, // n = 1..maxSaveSlots
+  maxSaveSlots: 3,
+  settingsKey: 'monsterAttackClickerSettings', // preferências globais (áudio/volume/idioma), fora de qualquer save
   tickMs: 200,
   autosaveMs: 10000,
   baseHp: 18,
@@ -103,7 +106,17 @@ const MAPS = {
 // Itens (drop alternativo ao ouro — ver campo `dropsItem` em MAPS). Simples
 // por enquanto: sem raridade, só um preço fixo de venda na Loja da cidade.
 const ITEM_DEFS = [
-  { key:'slimeGel', name:'Geleia de Slime', icon:'🧪', sellPrice:8 },
+  { key:'slimeGel', name:'Geleia de Slime', icon:'🧪', sellPrice:1 },
+];
+
+// Armas iniciais, escolhidas uma única vez na conversa com o Clérigo (ver
+// OnboardingModule) — todas dão o mesmo bônus fixo por enquanto (puramente
+// cosmético qual o jogador escolhe); no futuro cada uma ganha propriedades
+// próprias. `state.weapons[key]` é 0 ou 1 (só uma é escolhida hoje).
+const WEAPON_DEFS = [
+  { key:'swordSimple', name:'Espada Simples', icon:'🗡️', clickDamageBonus:1 },
+  { key:'bowArrow',    name:'Arco e Flecha',  icon:'🏹', clickDamageBonus:1 },
+  { key:'axe',         name:'Machado',        icon:'🪓', clickDamageBonus:1 },
 ];
 
 // Tropas (DPS) crescem de custo bem mais rápido que upgrades — elas não têm

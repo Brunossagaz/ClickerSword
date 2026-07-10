@@ -3,8 +3,9 @@
 --------------------------------------------------------------------- */
 const PlayerModule = {
   clickDamage(){
-    const base = (1 + state.clickDamageFlat);
-    return base * (1+state.pClickMult);
+    // Sem base fixa: o personagem começa com 0 de dano por clique — só sobe
+    // com upgrades ou a arma escolhida com o Clérigo (ver OnboardingModule).
+    return state.clickDamageFlat * (1+state.pClickMult);
   },
   handleClick(evt){
     // captura o estado ANTES de aplicar dano: se esse clique também matar o

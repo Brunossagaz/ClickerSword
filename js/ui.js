@@ -8,18 +8,12 @@ const UI = {
     this.ctx = this.canvas.getContext('2d');
     this.canvas.parentElement.addEventListener('click', (e)=>PlayerModule.handleClick(e));
 
-    document.querySelectorAll('.tab-btn').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
-      });
-    });
-
     document.getElementById('ascendBtn').addEventListener('click', ()=>PrestigeModule.ascend());
+    document.getElementById('switchCharacterBtn').addEventListener('click', ()=>{
+      if(confirm('Voltar ao menu principal? Seu progresso está salvo, nada será perdido.')) SaveModule.switchCharacter();
+    });
     document.getElementById('resetBtn').addEventListener('click', ()=>{
-      if(confirm('Tem certeza que deseja apagar todo o progresso?')) SaveModule.reset();
+      if(confirm('Tem certeza que deseja apagar esse save permanentemente?')) SaveModule.reset();
     });
     document.getElementById('leaveDungeonBtn').addEventListener('click', ()=>DungeonModule.leaveToCity());
 
@@ -33,15 +27,93 @@ const UI = {
       DungeonModule.leaveToCity();
     });
 
+    document.getElementById('timeUpRetryBtn').addEventListener('click', ()=>{
+      document.getElementById('timeUpModal').classList.remove('open');
+      MonsterModule.retryCycle();
+    });
+    document.getElementById('timeUpLeaveBtn').addEventListener('click', ()=>{
+      document.getElementById('timeUpModal').classList.remove('open');
+      DungeonModule.leaveToCity();
+    });
+
+    // Prédios da cidade: cada um abre um modal por cima da cena, igual ao
+    // padrão já usado por Configurações/Conquistas — nenhum bloqueia os
+    // outros porque só existem enquanto o jogador está na Cidade (a view da
+    // dungeon nem mostra os botões que os abrem). Os que ainda estão
+    // trancados (ver renderCityBuildingLocks) ficam com o atributo `disabled`,
+    // que já impede o clique nativamente — sem precisar checar de novo aqui.
+    this.wireBuildingModal('openFerreiroBtn', 'ferreiroModal', 'ferreiroCloseBtn');
+    this.wireBuildingModal('openGuildaBtn', 'guildaModal', 'guildaCloseBtn');
+    this.wireBuildingModal('openCavernaBtn', 'cavernaModal', 'cavernaCloseBtn');
+    this.wireBuildingModal('openLojaBtn', 'lojaModal', 'lojaCloseBtn');
+    this.wireBuildingModal('openDungeonBtn', 'dungeonModal', 'dungeonCloseBtn');
+    this.wireBuildingModal('openInventarioBtn', 'inventarioModal', 'inventarioCloseBtn');
+    this.initModalTabs('inventarioModal');
+
+    // Igreja é especial: na 1ª vez (personagem novo, sem arma escolhida e
+    // sem nenhuma morte) abre a introdução do Clérigo em vez da Ascensão
+    // normal — ver OnboardingModule.shouldShowClericIntro.
+    const igrejaModal = document.getElementById('igrejaModal');
+    document.getElementById('openIgrejaBtn').addEventListener('click', ()=>{
+      if(OnboardingModule.shouldShowClericIntro()) OnboardingModule.openClericIntro();
+      else igrejaModal.classList.add('open');
+    });
+    document.getElementById('igrejaCloseBtn').addEventListener('click', ()=>igrejaModal.classList.remove('open'));
+    igrejaModal.addEventListener('click', (e)=>{ if(e.target === igrejaModal) igrejaModal.classList.remove('open'); });
+    OnboardingModule.init();
+
     this.initSettingsModal();
   },
-  showCityView(){
-    document.getElementById('view-city').classList.add('active');
-    document.getElementById('view-dungeon').classList.remove('active');
+  wireBuildingModal(openBtnId, modalId, closeBtnId){
+    const modal = document.getElementById(modalId);
+    document.getElementById(openBtnId).addEventListener('click', ()=>modal.classList.add('open'));
+    document.getElementById(closeBtnId).addEventListener('click', ()=>modal.classList.remove('open'));
+    modal.addEventListener('click', (e)=>{ if(e.target === modal) modal.classList.remove('open'); });
   },
-  showDungeonView(){
-    document.getElementById('view-city').classList.remove('active');
-    document.getElementById('view-dungeon').classList.add('active');
+  // Abas internas escopadas a um modal específico (hoje só o Inventário usa)
+  // — não é o sistema global de tabs (removido na reestruturação anterior).
+  initModalTabs(modalId){
+    const modal = document.getElementById(modalId);
+    const tabBtns = modal.querySelectorAll('.modal-tab-btn');
+    const tabPanels = modal.querySelectorAll('.modal-tab-content');
+    tabBtns.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        tabBtns.forEach(b=>b.classList.remove('active'));
+        tabPanels.forEach(p=>p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+      });
+    });
+  },
+  // Alterna entre as 4 telas do jogo (menu principal, seletor de saves,
+  // cidade, dungeon) — só uma fica visível por vez. showCityView/showDungeonView
+  // mantêm nome/assinatura de antes, então dungeons.js/monster.js/main.js não
+  // precisam mudar.
+  showScreen(id){
+    ['view-mainmenu','view-slotpicker','view-city','view-dungeon'].forEach(vid=>{
+      document.getElementById(vid).classList.toggle('active', vid===id);
+    });
+    document.getElementById('statBar').style.display = (id==='view-city'||id==='view-dungeon') ? '' : 'none';
+  },
+  showMainMenu(){ this.showScreen('view-mainmenu'); },
+  showSlotPicker(){ MainMenuModule.renderSlotPicker(); this.showScreen('view-slotpicker'); },
+  showCityView(){ this.showScreen('view-city'); },
+  showDungeonView(){ this.showScreen('view-dungeon'); },
+  renderPlayerName(){
+    const el = document.getElementById('playerNameTag');
+    el.textContent = state.playerName ? `🧙 Bem-vindo, ${state.playerName}` : '';
+    el.style.display = state.playerName ? '' : 'none';
+  },
+  // Trava/destrava os prédios da cidade (botão `disabled` nativo já impede o
+  // clique) conforme o progresso do onboarding — ver OnboardingModule.
+  renderCityBuildingLocks(){
+    const buildingByBtn = {
+      openFerreiroBtn:'ferreiro', openGuildaBtn:'guilda', openCavernaBtn:'caverna',
+      openLojaBtn:'loja', openIgrejaBtn:'igreja', openDungeonBtn:'dungeon', openInventarioBtn:'inventario'
+    };
+    for(const btnId in buildingByBtn){
+      document.getElementById(btnId).disabled = !OnboardingModule.isBuildingUnlocked(buildingByBtn[btnId]);
+    }
   },
   // Chamado pelo MonsterModule.onDeath() quando o chefe de um ciclo é
   // derrotado — pausa o jogo (MonsterModule.current fica null) até o
@@ -54,20 +126,34 @@ const UI = {
       `Você derrotou o chefe do Ciclo ${justFinishedCycle} de ${MAPS[state.currentDungeon].name}! Quer continuar para o Ciclo ${nextCycle}?`;
     document.getElementById('cycleCompleteModal').classList.add('open');
   },
+  // Chamado pelo MonsterModule.onTimeUp() quando o timer do monstro atual
+  // esgota — pausa o jogo até o jogador escolher tentar de novo o ciclo ou
+  // voltar pra cidade, em vez de resetar sozinho.
+  showTimeUpModal(){
+    const d = state.dungeons[state.currentDungeon];
+    const cycleNum = Math.floor(d.killCount / CONFIG.cycleLength) + 1;
+    document.getElementById('timeUpText').textContent =
+      `Tempo esgotado! Você não derrotou o monstro a tempo. Quer tentar de novo o Ciclo ${cycleNum} de ${MAPS[state.currentDungeon].name} ou voltar pra cidade?`;
+    document.getElementById('timeUpModal').classList.add('open');
+  },
+  // Reflete as preferências globais e mostra/esconde a seção "Personagem"
+  // (trocar/apagar) dependendo se há um save ativo — não faz sentido
+  // trocar/apagar personagem a partir do menu principal, antes de escolher um.
+  openSettingsModal(){
+    document.getElementById('audioToggle').checked = SettingsModule.current.audioEnabled;
+    document.getElementById('audioToggleLabel').textContent = SettingsModule.current.audioEnabled ? 'Ativado' : 'Desativado';
+    document.getElementById('volumeSlider').value = SettingsModule.current.volume;
+    document.getElementById('languageSelect').value = SettingsModule.current.language;
+    document.getElementById('settingsSlotSection').style.display = SaveModule.activeSlot ? '' : 'none';
+    document.getElementById('settingsModal').classList.add('open');
+  },
   initSettingsModal(){
     const settingsModal = document.getElementById('settingsModal');
     const achievementsModal = document.getElementById('achievementsModal');
     const openModal = (modal)=> modal.classList.add('open');
     const closeModal = (modal)=> modal.classList.remove('open');
 
-    document.getElementById('settingsGearBtn').addEventListener('click', ()=>{
-      // reflete as preferências salvas nos controles toda vez que abre
-      document.getElementById('audioToggle').checked = state.settings.audioEnabled;
-      document.getElementById('audioToggleLabel').textContent = state.settings.audioEnabled ? 'Ativado' : 'Desativado';
-      document.getElementById('volumeSlider').value = state.settings.volume;
-      document.getElementById('languageSelect').value = state.settings.language;
-      openModal(settingsModal);
-    });
+    document.getElementById('settingsGearBtn').addEventListener('click', ()=>this.openSettingsModal());
     document.getElementById('settingsCloseBtn').addEventListener('click', ()=>closeModal(settingsModal));
     settingsModal.addEventListener('click', (e)=>{ if(e.target === settingsModal) closeModal(settingsModal); });
 
@@ -151,6 +237,9 @@ const UI = {
     document.getElementById('statDps').textContent = this.fmt(TroopsModule.totalDps());
     document.getElementById('statCrit').textContent = Math.round((state.critChance+state.pCritChance)*100)+'%';
     document.getElementById('statMiningGps').textContent = this.fmt(MiningModule.totalGoldPerSecond());
+    // espelham os mesmos valores na aba Estatísticas do Inventário
+    document.getElementById('invStatClickDmg').textContent = this.fmt(PlayerModule.clickDamage());
+    document.getElementById('invStatDps').textContent = this.fmt(TroopsModule.totalDps());
   },
   renderDungeonList(){
     const el = document.getElementById('dungeonList');
@@ -180,26 +269,65 @@ const UI = {
       el.appendChild(row);
     }
   },
-  renderShop(){
-    const el = document.getElementById('shopList');
-    el.innerHTML = '';
-    for(const def of ITEM_DEFS){
-      const qty = state.inventory[def.key];
-      const hasAny = qty > 0;
-      const row = document.createElement('div');
-      row.className = 'shop-row'+(hasAny?'':' disabled');
-      row.innerHTML = `
-        <div class="shop-info">
-          <div class="name">${def.icon} ${def.name}</div>
-          <div class="desc">Vende por ${def.sellPrice} ouro cada</div>
-          <div class="owned">Possui: ${qty}</div>
-        </div>
-        <button class="buy-btn" ${hasAny?'':'disabled'}>💰 Vender tudo</button>`;
-      if(hasAny) row.querySelector('button').addEventListener('click', ()=>{
+  // Monta uma linha de item reutilizável — com botão de vender (Loja) ou só
+  // visualização (Mochila do Inventário), conforme opts.showSellButton.
+  buildItemRow(def, opts){
+    opts = opts || {};
+    const qty = state.inventory[def.key];
+    const hasAny = qty > 0;
+    const row = document.createElement('div');
+    row.className = 'shop-row'+(hasAny?'':' disabled');
+    const sellBtnHtml = opts.showSellButton ? `<button class="buy-btn" ${hasAny?'':'disabled'}>💰 Vender tudo</button>` : '';
+    row.innerHTML = `
+      <div class="shop-info">
+        <div class="name">${def.icon} ${def.name}</div>
+        <div class="desc">${opts.showSellButton ? 'Vende por '+def.sellPrice+' ouro cada' : ''}</div>
+        <div class="owned">Possui: ${qty}</div>
+      </div>${sellBtnHtml}`;
+    if(opts.showSellButton && hasAny){
+      row.querySelector('button').addEventListener('click', ()=>{
         state.gold += qty * def.sellPrice;
         state.inventory[def.key] = 0;
         UI.renderAll();
       });
+    }
+    return row;
+  },
+  renderShop(){
+    const el = document.getElementById('shopList');
+    el.innerHTML = '';
+    for(const def of ITEM_DEFS) el.appendChild(this.buildItemRow(def, { showSellButton:true }));
+  },
+  // Mochila do Inventário: mesma lista de itens, só visualização (sem vender
+  // — vender continua exclusivo da Loja).
+  renderInventoryBag(){
+    const el = document.getElementById('inventoryBagList');
+    el.innerHTML = '';
+    const owned = ITEM_DEFS.filter(d=>state.inventory[d.key] > 0);
+    if(owned.length === 0){
+      el.innerHTML = '<div class="footer-note">Sua mochila está vazia. Explore as Dungeons para coletar itens.</div>';
+      return;
+    }
+    for(const def of owned) el.appendChild(this.buildItemRow(def, { showSellButton:false }));
+  },
+  // Aba Armas do Inventário: mostra a(s) arma(s) escolhida(s) com o Clérigo —
+  // só visualização, sem loja de armas por enquanto.
+  renderWeaponsList(){
+    const el = document.getElementById('weaponsList');
+    el.innerHTML = '';
+    const owned = WEAPON_DEFS.filter(d=>state.weapons[d.key] > 0);
+    if(owned.length === 0){
+      el.innerHTML = '<div class="footer-note">Nenhuma arma equipada ainda.</div>';
+      return;
+    }
+    for(const def of owned){
+      const row = document.createElement('div');
+      row.className = 'shop-row';
+      row.innerHTML = `
+        <div class="shop-info">
+          <div class="name">${def.icon} ${def.name}</div>
+          <div class="desc">+${def.clickDamageBonus} dano por clique</div>
+        </div>`;
       el.appendChild(row);
     }
   },
@@ -382,6 +510,9 @@ const UI = {
     this.renderTroopList();
     this.renderMinerList();
     this.renderShop();
+    this.renderInventoryBag();
+    this.renderWeaponsList();
+    this.renderCityBuildingLocks();
     this.renderUpgradeTree();
     this.renderPrestigeTab();
   },

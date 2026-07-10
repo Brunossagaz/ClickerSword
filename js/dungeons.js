@@ -19,6 +19,10 @@ const DungeonModule = {
   },
   enter(key){
     if(!this.isUnlocked(key)) return;
+    // o modal de seleção (prédio "Dungeons") fica por cima de qualquer view,
+    // já que é um .modal-overlay solto no body — sem isso ficaria visível
+    // por cima da arena depois de entrar
+    document.getElementById('dungeonModal').classList.remove('open');
     state.currentDungeon = key;
     // isFirst só quando a Dungeon nunca foi visitada (killCount=0) — assim
     // reentrar no meio de uma luta de chefe não "desliga" o chefe à toa
@@ -31,5 +35,6 @@ const DungeonModule = {
     MonsterModule.current = null;
     UI.showCityView();
     UI.renderAll();
+    OnboardingModule.announceShopUnlockIfNeeded();
   }
 };

@@ -1,10 +1,29 @@
 /* ---------------------------------------------------------------------
    SETTINGS MODULE (settings.js)
-   Baixar/carregar save como arquivo, e preferências de áudio/idioma.
-   Áudio e idioma são só placeholders por enquanto — guardam a preferência
-   no save, mas não existe sistema de áudio nem tradução ainda no jogo.
+   Baixar/carregar save como arquivo, e preferências globais de áudio/idioma.
+   Globais = fora de qualquer save, valem pra todos os personagens/slots (ver
+   CONFIG.settingsKey) — evita a estranheza de mudar o volume num personagem
+   e outro continuar com o valor antigo. Áudio e idioma são só placeholders
+   por enquanto — guardam a preferência, mas não existe sistema de áudio nem
+   tradução ainda no jogo.
 --------------------------------------------------------------------- */
 const SettingsModule = {
+  current: { audioEnabled:true, volume:70, language:'pt-BR' },
+
+  // Roda 1x no boot, antes de qualquer save ser escolhido.
+  loadGlobalSettings(){
+    try{
+      const raw = localStorage.getItem(CONFIG.settingsKey);
+      if(raw) this.current = Object.assign({audioEnabled:true, volume:70, language:'pt-BR'}, JSON.parse(raw));
+    }catch(e){ console.warn('Falha ao carregar configurações', e); }
+  },
+  saveGlobalSettings(){
+    try{ localStorage.setItem(CONFIG.settingsKey, JSON.stringify(this.current)); }catch(e){}
+  },
+  setAudioEnabled(enabled){ this.current.audioEnabled = enabled; this.saveGlobalSettings(); },
+  setVolume(vol){ this.current.volume = vol; this.saveGlobalSettings(); },
+  setLanguage(lang){ this.current.language = lang; this.saveGlobalSettings(); },
+
   downloadSave(){
     const json = JSON.stringify(state, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
@@ -44,15 +63,12 @@ const SettingsModule = {
           MonsterModule.current = null;
           UI.showCityView();
         }
+        UI.renderPlayerName();
         UI.renderAll();
         resolve();
       };
       reader.onerror = ()=> reject('Falha ao ler o arquivo.');
       reader.readAsText(file);
     });
-  },
-
-  setAudioEnabled(enabled){ state.settings.audioEnabled = enabled; SaveModule.save(); },
-  setVolume(vol){ state.settings.volume = vol; SaveModule.save(); },
-  setLanguage(lang){ state.settings.language = lang; SaveModule.save(); }
+  }
 };
