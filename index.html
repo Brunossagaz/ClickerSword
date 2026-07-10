@@ -172,6 +172,7 @@
     <div class="modal-body">
       <div class="panel-title">Loja da Cidade</div>
       <div class="footer-note" style="margin:0 0 10px;">Venda os itens coletados nas Dungeons por ouro.</div>
+      <div class="quest-banner" id="lojaQuestBanner"></div>
       <div id="shopList"></div>
     </div>
   </div>
@@ -267,8 +268,34 @@
       <span class="pixel">⛪ IRMÃO ANSELMO</span>
     </div>
     <div class="modal-body" style="text-align:center;">
-      <div class="cleric-text">A notícia já chegou aos meus ouvidos: alguém teve coragem de enfrentar os monstros lá fora! Isso trouxe esperança pra cidade — o Ferreiro, a Guilda, a Caverna e a Loja já estão liberados pra você.</div>
+      <div class="cleric-text">A notícia já chegou aos meus ouvidos: alguém teve coragem de enfrentar os monstros lá fora! Vá até a Loja da cidade e venda o que você encontrou por lá — ouvi dizer que o dono ainda consegue negociar alguns produtos.</div>
       <button class="ascend-btn" id="shopUnlockOkBtn" style="margin-top:14px;">Entendi</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sem botão de fechar de propósito: mesmo padrão dos outros diálogos de
+     NPC — só aparece 1x, no 1º clique na Loja (ver QuestModule.openBarnabeIntro). -->
+<div class="modal-overlay" id="barnabeModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="pixel">🏪 BARNABÉ</span>
+    </div>
+    <div class="modal-body" style="text-align:center;">
+      <div class="cleric-text">Ah, um forasteiro por essas bandas! Sou Barnabé, dono desta loja. Os negócios andam fracos desde que a dungeon apareceu, mas de vez em quando ainda consigo negociar alguns produtos. Aliás... meu irmão Creiton é ferreiro, mas fugiu quando os monstros surgiram. Ele quer voltar, mas precisa de material — se você me trouxer 10 Geleias de Slime, eu repasso pra ele e o convenço a reabrir a forja.</div>
+      <button class="ascend-btn" id="barnabeContinueBtn" style="margin-top:14px;">Continuar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="questCompleteModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="pixel">🏪 BARNABÉ</span>
+    </div>
+    <div class="modal-body" style="text-align:center;">
+      <div class="cleric-text">Ótima notícia! Isso é exatamente o que o Creiton precisava — ele já está a caminho de volta. Pode ir até o Ferreiro quando quiser.</div>
+      <button class="ascend-btn" id="questCompleteOkBtn" style="margin-top:14px;">Entendi</button>
     </div>
   </div>
 </div>
@@ -379,6 +406,7 @@
 <script src="js/monster.js"></script>
 <script src="js/dungeons.js"></script>
 <script src="js/onboarding.js"></script>
+<script src="js/quests.js"></script>
 <script src="js/player.js"></script>
 <script src="js/troops.js"></script>
 <script src="js/mining.js"></script>

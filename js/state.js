@@ -34,10 +34,15 @@ function freshState(){
     // arma inicial escolhida com o Clérigo (0 ou 1 por chave) — também usada
     // pra saber se o onboarding já passou (ver OnboardingModule.hasChosenWeapon)
     weapons: Object.fromEntries(WEAPON_DEFS.map(d => [d.key, 0])),
-    // já mostrou o aviso do Clérigo sobre Ferreiro/Guilda/Caverna/Loja
-    // liberados, ao voltar pra cidade pela 1ª vez após enfrentar a dungeon?
-    // (ver OnboardingModule.announceShopUnlockIfNeeded, chamado por DungeonModule.leaveToCity)
+    // já mostrou o aviso do Clérigo sobre a Loja liberada, ao voltar pra
+    // cidade pela 1ª vez após enfrentar a dungeon? (ver
+    // OnboardingModule.announceShopUnlockIfNeeded, chamado por DungeonModule.leaveToCity)
     shopUnlockAnnounced:false,
+    // já conheceu o Barnabé (dono da Loja)? controla se o clique na Loja
+    // mostra a apresentação dele ou já abre a loja normal — ver QuestModule
+    metBarnabe:false,
+    // missões concluídas (true/false por chave) — ver QUEST_DEFS/QuestModule
+    quests: Object.fromEntries(QUEST_DEFS.map(d => [d.key, false])),
     // upgrades owned (levels) — mesmo motivo, derivado de UPGRADE_DEFS
     upgrades: Object.fromEntries(UPGRADE_DEFS.map(d => [d.key, 0])),
     // prestige permanent upgrades

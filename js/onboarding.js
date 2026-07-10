@@ -2,11 +2,13 @@
    ONBOARDING MODULE (onboarding.js)
    Introdução do Clérigo (1ª vez que clica na Igreja): pede o nome (se ainda
    não tiver), conta a história da dungeon e deixa escolher uma arma inicial.
-   Também calcula quais prédios da cidade estão liberados — nada disso fica
-   guardado em flag própria, é sempre computado a partir de
-   state.weapons/state.totalKillsAll, no mesmo padrão de
-   DungeonModule/ProgressionModule (nunca dessincroniza, e personagens já
-   estabelecidos de antes desta atualização nunca ficam presos).
+   Também calcula quais prédios da cidade estão liberados — Igreja/Dungeon/
+   Inventário/Loja são computados aqui a partir de state.weapons/
+   state.totalKillsAll (nunca guardados em flag própria, mesmo padrão de
+   DungeonModule/ProgressionModule); Ferreiro depende da missão do Barnabé
+   (ver QuestModule/state.quests) porque entregar itens é uma ação
+   irreversível, não dá pra computar isso de volta a partir do progresso.
+   Guilda/Caverna ainda não têm gatilho de desbloqueio definido.
 --------------------------------------------------------------------- */
 const OnboardingModule = {
   hasChosenWeapon(){
@@ -24,7 +26,9 @@ const OnboardingModule = {
   isBuildingUnlocked(key){
     if(key === 'igreja') return true;
     if(key === 'dungeon' || key === 'inventario') return this.hasChosenWeapon() || this.hasFacedDungeon();
-    return this.hasFacedDungeon(); // ferreiro/guilda/caverna/loja
+    if(key === 'loja') return this.hasFacedDungeon();
+    if(key === 'ferreiro') return !!state.quests.slimeGelDelivery; // ver QuestModule
+    return false; // guilda/caverna: sem gatilho definido ainda
   },
 
   openClericIntro(){
@@ -69,8 +73,10 @@ const OnboardingModule = {
   },
   // Chamado por DungeonModule.leaveToCity() — na 1ª vez que o jogador volta
   // pra cidade já tendo enfrentado a dungeon (matado ao menos 1 monstro), o
-  // Clérigo avisa que a notícia chegou e libera Ferreiro/Guilda/Caverna/Loja.
-  // Só mostra 1 vez (ver state.shopUnlockAnnounced).
+  // Clérigo avisa que a notícia chegou e recomenda vender os itens na Loja
+  // (que libera nesse momento — Ferreiro depende da missão do Barnabé, ver
+  // QuestModule; Guilda/Caverna ainda sem gatilho definido). Só mostra 1 vez
+  // (ver state.shopUnlockAnnounced).
   announceShopUnlockIfNeeded(){
     if(!this.hasFacedDungeon() || state.shopUnlockAnnounced) return;
     state.shopUnlockAnnounced = true;

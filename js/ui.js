@@ -45,7 +45,6 @@ const UI = {
     this.wireBuildingModal('openFerreiroBtn', 'ferreiroModal', 'ferreiroCloseBtn');
     this.wireBuildingModal('openGuildaBtn', 'guildaModal', 'guildaCloseBtn');
     this.wireBuildingModal('openCavernaBtn', 'cavernaModal', 'cavernaCloseBtn');
-    this.wireBuildingModal('openLojaBtn', 'lojaModal', 'lojaCloseBtn');
     this.wireBuildingModal('openDungeonBtn', 'dungeonModal', 'dungeonCloseBtn');
     this.wireBuildingModal('openInventarioBtn', 'inventarioModal', 'inventarioCloseBtn');
     this.initModalTabs('inventarioModal');
@@ -61,6 +60,17 @@ const UI = {
     document.getElementById('igrejaCloseBtn').addEventListener('click', ()=>igrejaModal.classList.remove('open'));
     igrejaModal.addEventListener('click', (e)=>{ if(e.target === igrejaModal) igrejaModal.classList.remove('open'); });
     OnboardingModule.init();
+
+    // Loja também é especial: na 1ª vez, o Barnabé se apresenta antes de
+    // abrir a loja normal — ver QuestModule.openBarnabeIntro.
+    const lojaModal = document.getElementById('lojaModal');
+    document.getElementById('openLojaBtn').addEventListener('click', ()=>{
+      if(!state.metBarnabe) QuestModule.openBarnabeIntro();
+      else lojaModal.classList.add('open');
+    });
+    document.getElementById('lojaCloseBtn').addEventListener('click', ()=>lojaModal.classList.remove('open'));
+    lojaModal.addEventListener('click', (e)=>{ if(e.target === lojaModal) lojaModal.classList.remove('open'); });
+    QuestModule.init();
 
     this.initSettingsModal();
   },
@@ -513,6 +523,7 @@ const UI = {
     this.renderInventoryBag();
     this.renderWeaponsList();
     this.renderCityBuildingLocks();
+    QuestModule.renderQuestBanner();
     this.renderUpgradeTree();
     this.renderPrestigeTab();
   },

@@ -119,6 +119,14 @@ const WEAPON_DEFS = [
   { key:'axe',         name:'Machado',        icon:'🪓', clickDamageBonus:1 },
 ];
 
+// Missões dadas por NPCs da cidade (ver QuestModule) — entregar `itemQty`
+// unidades de `itemKey` consome os itens do inventário e marca
+// state.quests[key]=true (persistido, não computado, já que a entrega é uma
+// ação irreversível). `unlocksBuilding` é o prédio liberado ao concluir.
+const QUEST_DEFS = [
+  { key:'slimeGelDelivery', npc:'Barnabé', itemKey:'slimeGel', itemQty:10, unlocksBuilding:'ferreiro' },
+];
+
 // Tropas (DPS) crescem de custo bem mais rápido que upgrades — elas não têm
 // nível máximo (dá pra comprar infinitas), então o custo precisa subir rápido
 // pra virar um sumidouro de ouro de longo prazo. Upgrades têm nível máximo,

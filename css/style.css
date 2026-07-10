@@ -481,6 +481,18 @@
   .weapon-choice-card .weapon-name{ font-size:10px; text-align:center; }
   .weapon-choice-card .weapon-desc{ font-family:'VT323', monospace; font-size:13px; color:var(--arcane); }
 
+  /* ---- Missão do Barnabé (banner dentro da Loja) ---- */
+  .quest-banner{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    flex-wrap:wrap;
+    background:var(--stone-dark);
+    border:2px dashed var(--ember-dim);
+    border-radius:6px;
+    padding:10px 12px;
+    margin-bottom:12px;
+  }
+  .quest-banner-text{ font-size:15px; color:var(--parchment); }
+
   .prestige-box{
     text-align:center;
     padding:10px;

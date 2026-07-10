@@ -94,6 +94,7 @@ const SaveModule = {
     state.upgrades = Object.assign(Object.fromEntries(UPGRADE_DEFS.map(d => [d.key, 0])), loaded.upgrades||{});
     state.inventory = Object.assign(Object.fromEntries(ITEM_DEFS.map(d => [d.key, 0])), loaded.inventory||{});
     state.weapons = Object.assign(Object.fromEntries(WEAPON_DEFS.map(d => [d.key, 0])), loaded.weapons||{});
+    state.quests = Object.assign(Object.fromEntries(QUEST_DEFS.map(d => [d.key, false])), loaded.quests||{});
     state.prestige = Object.assign({pClick:0,pDps:0,pGold:0,pCrit:0}, loaded.prestige||{});
 
     // Save de antes da atualização de Dungeons: tinha um killCount/loop
@@ -126,6 +127,14 @@ const SaveModule = {
     // mesmo que `false`, desde a criação — ver freshState().)
     if(loaded.shopUnlockAnnounced === undefined && state.totalKillsAll >= 1){
       state.shopUnlockAnnounced = true;
+    }
+
+    // Save de antes do sistema de missões: Ferreiro/Guilda/Caverna
+    // desbloqueavam junto com a Loja só por enfrentar a dungeon — quem já
+    // tinha esse acesso não pode perder o Ferreiro por causa da missão nova.
+    if(loaded.quests === undefined && state.totalKillsAll >= 1){
+      state.quests.slimeGelDelivery = true;
+      state.metBarnabe = true;
     }
   },
 
