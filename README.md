@@ -8,38 +8,54 @@ Idle clicker de combate contra monstros, inspirado em Cookie Clicker.
 monster-attack-clicker/
 ├── index.html          → shell HTML: layout da UI + carrega CSS/JS
 ├── css/
-│   └── style.css        → todo o visual (tema pixel/dungeon), animações, responsivo
+│   └── style.css        → todo o visual (tema pixel/dungeon), animações, responsivo, ícones pixel art
 ├── js/
-│   ├── config.js         → constantes de balanceamento + definições de monstros/tropas/upgrades
-│   ├── state.js           → estado do jogador (freshState()) — a "fonte da verdade" do save
-│   ├── save.js             → localStorage: salvar, carregar, resetar, calcular ganhos offline
-│   ├── sprites.js           → desenha no <canvas> os spritesheets PNG de assets/sprites/
-│   ├── monster.js            → spawn de monstro (escopado à Dungeon ativa), escala de HP, chefes, monstro dourado, morte/drop (ouro ou item)
-│   ├── dungeons.js            → escolha de Dungeon na cidade: desbloqueio, entrar, voltar
-│   ├── player.js               → dano por clique, crítico, disparo do ataque manual
-│   ├── troops.js                → compra de tropas, custo exponencial, cálculo de DPS total
-│   ├── mining.js                 → Caverna de Mineração: mineradores rendem ouro passivamente
-│   ├── upgrades.js               → compra de upgrades de combate (loja de ouro)
-│   ├── prestige.js                → lógica de Ascensão: cálculo de Essência, reset, upgrades permanentes
-│   ├── settings.js                 → menu de configurações: baixar/carregar save, áudio/idioma (placeholders)
-│   ├── ui.js                        → toda renderização/DOM: barras, listas, textos flutuantes, toasts, views
-│   └── main.js                       → game loop (tick de DPS, autosave) e boot() inicial
+│   ├── config.js         → constantes de balanceamento + definições de monstros/tropas/upgrades/itens/missões
+│   ├── progression.js      → corrente de desbloqueio genérica (upgrades da Academia de Combate)
+│   ├── state.js             → estado do jogador (freshState()) — a "fonte da verdade" do save
+│   ├── save.js                → sistema de 3 saves (slots), migração de saves antigos, ganhos offline
+│   ├── sprites.js               → desenha no <canvas> os spritesheets PNG de assets/sprites/
+│   ├── monster.js                → spawn de monstro (escopado à Dungeon ativa), ciclos/posições
+│   │                                (incl. posições de monstro duplo), escala de HP, chefes, monstro
+│   │                                dourado, morte/drop (ouro ou item)
+│   ├── dungeons.js                 → escolha de Dungeon na cidade: desbloqueio, entrar, voltar
+│   ├── onboarding.js                 → 1ª conversa com o Clérigo (nome, história, escolha de arma) +
+│   │                                    desbloqueio computado dos prédios da cidade
+│   ├── quests.js                      → missões de NPC (ex.: entrega de item pro Barnabé), desbloqueiam prédios
+│   ├── player.js                       → dano por clique, crítico, disparo do ataque manual
+│   ├── troops.js                        → compra de tropas (Guilda), custo exponencial, cálculo de DPS total
+│   ├── mining.js                         → Caverna de Mineração: mineradores rendem ouro passivamente
+│   ├── upgrades.js                       → compra de upgrades da Academia de Combate (árvore radial)
+│   ├── prestige.js                        → lógica de Ascensão: cálculo de Essência, reset, upgrades permanentes
+│   ├── settings.js                         → preferências globais (áudio/idioma) + baixar/carregar save
+│   ├── ui.js                                → toda renderização/DOM: barras, listas, textos flutuantes, modais, views
+│   ├── mainmenu.js                           → menu principal, seletor de saves (3 slots), criação de personagem
+│   └── main.js                                → game loop (tick de DPS, autosave) e boot() inicial
 ├── assets/
-│   └── sprites/                     → um PNG por monstro (spritesheet: idle | piscar | dano, 128x128
-│                                        por frame), referenciado em `js/config.js` (campo `image`)
+│   ├── sprites/                              → um PNG por monstro (spritesheet: idle | piscar | dano, 128x128
+│   │                                             por frame), referenciado em `js/config.js` (campo `image`)
+│   ├── portraits/                            → retratos de NPCs em pixel art (128x128), usados nas falas
+│   │                                             de diálogo (Clérigo, Barnabé)
+│   └── icons/                                → ÍCONES PIXEL ART DA UI (prédios, itens, armas, etc.) — ver
+│                                                 seção "Ícones da UI" abaixo, pasta ainda vazia (pendente)
 └── tools/
-    └── gen_sprites.py                → gerador Python (Pillow) de todos os PNGs de assets/sprites/
+    ├── gen_sprites.py                         → gerador Python (Pillow) dos PNGs de assets/sprites/
+    ├── gen_portraits.py                       → gerador Python (Pillow) dos PNGs de assets/portraits/
+    └── resize_sprite.py                       → redimensiona um sprite desenhado à mão pro padrão 384x128
+                                                   (3 frames de 128x128), mantendo proporção
 ```
 
 ## Por que essa divisão
 
 Segue a mesma separação de responsabilidades sugerida no GDD (seção 8), só que
 100% vanilla JS sem bundler — os arquivos são carregados via `<script src="...">`
-em `index.html`, na ordem de dependência (`config` → `state` → `save` →
-`sprites` → `monster` → `player` → `troops` → `upgrades` → `prestige` → `ui` →
-`main`). Cada módulo expõe um único objeto global (`MonsterModule`,
-`TroopsModule`, `UI`, etc.), então dá pra abrir qualquer arquivo isolado e
-entender uma responsabilidade só, sem precisar ler o jogo inteiro.
+em `index.html`, na ordem de dependência (`config` → `progression` → `state`
+→ `save` → `sprites` → `monster` → `dungeons` → `onboarding` → `quests` →
+`player` → `troops` → `mining` → `upgrades` → `prestige` → `settings` →
+`ui` → `mainmenu` → `main`). Cada módulo expõe um único objeto global
+(`MonsterModule`, `TroopsModule`, `UI`, etc.), então dá pra abrir qualquer
+arquivo isolado e entender uma responsabilidade só, sem precisar ler o jogo
+inteiro.
 
 Todo monstro segue o mesmo padrão de arte: um spritesheet PNG com 3 frames
 (idle, piscando, flash de dano) desenhado em `js/sprites.js` via
@@ -81,37 +97,59 @@ no navegador.
 
 ### Salvamento e reset
 
-O progresso é salvo automaticamente no `localStorage` do navegador (chave
-`monsterAttackClickerSave`, ver `js/config.js`). Isso significa que o save é
-por origem (`file://` local ou `http://localhost:PORTA`) — trocar a forma de
-rodar o jogo (arquivo local vs. servidor, ou mudar de porta) começa um save
-novo. Para apagar o progresso, use o botão "Apagar progresso" na aba de
-Ascensão dentro do próprio jogo.
+O jogo tem **3 slots de save** independentes, cada um sua própria chave no
+`localStorage` (`CONFIG.saveKeySlot(n)`, ver `js/config.js`/`js/save.js`) —
+escolhidos na tela de "Menu Principal" ao abrir o jogo (Novo Jogo/Continuar).
+Preferências globais (áudio/idioma) ficam fora de qualquer slot
+(`CONFIG.settingsKey`), então não mudam de personagem pra personagem. Saves
+únicos de antes desse sistema (chave antiga `monsterAttackClickerSave`) são
+migrados automaticamente pro slot 1 na 1ª vez que o jogo abre depois da
+atualização (`SaveModule.migrateLegacyIfNeeded`) — a chave antiga nunca é
+apagada, fica como backup. Dentro do jogo, o menu de Configurações (ícone de
+engrenagem) tem "Trocar de personagem" (volta ao menu principal sem apagar
+nada) e "Apagar progresso" (apaga só o slot ativo).
 
 ## Cidade, Dungeons e Itens
 
-O jogador começa numa **Cidade Abandonada** (tela de seleção) e escolhe em
-qual **Dungeon** entrar — cada uma é uma família de monstros (`MAPS` em
-`js/config.js`: `slimes`, `goblins`, `wilds`), com progresso independente
-(`state.dungeons[key].killCount`). Dungeons desbloqueiam em sequência via
-`unlockRequirement` (ex.: Goblin exige 30 mortes na Slime) — a lógica de
-desbloqueio é **computada**, não guardada em flag (mesmo padrão de
-`ProgressionModule`), então nunca dessincroniza.
+O jogo começa com uma conversa com o **Clérigo** (Igreja) — nome do
+personagem, história rápida e escolha da 1ª arma (`js/onboarding.js`). Só
+depois disso a **Cidade Abandonada** (tela de prédios clicáveis) libera
+Dungeon/Loja/Inventário/Igreja; os demais prédios (Ferreiro/Guilda/
+Caverna/Academia) liberam progressivamente conforme o jogador avança —
+inclusive o Ferreiro, que só abre depois de concluir a missão de entrega do
+Barnabé, dono da Loja (`js/quests.js`, `QUEST_DEFS` em `config.js`). Toda
+essa lógica de desbloqueio é **computada** a partir do progresso atual
+(`OnboardingModule.isBuildingUnlocked`), nunca guardada como flag solta —
+então um save antigo com progresso suficiente nunca fica "trancado" à toa.
 
-Uma vez que os ciclos definidos de uma Dungeon acabam (hoje, 3 por Dungeon),
-o padrão de monstros **repete** (`MonsterModule.typeFor` faz o wrap) — o HP
-continua subindo normalmente, então nenhuma Dungeon "termina" de verdade, só
-fica mais difícil.
+Dentro da Cidade, o jogador escolhe em qual **Dungeon** entrar — cada uma é
+uma família de monstros (`MAPS` em `js/config.js`: `slimes`, `goblins`,
+`wilds`), com progresso independente (`state.dungeons[key].killCount`).
+Dungeons desbloqueiam em sequência via `unlockRequirement` (ex.: Goblin exige
+30 mortes na Slime).
+
+Cada ciclo de uma Dungeon tem 10 **posições** — a última é sempre o chefe.
+Toda posição normal spawna 1 monstro só, mas uma posição pode ser marcada
+como **dupla** (`{ pairChoices:[[...], ...] }` em `MAPS`): aparecem 2
+monstros em sequência (o 2º spawna assim que o 1º morre), contando como 1
+posição só — a Dungeon Slime usa isso nas posições 5 (dupla normal) e 9
+(dupla "mais forte", com +50% de HP). Derrotar os dois monstros de uma dupla
+dá a recompensa individual de cada um, mais um bônus de +10% (arredondado
+pra cima) na quantidade de item dropado. Ver `MonsterModule.resolveSlot` /
+`killsPerCycle` pra a lógica de posição↔monstro morto. Uma vez que os ciclos
+definidos de uma Dungeon acabam (hoje, 5 no caso da Slime, 3 nas demais), o
+padrão de monstros **repete** — o HP continua subindo normalmente, então
+nenhuma Dungeon "termina" de verdade, só fica mais difícil.
 
 Dungeons marcadas com `dropsItem` (hoje só `slimes`) dão **itens**
-(`ITEM_DEFS`) em vez de ouro — vendidos na aba "🏪 LOJA" por um preço fixo.
-As demais abas (Ferreiro/Guilda/Caverna/Ascensão) são as mesmas
-mecânicas de sempre, só "vestidas" com nomes de locais da cidade.
+(`ITEM_DEFS`) em vez de ouro — vendidos na Loja por um preço fixo. As demais
+abas (Ferreiro/Guilda/Caverna/Academia/Ascensão) são as mesmas mecânicas de
+sempre, só "vestidas" com nomes de locais da cidade.
 
 Saves de antes dessa atualização (com `killCount`/`loop` únicos, sem conceito
-de Dungeon) são migrados automaticamente em `SaveModule.applyLoaded()` —
-o progresso linear antigo vira o progresso da Dungeon correspondente, sem
-perder nada.
+de Dungeon, onboarding ou missões) são migrados automaticamente em
+`SaveModule.applyLoaded()` — o progresso antigo vira o progresso da Dungeon
+correspondente e os prédios já acessíveis continuam liberados, sem perder nada.
 
 ## Sprites dos monstros
 
@@ -144,34 +182,76 @@ novo). Campos disponíveis por monstro em `config.js`:
   que é mais forte que o Slime normal).
 - `blinkCapable` — ativa a animação periódica de piscar.
 
-## Imagens customizadas na UI (prédios/janelas/menus)
+Se tiver um sprite desenhado à mão fora do padrão 384×128 (3 frames de
+128×128), `python tools/resize_sprite.py assets/sprites/nome.png`
+redimensiona mantendo a proporção (sem esticar/distorcer), com borda
+transparente onde sobrar espaço, e faz backup do arquivo original em
+`nome_before_resize.png`.
 
-Hoje os prédios da cidade (`.building-card`) e os modais usam só CSS
-(`background: linear-gradient(...)`, emoji como ícone) — nenhuma imagem
-própria ainda, diferente dos monstros (que já usam PNG via `sprites.js`, ver
-seção acima). Formas de trocar isso por imagens de verdade, da mais simples
-pra mais trabalhosa:
+## Retratos de NPCs — `assets/portraits/`
 
-1. **Trocar o fundo dos cards existentes**: substitui o `background:
-   linear-gradient(...)` de cada `.building-X` em `css/style.css` por
-   `background-image: url('assets/ui/nome.png')` (+ `background-size: cover`
-   se precisar). Zero mudança de JS/HTML — é só arte nova apontada pelo CSS
-   que já existe.
-2. **Janelas/molduras decoradas** (tipo moldura de pergaminho/RPG): usar
-   `border-image` com um sprite de borda, ou técnica de 9-slice, nos
-   `.modal-box`. Mais trabalho de CSS, mas dá o efeito de "janela desenhada
-   à mão" em vez de caixa lisa.
-3. **Cena de cidade ilustrada com hotspots**: uma imagem de fundo única
-   cobrindo a tela (`<img>` ou `background-image`), com os botões dos
-   prédios virando elementos `position:absolute` invisíveis/transparentes
-   posicionados por `%` em cima de cada prédio na imagem (técnica clássica
-   de "image map" clicável). Visual mais imersivo, mas exige a arte inteira
-   calibrada com as coordenadas dos botões.
+Falas de diálogo (Clérigo, Barnabé) podem usar um retrato 128×128 em pixel
+art, gerado pelo mesmo sistema de grade dos sprites (`tools/gen_portraits.py`,
+que já inclui `_TEMPLATE_128x128.png` como guia em branco). Pra adicionar um
+NPC novo: gere/desenhe o PNG nesse padrão, salve em `assets/portraits/`, e
+referencie no `<img>`/`background-image` do modal de diálogo correspondente
+em `index.html`.
 
-Recomendação: começar pela opção 1 (resultado imediato, sem mexer em lógica)
-e evoluir pra opção 3 se quiser algo mais imersivo depois. Se a arte for
-pixel art, manter `image-rendering: pixelated` (já usado no canvas dos
-monstros) pra não borrar ao escalar.
+## Ícones da UI (pixel art) — `assets/icons/`
+
+Todo emoji foi removido da interface (prédios da cidade, botões de
+custo/recompensa, itens, armas, marcador de chefe, etc.). No lugar, cada um
+desses pontos já tem uma classe CSS `.icon-<nome>` pronta em
+`css/style.css`, apontando para um PNG em `assets/icons/<nome>.png` que
+**ainda não existe** — a pasta está vazia de propósito, esperando a arte.
+Até os arquivos serem criados, o espaço fica simplesmente em branco (não
+quebra o layout, não aparece "imagem quebrada").
+
+**Formato**: 64×64 px, fundo transparente, unidade de pixel de 4px (mesmo
+sistema de `tools/gen_sprites.py`/`gen_portraits.py`, numa grade menor pra
+ficar nítido em tamanho de ícone). Salvar com `image-rendering: pixelated`
+já configurado — não precisa suavizar/antialiasing.
+
+### Lista de ícones pendentes
+
+| Arquivo (`assets/icons/…`) | Onde aparece | Tamanho na tela |
+|---|---|---|
+| `ferreiro.png` | Prédio Ferreiro | ~32px |
+| `guilda.png` | Prédio Guilda | ~32px |
+| `caverna.png` | Prédio Caverna | ~32px |
+| `loja.png` | Prédio Loja | ~32px |
+| `igreja.png` | Prédio Igreja | ~32px |
+| `dungeon.png` | Prédio Dungeons | ~32px |
+| `inventario.png` | Prédio Inventário | ~32px |
+| `academia.png` | Prédio Academia de Combate | ~32px |
+| `gear.png` | Botão de Configurações (engrenagem) | ~18px |
+| `trophy.png` | Modal de Conquistas | ~40px |
+| `lock.png` | Prédio/upgrade bloqueado (cadeado) | ~12-14px |
+| `gold.png` | Custo/recompensa em ouro | ~14px |
+| `essence.png` | Custo em Essência (upgrades de Ascensão) | ~14px |
+| `boss.png` | Marcador de chefe no nome do monstro | ~16px |
+| `golden-monster.png` | Marcador de monstro dourado | ~16px |
+| `item-slimegel.png` | Item Geleia de Slime (Loja/Inventário) | ~20px |
+| `weapon-sword.png` | Arma Espada Simples | ~20-28px |
+| `weapon-bow.png` | Arma Arco e Flecha | ~20-28px |
+| `weapon-axe.png` | Arma Machado | ~20-28px |
+
+### Passo a passo pra implementar
+
+1. Desenhe/exporte cada PNG no formato acima (64×64, fundo transparente).
+2. Salve dentro de `assets/icons/`, usando **exatamente** o nome de arquivo
+   da tabela (é o nome que o CSS já espera — sem isso, renomear ou trocar
+   maiúscula/minúscula quebra o link).
+3. Dê refresh no jogo (`Ctrl+F5` se estiver com cache). Não precisa editar
+   `.js`, `.html` nem `.css` — a classe `.icon-<nome>` já existe e já está
+   aplicada em todos os lugares certos (ver `--icon-*` no topo de
+   `css/style.css`, seção "Ícones pixel art").
+4. Se quiser adicionar um ícone **novo** (que não está na lista, ex. pra uma
+   Dungeon futura), o padrão é: escolher um nome em kebab-case, adicionar
+   `--icon-nome:url('../assets/icons/nome.png');` e a classe
+   `.icon-nome{background-image:var(--icon-nome);}` em `css/style.css`, e
+   usar `<div class="icon icon-nome"></div>` no HTML/JS onde o ícone deve
+   aparecer.
 
 ## Empacotar como executável (planos futuros)
 
@@ -198,19 +278,25 @@ for a hora.
 
 ### ✅ Já implementado (referência rápida)
 
-- Mapas temáticos com tiers de força (Mapa 1: Slimes, Mapa 2: Reino Goblin,
-  Mapa 3: Terras Selvagens)
-- Timer de 15s por monstro + reset de ciclo em caso de falha no chefe
-- Corrente de desbloqueio (`PROGRESSION_CHAIN`) intercalando upgrades e tropas
+- Mapas temáticos com tiers de força (Mapa 1: Slimes — 5 ciclos, com
+  posições de monstro duplo; Mapa 2: Reino Goblin; Mapa 3: Terras Selvagens)
+- Timer de 15s por monstro + reset de ciclo em caso de falha ou saída manual
+  da dungeon (com modal de confirmação próprio, sem `confirm()` nativo)
+- Onboarding com o Clérigo (nome, história, escolha da 1ª arma) + missão de
+  entrega pro Barnabé (Loja) que libera o Ferreiro — desbloqueio de prédios
+  100% computado a partir do progresso, nunca uma flag solta
+- Academia de Combate: árvore radial de upgrades (4 nós, corrente de
+  desbloqueio sequencial)
 - Caverna de Mineração (fonte de ouro passiva, separada do combate)
-- Árvore radial de upgrades (aba "UPGRADES"), com upgrade de sinergia
-  (Ressonância de Combate: DPS ganha % do dano por clique)
 - Ascensão baseada em mortes vitalícias (`totalKillsAll`), com limiar
   crescente a cada ascensão
 - Cidade Abandonada + Dungeons selecionáveis (progresso independente por
   Dungeon, desbloqueio sequencial) + itens vendidos na Loja (Dungeon Slime)
-- Menu de configurações (⚙): baixar/carregar save como arquivo, placeholders
-  de áudio/idioma/conquistas
+- Menu principal com 3 slots de save independentes (nome de personagem,
+  continuar/apagar/baixar por slot) + migração automática de saves antigos
+- Preferências globais (áudio/idioma) fora de qualquer save
+- Interface 100% sem emoji — ícones pixel art via `assets/icons/` (ver seção
+  acima; PNGs ainda pendentes de criar)
 
 ### Novas Dungeons (seguindo o padrão: 3 ciclos, 6 variantes, 3 chefes)
 

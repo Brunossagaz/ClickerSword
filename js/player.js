@@ -5,7 +5,9 @@ const PlayerModule = {
   clickDamage(){
     // Sem base fixa: o personagem começa com 0 de dano por clique — só sobe
     // com upgrades ou a arma escolhida com o Clérigo (ver OnboardingModule).
-    return state.clickDamageFlat * (1+state.pClickMult);
+    // clickDamagePercent (Academia de Combate) multiplica em cima do flat.
+    const base = state.clickDamageFlat * (1+state.clickDamagePercent);
+    return base * (1+state.pClickMult);
   },
   handleClick(evt){
     // captura o estado ANTES de aplicar dano: se esse clique também matar o
@@ -17,7 +19,8 @@ const PlayerModule = {
 
     let dmg = this.clickDamage();
     let isCrit = Math.random() < (state.critChance + state.pCritChance);
-    if(isCrit) dmg *= state.critMult;
+    // critDamagePercent (Academia de Combate) multiplica em cima do critMult
+    if(isCrit) dmg *= state.critMult * (1+state.critDamagePercent);
     dmg = Math.max(1, Math.round(dmg));
     MonsterModule.applyDamage(dmg);
     UI.showFloatingDamage(dmg, isCrit, evt);

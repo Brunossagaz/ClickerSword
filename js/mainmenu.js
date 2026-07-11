@@ -35,16 +35,16 @@ const MainMenuModule = {
           <div class="slot-name">${meta.playerName || '(sem nome)'}</div>
           <div class="slot-date">Último acesso: ${dateStr}</div>
           <div class="slot-actions">
-            <button class="menu-btn slot-continue" data-slot="${n}">▶ Continuar</button>
-            <button class="small-btn slot-download" data-slot="${n}">⬇</button>
-            <button class="small-btn slot-delete" data-slot="${n}">🗑</button>
-            <button class="small-btn slot-newhere" data-slot="${n}">🔄 Novo aqui</button>
+            <button class="menu-btn slot-continue" data-slot="${n}">Continuar</button>
+            <button class="small-btn slot-download" data-slot="${n}">Baixar</button>
+            <button class="small-btn slot-delete" data-slot="${n}">Apagar</button>
+            <button class="small-btn slot-newhere" data-slot="${n}">Novo aqui</button>
           </div>`;
       } else {
         box.innerHTML = `
           <div class="slot-name">Slot ${n} vazio</div>
           <div class="slot-actions">
-            <button class="menu-btn slot-createnew" data-slot="${n}">🆕 Começar aqui</button>
+            <button class="menu-btn slot-createnew" data-slot="${n}">Começar aqui</button>
           </div>`;
       }
       el.appendChild(box);
@@ -82,7 +82,7 @@ const MainMenuModule = {
     if(!ok){ alert('Este save está corrompido ou vazio.'); return; }
     if(!state.playerName){
       this.pendingMode = 'rename'; this.pendingSlot = n;
-      document.getElementById('nameEntryTitle').textContent = '🧙 NOMEIE SEU PERSONAGEM';
+      document.getElementById('nameEntryTitle').textContent = 'NOMEIE SEU PERSONAGEM';
       document.getElementById('nameEntryPrompt').textContent = 'Este save antigo ainda não tem um nome de personagem.';
       document.getElementById('nameEntryInput').value = '';
       document.getElementById('nameEntryModal').classList.add('open');

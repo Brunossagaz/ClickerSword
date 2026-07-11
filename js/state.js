@@ -9,7 +9,16 @@ function freshState(){
     ascensionCount:0, // quantas vezes já ascendeu (vitalício) — usado pra escalar o limiar da próxima ascensão
     // run progress
     currentDungeon:null, // null = jogador está na cidade (tela de seleção); 'slimes'/'goblins'/'wilds' = dentro de uma Dungeon
-    dungeons:{ slimes:{killCount:0}, goblins:{killCount:0}, wilds:{killCount:0} }, // progresso independente por Dungeon
+    // progresso independente por Dungeon. `pendingSlot` só é usado por
+    // Dungeons com posições de monstro duplo (ver MAPS/MonsterModule) — guarda
+    // qual par de monstros foi sorteado pra posição atual (e o quanto o 1º já
+    // rendeu de item), pra o 2º monstro da dupla usar o MESMO sorteio em vez
+    // de rolar de novo.
+    dungeons:{
+      slimes:{killCount:0, pendingSlot:null},
+      goblins:{killCount:0, pendingSlot:null},
+      wilds:{killCount:0, pendingSlot:null}
+    },
     totalKillsAll:0,
     monsterHp:0,
     monsterMaxHp:0,
@@ -23,7 +32,11 @@ function freshState(){
     critChance:0,
     critMult:2,
     goldMult:1,
-    dpsSynergyRatio:0, // fração do dano por clique somada como DPS extra (upgrade Ressonância de Combate)
+    dpsSynergyRatio:0, // fração do dano por clique somada como DPS extra (upgrade antigo, removido da árvore — só existe pra quem já tinha comprado)
+    // percentuais da Academia de Combate — multiplicam em cima do que já foi
+    // acumulado (ver PlayerModule.clickDamage())
+    clickDamagePercent:0,
+    critDamagePercent:0,
     // troops owned — derivado de TROOP_DEFS, então tropa nova nunca fica de
     // fora daqui (era a causa do bug de "Nível: undefined" / "NaN" na loja)
     troops: Object.fromEntries(TROOP_DEFS.map(d => [d.key, 0])),

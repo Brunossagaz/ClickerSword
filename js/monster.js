@@ -5,20 +5,42 @@
 --------------------------------------------------------------------- */
 const MonsterModule = {
   current:null,
-  typeFor(dungeonKey, cycleNum, posInCycle){
+  // Schedule "canônico" de uma Dungeon (usado só pra saber o FORMATO dos
+  // ciclos — quantas posições, quais são duplas): todo ciclo definido de uma
+  // mesma Dungeon usa o mesmo formato, só a cor/tipo dos monstros muda de
+  // ciclo pra ciclo (ver MAPS.slimes) — por isso basta olhar o ciclo 1.
+  scheduleFor(dungeonKey){
     const map = MAPS[dungeonKey];
-    let order;
-    if(map.cycles){
-      // Uma vez passado o último ciclo definido, a fileira de monstros
-      // repete (o padrão volta pro ciclo 1) — só o HP continua subindo com
-      // killIdx, então a dungeon nunca "acaba", só fica cada vez mais difícil.
-      const totalCycles = Object.keys(map.cycles).length;
-      const wrapped = ((cycleNum - 1) % totalCycles) + 1;
-      order = map.cycles[wrapped];
-    } else {
-      order = map.order;
+    return map.cycles ? map.cycles[1] : map.order;
+  },
+  // Quantidade de MONSTROS (não de "posições") que um ciclo inteiro dessa
+  // Dungeon consome — cada posição normal vale 1, cada posição de dupla
+  // (`pairChoices`) vale 2. Usado no lugar de CONFIG.cycleLength, que só
+  // servia quando toda posição era sempre 1 monstro.
+  killsPerCycle(schedule){
+    return schedule.reduce((sum, slot) => sum + ((slot && slot.pairChoices) ? 2 : 1), 0);
+  },
+  killsPerCycleFor(dungeonKey){
+    return this.killsPerCycle(this.scheduleFor(dungeonKey));
+  },
+  // Acha, dentro do schedule de UM ciclo, qual posição (slotIdx, 0-based) e
+  // qual monstro da dupla (subKill: 0 ou 1, sempre 0 se a posição for única)
+  // correspondem ao `killIdxInCycle`-ésimo monstro morto desde o início do
+  // ciclo atual.
+  resolveSlot(schedule, killIdxInCycle){
+    let consumed = 0;
+    for(let slotIdx=0; slotIdx<schedule.length; slotIdx++){
+      const slot = schedule[slotIdx];
+      const size = (slot && slot.pairChoices) ? 2 : 1;
+      if(killIdxInCycle < consumed + size){
+        return { slotIdx, subKill: killIdxInCycle - consumed, slot, isLastSlot: slotIdx === schedule.length-1 };
+      }
+      consumed += size;
     }
-    return MONSTER_TYPES.find(t=>t.key===order[posInCycle]);
+    // não deveria acontecer (killIdxInCycle sempre < killsPerCycle), mas por
+    // segurança devolve a última posição em vez de quebrar
+    const lastIdx = schedule.length-1;
+    return { slotIdx:lastIdx, subKill:0, slot:schedule[lastIdx], isLastSlot:true };
   },
   hpFor(killIndexInRun, isBoss, hpMult){
     let hp = CONFIG.baseHp * Math.pow(CONFIG.hpGrowth, killIndexInRun);
@@ -54,27 +76,63 @@ const MonsterModule = {
     UI.showTimeUpModal();
   },
   retryCycle(){
-    const cycleLen = CONFIG.cycleLength;
     const d = state.dungeons[state.currentDungeon];
-    d.killCount = Math.floor(d.killCount / cycleLen) * cycleLen; // volta pro monstro 1 do ciclo atual
+    const kpc = this.killsPerCycleFor(state.currentDungeon);
+    d.killCount = Math.floor(d.killCount / kpc) * kpc; // volta pro monstro 1 do ciclo atual
+    d.pendingSlot = null; // descarta o sorteio de dupla em andamento, se houver
     this.spawn(false);
     UI.renderAll();
   },
-  spawn(isFirst){
-    const cycleLen = CONFIG.cycleLength;
+  // Chamado quando o jogador sai da dungeon manualmente (botão "Voltar pra
+  // cidade" durante o combate, com o monstro ainda vivo) — mesmo reset de
+  // retryCycle(), só que sem spawnar de novo (quem chama já está saindo pra
+  // cidade). Precisa rodar ANTES de DungeonModule.leaveToCity() zerar
+  // state.currentDungeon, senão perde a referência de qual Dungeon resetar.
+  abandonCycle(){
     const d = state.dungeons[state.currentDungeon];
+    const kpc = this.killsPerCycleFor(state.currentDungeon);
+    d.killCount = Math.floor(d.killCount / kpc) * kpc; // volta pro monstro 1 do ciclo atual
+    d.pendingSlot = null;
+  },
+  spawn(isFirst){
+    const d = state.dungeons[state.currentDungeon];
+    const map = MAPS[state.currentDungeon];
     const killIdx = d.killCount;
-    const posInCycle = killIdx % cycleLen;
-    const cycleNum = Math.floor(killIdx / cycleLen) + 1;
-    const isBoss = (!isFirst) && posInCycle === cycleLen - 1; // último monstro do ciclo = chefe
-    const type = this.typeFor(state.currentDungeon, cycleNum, posInCycle);
+    const cyclesMap = map.cycles || { 1: map.order };
+    const totalCycles = Object.keys(cyclesMap).length;
+    const schedule1 = cyclesMap[1];
+    const kpc = this.killsPerCycle(schedule1);
+    const cycleNum = Math.floor(killIdx / kpc) + 1;
+    const killIdxInCycle = killIdx % kpc;
+    const wrappedCycle = ((cycleNum - 1) % totalCycles) + 1;
+    const schedule = cyclesMap[wrappedCycle];
+    const { slotIdx, subKill, slot, isLastSlot } = this.resolveSlot(schedule, killIdxInCycle);
 
-    this.current = { type, isBoss };
+    const isDouble = !!(slot && slot.pairChoices);
+    let monsterKey, isBoss = false, extraHpMult = 1;
+
+    if(isDouble){
+      // sorteia a dupla dessa posição só na 1ª metade — a 2ª reaproveita o
+      // mesmo sorteio (ver state.dungeons[key].pendingSlot)
+      if(subKill === 0 || !d.pendingSlot){
+        const options = slot.pairChoices;
+        const chosen = options[Math.floor(Math.random()*options.length)];
+        d.pendingSlot = { keys: chosen, firstQty: null };
+      }
+      monsterKey = d.pendingSlot.keys[subKill] || d.pendingSlot.keys[0];
+      if(slot.strong) extraHpMult = 1.5; // posição "mais forte" (ver MAPS.slimes)
+    } else {
+      monsterKey = slot;
+      isBoss = (!isFirst) && isLastSlot; // último monstro do ciclo = chefe
+    }
+
+    const type = MONSTER_TYPES.find(t=>t.key===monsterKey);
+    this.current = { type, isBoss, isDouble, doubleSubKill: subKill, slotIdx, totalSlots: schedule.length };
 
     // killIdx (killCount da Dungeon ativa) reseta a cada ascensão, então a
     // dificuldade dos monstros também reseta — sem isso o HP nunca voltaria
     // ao nível 1.
-    const hp = this.hpFor(killIdx, isBoss, type.hpMult);
+    const hp = this.hpFor(killIdx, isBoss, (type.hpMult||1) * extraHpMult);
     state.monsterHp = hp;
     state.monsterMaxHp = hp;
     state.isBoss = isBoss;
@@ -111,9 +169,23 @@ const MonsterModule = {
   onDeath(){
     const d = state.dungeons[state.currentDungeon];
     const wasBoss = this.current.isBoss; // captura antes do spawn() sobrescrever this.current
+    const wasDouble = this.current.isDouble;
+    const doubleSubKill = this.current.doubleSubKill;
     const itemKey = MAPS[state.currentDungeon].dropsItem;
     if(itemKey){
-      const qty = this.itemRewardQty();
+      let qty = this.itemRewardQty();
+      if(wasDouble){
+        if(doubleSubKill === 0){
+          // guarda a recompensa do 1º da dupla — o bônus só é calculado
+          // quando o 2º morrer (precisa da soma dos dois, ver MAPS.slimes)
+          d.pendingSlot.firstQty = qty;
+        } else {
+          const firstQty = (d.pendingSlot && d.pendingSlot.firstQty) || 0;
+          const bonus = Math.ceil((firstQty + qty) * 0.10);
+          qty += bonus;
+          d.pendingSlot = null;
+        }
+      }
       state.inventory[itemKey] += qty;
       UI.showFloatingItem(qty, ITEM_DEFS.find(i=>i.key===itemKey));
     } else {

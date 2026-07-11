@@ -11,8 +11,8 @@
 <body>
 
 <div class="title-bar">
-  <button class="gear-btn" id="settingsGearBtn" title="Configurações">⚙</button>
-  <h1>⚔ MONSTER ATTACK CLICKER ⚔</h1>
+  <button class="gear-btn" id="settingsGearBtn" title="Configurações"><div class="icon icon-gear"></div></button>
+  <h1>MONSTER ATTACK CLICKER</h1>
   <div class="subtitle">clique. destrua. evolua. ascenda.</div>
   <div class="player-name-tag" id="playerNameTag" style="display:none;"></div>
 </div>
@@ -20,30 +20,30 @@
 <div class="modal-overlay" id="settingsModal">
   <div class="modal-box">
     <div class="modal-header">
-      <span class="pixel">⚙ CONFIGURAÇÕES</span>
+      <span class="pixel">CONFIGURAÇÕES</span>
       <button class="modal-close" id="settingsCloseBtn">✕</button>
     </div>
     <div class="modal-body">
       <div class="settings-row">
         <div class="settings-label">Conquistas</div>
         <div class="settings-actions">
-          <button class="small-btn" id="achievementsBtn">🏆 Ver conquistas</button>
+          <button class="small-btn" id="achievementsBtn">Ver conquistas</button>
         </div>
       </div>
       <div id="settingsSlotSection">
         <div class="settings-row">
           <div class="settings-label">Salvamento</div>
           <div class="settings-actions">
-            <button class="small-btn" id="downloadSaveBtn">⬇ Baixar save</button>
-            <button class="small-btn" id="uploadSaveBtn">⬆ Carregar save</button>
+            <button class="small-btn" id="downloadSaveBtn">Baixar save</button>
+            <button class="small-btn" id="uploadSaveBtn">Carregar save</button>
             <input type="file" id="uploadSaveInput" accept="application/json" style="display:none;">
           </div>
         </div>
         <div class="settings-row">
           <div class="settings-label">Personagem</div>
           <div class="settings-actions">
-            <button class="small-btn" id="switchCharacterBtn">🚪 Trocar de personagem</button>
-            <button class="small-btn" id="resetBtn">🗑 Apagar progresso</button>
+            <button class="small-btn" id="switchCharacterBtn">Trocar de personagem</button>
+            <button class="small-btn" id="resetBtn">Apagar progresso</button>
           </div>
         </div>
       </div>
@@ -74,11 +74,11 @@
 <div class="modal-overlay" id="achievementsModal">
   <div class="modal-box">
     <div class="modal-header">
-      <span class="pixel">🏆 CONQUISTAS</span>
+      <span class="pixel">CONQUISTAS</span>
       <button class="modal-close" id="achievementsCloseBtn">✕</button>
     </div>
     <div class="modal-body" style="text-align:center; padding:10px 6px 16px;">
-      <div style="font-size:40px; margin-bottom:10px;">🏆</div>
+      <div class="icon icon-trophy" style="margin:0 auto 10px;"></div>
       <div>Em breve! Suas conquistas vão aparecer aqui conforme forem lançadas.</div>
     </div>
   </div>
@@ -89,13 +89,13 @@
 <div class="modal-overlay" id="cycleCompleteModal">
   <div class="modal-box">
     <div class="modal-header">
-      <span class="pixel">🎉 CICLO CONCLUÍDO</span>
+      <span class="pixel">CICLO CONCLUÍDO</span>
     </div>
     <div class="modal-body" style="text-align:center;">
       <div id="cycleCompleteText" style="margin-bottom:14px;"></div>
       <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
         <button class="ascend-btn" id="cycleContinueBtn">CONTINUAR</button>
-        <button class="small-btn" id="cycleLeaveBtn">🏘 Voltar pra cidade</button>
+        <button class="small-btn" id="cycleLeaveBtn">Voltar pra cidade</button>
       </div>
     </div>
   </div>
@@ -106,29 +106,60 @@
 <div class="modal-overlay" id="timeUpModal">
   <div class="modal-box">
     <div class="modal-header">
-      <span class="pixel">⏱ TEMPO ESGOTADO</span>
+      <span class="pixel">TEMPO ESGOTADO</span>
     </div>
     <div class="modal-body" style="text-align:center;">
       <div id="timeUpText" style="margin-bottom:14px;"></div>
       <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-        <button class="ascend-btn" id="timeUpRetryBtn">🔁 Tentar de novo</button>
-        <button class="small-btn" id="timeUpLeaveBtn">🏘 Voltar pra cidade</button>
+        <button class="ascend-btn" id="timeUpRetryBtn">Tentar de novo</button>
+        <button class="small-btn" id="timeUpLeaveBtn">Voltar pra cidade</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Sem botão de fechar de propósito: o jogador precisa escolher sim ou não,
+     não só fechar e continuar lutando sem querer. -->
+<div class="modal-overlay" id="leaveConfirmModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="pixel">SAIR DA DUNGEON</span>
+    </div>
+    <div class="modal-body" style="text-align:center;">
+      <div style="margin-bottom:14px;">Sair da dungeon agora? Você vai perder o progresso deste ciclo e vai recomeçar do início dele na próxima vez.</div>
+      <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+        <button class="ascend-btn" id="leaveConfirmYesBtn">SIM, SAIR</button>
+        <button class="small-btn" id="leaveConfirmNoBtn">Cancelar</button>
       </div>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay" id="ferreiroModal">
-  <div class="modal-box modal-wide">
+  <div class="modal-box">
     <div class="modal-header">
-      <span class="pixel">⚒ FERREIRO</span>
+      <span class="pixel">FERREIRO</span>
       <button class="modal-close" id="ferreiroCloseBtn">✕</button>
     </div>
     <div class="modal-body">
-      <div class="panel-title">Ferreiro — Árvore de Upgrades</div>
+      <div class="panel-title">Ferreiro — Armas</div>
+      <div class="footer-note" style="margin:0 0 10px;">Creiton forja armas novas — compre as que ainda não tem.</div>
+      <div id="ferreiroWeaponList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="academiaModal">
+  <div class="modal-box modal-wide">
+    <div class="modal-header">
+      <span class="pixel">ACADEMIA DE COMBATE</span>
+      <button class="modal-close" id="academiaCloseBtn">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="panel-title">Academia de Combate — Upgrades de Batalha</div>
       <div class="tree-wrap" id="upgradeTreeWrap">
         <svg class="tree-lines" id="upgradeTreeLines"></svg>
-        <div class="tree-hub">🌳<br>ÁRVORE</div>
+        <div class="tree-hub">BATALHA</div>
         <div class="tree-nodes" id="upgradeTreeNodes"></div>
       </div>
     </div>
@@ -138,7 +169,7 @@
 <div class="modal-overlay" id="guildaModal">
   <div class="modal-box">
     <div class="modal-header">
-      <span class="pixel">🛡 GUILDA</span>
+      <span class="pixel">GUILDA</span>
       <button class="modal-close" id="guildaCloseBtn">✕</button>
     </div>
     <div class="modal-body">
@@ -151,7 +182,7 @@
 <div class="modal-overlay" id="cavernaModal">
   <div class="modal-box">
     <div class="modal-header">
-      <span class="pixel">⛏ CAVERNA</span>
+      <span class="pixel">CAVERNA</span>
       <button class="modal-close" id="cavernaCloseBtn">✕</button>
     </div>
     <div class="modal-body">
@@ -166,7 +197,7 @@
 <div class="modal-overlay" id="lojaModal">
   <div class="modal-box">
     <div class="modal-header">
-      <span class="pixel">🏪 LOJA</span>
+      <span class="pixel">LOJA</span>
       <button class="modal-close" id="lojaCloseBtn">✕</button>
     </div>
     <div class="modal-body">
@@ -181,7 +212,7 @@
 <div class="modal-overlay" id="igrejaModal">
   <div class="modal-box">
     <div class="modal-header">
-      <span class="pixel">⛪ IGREJA</span>
+      <span class="pixel">IGREJA</span>
       <button class="modal-close" id="igrejaCloseBtn">✕</button>
     </div>
     <div class="modal-body">
@@ -200,7 +231,7 @@
 <div class="modal-overlay" id="dungeonModal">
   <div class="modal-box">
     <div class="modal-header">
-      <span class="pixel">🚪 DUNGEONS</span>
+      <span class="pixel">DUNGEONS</span>
       <button class="modal-close" id="dungeonCloseBtn">✕</button>
     </div>
     <div class="modal-body">
@@ -213,7 +244,7 @@
 <div class="modal-overlay" id="inventarioModal">
   <div class="modal-box">
     <div class="modal-header">
-      <span class="pixel">🎒 INVENTÁRIO</span>
+      <span class="pixel">INVENTÁRIO</span>
       <button class="modal-close" id="inventarioCloseBtn">✕</button>
     </div>
     <div class="modal-body">
@@ -242,7 +273,7 @@
 <div class="modal-overlay" id="clericModal">
   <div class="modal-box">
     <div class="modal-header">
-      <span class="pixel">⛪ IRMÃO ANSELMO</span>
+      <span class="pixel">IRMÃO ANSELMO</span>
     </div>
     <div class="modal-body" style="text-align:center;">
       <div class="cleric-step active" id="clericStepName">
@@ -265,7 +296,7 @@
 <div class="modal-overlay" id="shopUnlockModal">
   <div class="modal-box">
     <div class="modal-header">
-      <span class="pixel">⛪ IRMÃO ANSELMO</span>
+      <span class="pixel">IRMÃO ANSELMO</span>
     </div>
     <div class="modal-body" style="text-align:center;">
       <div class="cleric-text">A notícia já chegou aos meus ouvidos: alguém teve coragem de enfrentar os monstros lá fora! Vá até a Loja da cidade e venda o que você encontrou por lá — ouvi dizer que o dono ainda consegue negociar alguns produtos.</div>
@@ -279,7 +310,7 @@
 <div class="modal-overlay" id="barnabeModal">
   <div class="modal-box">
     <div class="modal-header">
-      <span class="pixel">🏪 BARNABÉ</span>
+      <span class="pixel">BARNABÉ</span>
     </div>
     <div class="modal-body" style="text-align:center;">
       <div class="cleric-text">Ah, um forasteiro por essas bandas! Sou Barnabé, dono desta loja. Os negócios andam fracos desde que a dungeon apareceu, mas de vez em quando ainda consigo negociar alguns produtos. Aliás... meu irmão Creiton é ferreiro, mas fugiu quando os monstros surgiram. Ele quer voltar, mas precisa de material — se você me trouxer 10 Geleias de Slime, eu repasso pra ele e o convenço a reabrir a forja.</div>
@@ -291,7 +322,7 @@
 <div class="modal-overlay" id="questCompleteModal">
   <div class="modal-box">
     <div class="modal-header">
-      <span class="pixel">🏪 BARNABÉ</span>
+      <span class="pixel">BARNABÉ</span>
     </div>
     <div class="modal-body" style="text-align:center;">
       <div class="cleric-text">Ótima notícia! Isso é exatamente o que o Creiton precisava — ele já está a caminho de volta. Pode ir até o Ferreiro quando quiser.</div>
@@ -303,7 +334,7 @@
 <div class="modal-overlay" id="nameEntryModal">
   <div class="modal-box">
     <div class="modal-header">
-      <span class="pixel" id="nameEntryTitle">🧙 NOVO PERSONAGEM</span>
+      <span class="pixel" id="nameEntryTitle">NOVO PERSONAGEM</span>
     </div>
     <div class="modal-body" style="text-align:center;">
       <div id="nameEntryPrompt" style="margin-bottom:10px;">Como se chama seu personagem?</div>
@@ -326,56 +357,60 @@
     </div>
 
     <div class="view-content active" id="view-mainmenu">
-      <div class="panel-title">⚔ MONSTER ATTACK CLICKER</div>
+      <div class="panel-title">MONSTER ATTACK CLICKER</div>
       <div class="main-menu-actions">
-        <button class="menu-btn" id="menuNewGameBtn">🆕 NOVO JOGO</button>
-        <button class="menu-btn" id="menuContinueBtn">▶ CONTINUAR JOGO ANTERIOR</button>
-        <button class="menu-btn" id="menuSettingsBtn">⚙ CONFIGURAÇÕES</button>
+        <button class="menu-btn" id="menuNewGameBtn">NOVO JOGO</button>
+        <button class="menu-btn" id="menuContinueBtn">CONTINUAR JOGO ANTERIOR</button>
+        <button class="menu-btn" id="menuSettingsBtn">CONFIGURAÇÕES</button>
       </div>
     </div>
 
     <div class="view-content" id="view-slotpicker">
-      <div class="panel-title">💾 ESCOLHA UM SAVE</div>
+      <div class="panel-title">ESCOLHA UM SAVE</div>
       <div class="slot-grid" id="slotGrid"></div>
-      <button class="small-btn" id="slotBackBtn" style="margin-top:14px;">◀ Voltar ao menu</button>
+      <button class="small-btn" id="slotBackBtn" style="margin-top:14px;">Voltar ao menu</button>
     </div>
 
     <div class="view-content" id="view-city">
-      <div class="panel-title">🏘 Cidade Abandonada</div>
+      <div class="panel-title">Cidade Abandonada</div>
       <div class="city-buildings">
         <button class="building-card building-ferreiro" id="openFerreiroBtn">
-          <div class="building-icon">⚒</div>
+          <div class="building-icon icon icon-ferreiro"></div>
           <div class="building-name">Ferreiro</div>
         </button>
         <button class="building-card building-guilda" id="openGuildaBtn">
-          <div class="building-icon">🛡</div>
+          <div class="building-icon icon icon-guilda"></div>
           <div class="building-name">Guilda</div>
         </button>
         <button class="building-card building-caverna" id="openCavernaBtn">
-          <div class="building-icon">⛏</div>
+          <div class="building-icon icon icon-caverna"></div>
           <div class="building-name">Caverna</div>
         </button>
         <button class="building-card building-loja" id="openLojaBtn">
-          <div class="building-icon">🏪</div>
+          <div class="building-icon icon icon-loja"></div>
           <div class="building-name">Loja</div>
         </button>
         <button class="building-card building-igreja" id="openIgrejaBtn">
-          <div class="building-icon">⛪</div>
+          <div class="building-icon icon icon-igreja"></div>
           <div class="building-name">Igreja</div>
         </button>
         <button class="building-card building-dungeon" id="openDungeonBtn">
-          <div class="building-icon">🚪</div>
+          <div class="building-icon icon icon-dungeon"></div>
           <div class="building-name">Dungeons</div>
         </button>
         <button class="building-card building-inventario" id="openInventarioBtn">
-          <div class="building-icon">🎒</div>
+          <div class="building-icon icon icon-inventario"></div>
           <div class="building-name">Inventário</div>
+        </button>
+        <button class="building-card building-academia" id="openAcademiaBtn">
+          <div class="building-icon icon icon-academia"></div>
+          <div class="building-name">Academia</div>
         </button>
       </div>
     </div>
 
     <div class="view-content" id="view-dungeon">
-      <button class="small-btn" id="leaveDungeonBtn" style="margin-bottom:10px;">🏘 Voltar pra cidade</button>
+      <button class="small-btn" id="leaveDungeonBtn" style="margin-bottom:10px;">Voltar pra cidade</button>
       <div class="arena-frame">
         <div class="tier-label" id="tierLabel">CICLO I · MONSTRO 1</div>
         <div class="monster-name" id="monsterName">SLIME</div>
@@ -390,7 +425,7 @@
           <div class="timer-fill" id="timerFill"></div>
           <div class="timer-text" id="timerText">15s</div>
         </div>
-        <div class="golden-tag" id="goldenTag">✨ MONSTRO DOURADO! CLIQUE RÁPIDO! ✨</div>
+        <div class="golden-tag" id="goldenTag"><div class="icon icon-golden" style="display:inline-block;"></div> MONSTRO DOURADO! CLIQUE RÁPIDO!</div>
       </div>
       <div class="footer-note">Clique no monstro para atacar manualmente.</div>
     </div>

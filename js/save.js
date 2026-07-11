@@ -97,6 +97,17 @@ const SaveModule = {
     state.quests = Object.assign(Object.fromEntries(QUEST_DEFS.map(d => [d.key, false])), loaded.quests||{});
     state.prestige = Object.assign({pClick:0,pDps:0,pGold:0,pCrit:0}, loaded.prestige||{});
 
+    // Merge por-Dungeon (não substitui o objeto inteiro): saves antigos podem
+    // não ter `pendingSlot` (adicionado junto das posições de monstro duplo),
+    // então cada Dungeon recebe o default de freshState() por baixo do que
+    // já tinha salvo.
+    const freshDungeons = freshState().dungeons;
+    const mergedDungeons = {};
+    for(const key of Object.keys(freshDungeons)){
+      mergedDungeons[key] = Object.assign({}, freshDungeons[key], (loaded.dungeons && loaded.dungeons[key]) || {});
+    }
+    state.dungeons = mergedDungeons;
+
     // Save de antes da atualização de Dungeons: tinha um killCount/loop
     // globais (Mapa 1 ciclos 1-3, Mapa 2 ciclos 4-6, Mapa 3 ciclo 7+), sem
     // conceito de Dungeon escolhida. Migra esse progresso linear pra dentro
@@ -106,7 +117,7 @@ const SaveModule = {
       const cycleLen = CONFIG.cycleLength;
       const cap = 3 * cycleLen; // 30 — tamanho de Slime e de Goblin no sistema antigo
       const oldKill = loaded.killCount || 0;
-      const dungeons = { slimes:{killCount:0}, goblins:{killCount:0}, wilds:{killCount:0} };
+      const dungeons = { slimes:{killCount:0, pendingSlot:null}, goblins:{killCount:0, pendingSlot:null}, wilds:{killCount:0, pendingSlot:null} };
       let current;
       if(oldKill <= cap){
         dungeons.slimes.killCount = oldKill; current = 'slimes';

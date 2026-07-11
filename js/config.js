@@ -44,7 +44,7 @@ const CONFIG = {
 // (arredondada pra cima), então nunca fica fora de ordem com a força real
 // da criatura (1 → 2 → 3 → 4 → 6 → 8).
 const MONSTER_TYPES = [
-  // --- Mapa 1: Pântano dos Slimes (ciclos 1-3) ---
+  // --- Mapa 1: Pântano dos Slimes (ciclos 1-5) ---
   { key:'slime',              name:'SLIME',               image:'assets/sprites/slime.png',              frameW:128, frameH:128, dropQty:1,  blinkCapable:true },
   { key:'slimeBlue',          name:'SLIME AZUL',          image:'assets/sprites/slime_blue.png',          frameW:128, frameH:128, spriteScale:0.7, hpMult:1.5,  dropQty:2,  blinkCapable:true },
   { key:'slimeGreenWarrior',  name:'SLIME VERDE GUERREIRO', image:'assets/sprites/slime_green_warrior.png', frameW:128, frameH:128, hpMult:2.25, dropQty:3,  blinkCapable:true },
@@ -68,23 +68,63 @@ const MONSTER_TYPES = [
 
 // Dungeons: cada uma tem seu próprio progresso (state.dungeons[key].killCount,
 // contado do zero, independente das outras) — o jogador escolhe em qual
-// entrar na tela da cidade (ver DungeonModule). Cada ciclo (CONFIG.cycleLength
-// monstros) usa a ordem de `cycles[cicloLocal]`; o 10º monstro do ciclo
-// (índice 9) é sempre o chefe (ver MonsterModule.spawn). Dungeons sem
-// `cycles` definidos (ex: wilds) usam `order` e repetem pra sempre.
+// entrar na tela da cidade (ver DungeonModule). Cada ciclo tem 10 POSIÇÕES
+// (ver `cycles[cicloLocal]`); a última posição (índice 9) é sempre o chefe.
+// Toda posição normal é 1 monstro só (string); posições de monstro duplo
+// usam `{ pairChoices:[...] }` e valem 2 monstros mortos, mas continuam
+// contando como 1 posição só (ver MonsterModule.killsPerCycle/resolveSlot).
+// Dungeons sem `cycles` definidos (ex: wilds) usam `order` e repetem pra sempre.
 //
 // `unlockRequirement` (opcional): quantas mortes a Dungeon indicada precisa
 // ter pra esta desbloquear. Sem isso, a Dungeon já começa desbloqueada.
 // `dropsItem` (opcional): se definido, monstros dessa Dungeon dão item em vez
 // de ouro (ver MonsterModule.onDeath e ITEM_DEFS).
 const MAPS = {
+  // Cada posição do ciclo é normalmente 1 monstro só (string = chave em
+  // MONSTER_TYPES). Posições de monstro DUPLO usam
+  // `{ pairChoices:[[a,b], [c,d], ...] }`: ao chegar nessa posição, sorteia
+  // UMA dessas duplas (ver MonsterModule.resolveSlot/pendingSlot) e os 2
+  // monstros aparecem em sequência — matou o 1º, o 2º já spawna. `strong:true`
+  // marca a dupla "mais forte" (posição 9 de cada ciclo, ganha hpMult extra —
+  // ver MonsterModule.hpFor). A posição 10 é sempre o chefe (1 monstro só).
   slimes: {
     name: 'Dungeon do Pântano dos Slimes',
     dropsItem: 'slimeGel',
     cycles: {
-      1: ['slime','slime','slimeBlue','slime','slimeBlue','slime','slimeBlue','slime','slimeBlue','slimeGreenWarrior'],
-      2: ['slimeBlue','slimeRed','slime','slimeBlue','slimeRed','slimeBlue','slimeRed','slimeBlue','slimeRed','slimeBlueBarbarian'],
-      3: ['slimeRed','slimeBlueBarbarian','slimeRed','slimeGreenWarrior','slimeRed','slimeBlueBarbarian','slimeRed','slimeGreenWarrior','slimeRed','slimeRedKing'],
+      // Ciclo 1: só slime verde, do início ao fim.
+      1: ['slime','slime','slime','slime',
+          { pairChoices:[['slime','slime']] },
+          'slime','slime','slime',
+          { pairChoices:[['slime','slime']], strong:true },
+          'slimeGreenWarrior'],
+      // Ciclo 2: começa verde, o azul entra na posição 4 e domina o resto.
+      2: ['slime','slime','slime',
+          'slimeBlue',
+          { pairChoices:[['slime','slime'], ['slime','slimeBlue']] },
+          'slimeBlue','slimeBlue','slimeBlue',
+          { pairChoices:[['slimeBlue','slimeBlue']], strong:true },
+          'slimeBlueBarbarian'],
+      // Ciclo 3: 3 cores — verde, depois azul, depois vermelho dominando o resto.
+      3: ['slime','slime',
+          'slimeBlue','slimeBlue',
+          { pairChoices:[['slime','slime'], ['slime','slimeBlue']] },
+          'slimeRed','slimeRed','slimeRed',
+          { pairChoices:[['slimeRed','slimeRed']], strong:true },
+          'slimeRedKing'],
+      // Ciclo 4: mesmo padrão do Ciclo 3 (a dificuldade já sobe sozinha pelo
+      // HP crescente por kill — não precisa de uma composição nova).
+      4: ['slime','slime',
+          'slimeBlue','slimeBlue',
+          { pairChoices:[['slime','slime'], ['slime','slimeBlue']] },
+          'slimeRed','slimeRed','slimeRed',
+          { pairChoices:[['slimeRed','slimeRed']], strong:true },
+          'slimeRedKing'],
+      // Ciclo 5: só slime vermelho, do início ao fim (espelha o Ciclo 1).
+      5: ['slimeRed','slimeRed','slimeRed','slimeRed',
+          { pairChoices:[['slimeRed','slimeRed']] },
+          'slimeRed','slimeRed','slimeRed',
+          { pairChoices:[['slimeRed','slimeRed']], strong:true },
+          'slimeRedKing'],
     }
   },
   goblins: {
@@ -106,17 +146,18 @@ const MAPS = {
 // Itens (drop alternativo ao ouro — ver campo `dropsItem` em MAPS). Simples
 // por enquanto: sem raridade, só um preço fixo de venda na Loja da cidade.
 const ITEM_DEFS = [
-  { key:'slimeGel', name:'Geleia de Slime', icon:'🧪', sellPrice:1 },
+  { key:'slimeGel', name:'Geleia de Slime', icon:'item-slimegel', sellPrice:1 },
 ];
 
-// Armas iniciais, escolhidas uma única vez na conversa com o Clérigo (ver
-// OnboardingModule) — todas dão o mesmo bônus fixo por enquanto (puramente
-// cosmético qual o jogador escolhe); no futuro cada uma ganha propriedades
-// próprias. `state.weapons[key]` é 0 ou 1 (só uma é escolhida hoje).
+// Armas — a 1ª é escolhida de graça na conversa com o Clérigo (ver
+// OnboardingModule); as outras duas ficam à venda no Ferreiro por
+// `buyCost` ouro (ver UI.renderFerreiroWeapons). Todas dão o mesmo bônus
+// fixo por enquanto (puramente cosmético qual o jogador tem); no futuro
+// cada uma ganha propriedades próprias. `state.weapons[key]` é 0 ou 1.
 const WEAPON_DEFS = [
-  { key:'swordSimple', name:'Espada Simples', icon:'🗡️', clickDamageBonus:1 },
-  { key:'bowArrow',    name:'Arco e Flecha',  icon:'🏹', clickDamageBonus:1 },
-  { key:'axe',         name:'Machado',        icon:'🪓', clickDamageBonus:1 },
+  { key:'swordSimple', name:'Espada Simples', icon:'weapon-sword', clickDamageBonus:1, buyCost:500 },
+  { key:'bowArrow',    name:'Arco e Flecha',  icon:'weapon-bow', clickDamageBonus:1, buyCost:500 },
+  { key:'axe',         name:'Machado',        icon:'weapon-axe', clickDamageBonus:1, buyCost:500 },
 ];
 
 // Missões dadas por NPCs da cidade (ver QuestModule) — entregar `itemQty`
@@ -149,78 +190,51 @@ const MINER_DEFS = [
   { key:'crystalGolem', name:'Golem de Cristal',   desc:'+250 ouro/seg', baseCost:60000, costGrowth:1.35, goldPerSec:250 },
 ];
 
-// Ordem aqui é só organizacional — quem manda na ordem de exibição da loja é
-// a PROGRESSION_CHAIN (ver abaixo). Mesmo assim, mantenha as duas em sincronia
-// pra não confundir quem estiver lendo o arquivo.
+// Árvore de habilidades de BATALHA (Academia de Combate) — reformulada:
+// 4 nós só, cada um com nível máximo 5, focados 100% em combate (sem ouro
+// nem sinergia de DPS, que saíram da árvore por enquanto). Os dois primeiros
+// bônus são flat (dano por clique fixo); os dois últimos são percentuais
+// (multiplicam em cima do que já foi acumulado).
 const UPGRADE_DEFS = [
-  { key:'clickDmg1', name:'Lâmina Afiada',      desc:'+1 dano por clique',    baseCost:15,      costGrowth:1.15, apply:s=>s.clickDamageFlat+=1,    maxLevel:20 },
-  { key:'clickDmg2', name:'Punho de Ferro',     desc:'+5 dano por clique',    baseCost:300,     costGrowth:1.15, apply:s=>s.clickDamageFlat+=5,    maxLevel:20 },
-  { key:'critChance',name:'Olho Certeiro',      desc:'+3% chance de crítico', baseCost:600,     costGrowth:1.15, apply:s=>s.critChance=Math.min(0.75,s.critChance+0.03), maxLevel:15 },
-  { key:'clickDmg3', name:'Fúria Berserker',    desc:'+25 dano por clique',   baseCost:20000,   costGrowth:1.15, apply:s=>s.clickDamageFlat+=25,   maxLevel:20 },
-  { key:'critMult',  name:'Golpe Mortal',       desc:'+0.5x multiplicador de crítico', baseCost:2000, costGrowth:1.15, apply:s=>s.critMult+=0.5, maxLevel:12 },
-  { key:'clickDmg4', name:'Lâmina Encantada',   desc:'+150 dano por clique',  baseCost:80000,   costGrowth:1.15, apply:s=>s.clickDamageFlat+=150,  maxLevel:20 },
-  { key:'goldFind',  name:'Bolsa Encantada',    desc:'+10% de ouro dos monstros', baseCost:6000, costGrowth:1.15, apply:s=>s.goldMult+=0.10, maxLevel:20 },
-  { key:'clickDmg5', name:'Punho Divino',       desc:'+1000 dano por clique', baseCost:400000,  costGrowth:1.15, apply:s=>s.clickDamageFlat+=1000, maxLevel:20 },
-  { key:'clickDmg6', name:'Fúria do Caos',      desc:'+6000 dano por clique', baseCost:2000000, costGrowth:1.15, apply:s=>s.clickDamageFlat+=6000, maxLevel:20 },
-  // Sinergia: converte uma fração do dano por clique em DPS extra (somado
-  // depois do multiplicador de tropas). Bônus moderado — até 40% no nível
-  // máximo (20 níveis x 2%), pra não substituir tropas/mineração como fonte
-  // principal de DPS, só complementar quem investiu em dano por clique.
-  { key:'dpsSynergy',name:'Ressonância de Combate', desc:'DPS ganha +2% do dano por clique', baseCost:8000000, costGrowth:1.18, apply:s=>s.dpsSynergyRatio+=0.02, maxLevel:20 },
+  { key:'battleClickDmg',     name:'Fúria do Guerreiro', desc:'+5 dano por clique',        baseCost:20,    costGrowth:1.4, apply:s=>s.clickDamageFlat+=5,     maxLevel:5 },
+  { key:'battleCritChance',   name:'Olho Certeiro',      desc:'+3% chance de crítico',      baseCost:300,   costGrowth:1.5, apply:s=>s.critChance=Math.min(0.75,s.critChance+0.03), maxLevel:5 },
+  { key:'battleDmgPercent',   name:'Força Bruta',        desc:'+5% de dano por clique',     baseCost:3000,  costGrowth:1.6, apply:s=>s.clickDamagePercent+=0.05, maxLevel:5 },
+  { key:'battleCritDmgPercent', name:'Golpe Devastador', desc:'+10% de dano crítico',       baseCost:30000, costGrowth:1.7, apply:s=>s.critDamagePercent+=0.10, maxLevel:5 },
 ];
 
-// Corrente única de progressão (upgrades + tropas intercalados). Cada item só
-// desbloqueia depois que o ANTERIOR na corrente atinge UNLOCK_REQUIREMENT
-// níveis (upgrade) ou unidades compradas (tropa). Como a 3ª upgrade
-// (critChance) só desbloqueia depois que as 2 primeiras já passaram desse
-// nível, "recruit" (a 1ª tropa) só fica disponível depois de 3 upgrades
-// conquistados — exatamente a regra pedida. Os tiers extras de dano por
-// clique (clickDmg3-6) ficam intercalados mais adiante na corrente.
+// Corrente de progressão só entre upgrades agora — tropas (Guilda) não
+// dependem mais disso, ficam liberadas só por ouro (ver TroopsModule/
+// UI.renderTroopList). Cada upgrade só desbloqueia depois que o ANTERIOR
+// atinge UNLOCK_REQUIREMENT níveis — como maxLevel também é 5 em todos,
+// isso significa "maxar o anterior libera o próximo".
 const UNLOCK_REQUIREMENT = 5;
 const PROGRESSION_CHAIN = [
-  { type:'upgrade', key:'clickDmg1' },
-  { type:'upgrade', key:'clickDmg2' },
-  { type:'upgrade', key:'critChance' },
-  { type:'troop',   key:'recruit' },
-  { type:'upgrade', key:'clickDmg3' },
-  { type:'upgrade', key:'critMult' },
-  { type:'troop',   key:'archer' },
-  { type:'upgrade', key:'clickDmg4' },
-  { type:'upgrade', key:'goldFind' },
-  { type:'troop',   key:'mage' },
-  { type:'upgrade', key:'clickDmg5' },
-  { type:'troop',   key:'catapult' },
-  { type:'upgrade', key:'clickDmg6' },
-  { type:'troop',   key:'dragon' },
-  { type:'upgrade', key:'dpsSynergy' },
+  { type:'upgrade', key:'battleClickDmg' },
+  { type:'upgrade', key:'battleCritChance' },
+  { type:'upgrade', key:'battleDmgPercent' },
+  { type:'upgrade', key:'battleCritDmgPercent' },
 ];
 
-// Layout visual da árvore de Upgrades (aba "UPGRADES"). Puramente
-// apresentacional — não afeta a lógica de desbloqueio (isso é sempre
-// PROGRESSION_CHAIN). hub = círculo central; cada branch é uma lista
-// ordenada de nós (do centro pra fora) com posição em % do container
-// .tree-wrap. Pra adicionar um upgrade novo numa branch existente, só
-// acrescente um item em `nodes`; pra criar uma branch nova, copie o padrão.
+// Layout visual da árvore de Upgrades (Academia de Combate) — círculo com 4
+// ramificações partindo do hub central, uma pra cada direção cardeal.
+// Puramente apresentacional — não afeta a lógica de desbloqueio (isso é
+// sempre PROGRESSION_CHAIN). Pra adicionar um upgrade novo numa branch
+// existente, só acrescente um item em `nodes` (mais afastado do hub); pra
+// criar uma branch nova, copie o padrão.
 const UPGRADE_TREE = {
-  hub: { x:50, y:52 },
+  hub: { x:50, y:50 },
   branches: [
     { label:'Dano por Clique', color:'#e8974a', nodes:[
-      { key:'clickDmg1',  x:50,   y:42 },
-      { key:'clickDmg2',  x:37,   y:35.7 },
-      { key:'clickDmg3',  x:63,   y:29.3 },
-      { key:'clickDmg4',  x:37,   y:23 },
-      { key:'clickDmg5',  x:63,   y:16.7 },
-      { key:'clickDmg6',  x:37,   y:10.3 },
-      { key:'dpsSynergy', x:63,   y:4 },
+      { key:'battleClickDmg', x:50, y:15 },
     ]},
     { label:'Crítico', color:'#4fd1c5', nodes:[
-      { key:'critChance', x:80, y:52 },
+      { key:'battleCritChance', x:83, y:50 },
     ]},
-    { label:'Dano Crítico', color:'#c9432f', nodes:[
-      { key:'critMult', x:50, y:84 },
+    { label:'Dano %', color:'#c9432f', nodes:[
+      { key:'battleDmgPercent', x:50, y:85 },
     ]},
-    { label:'Ouro', color:'#ffd54a', nodes:[
-      { key:'goldFind', x:20, y:52 },
+    { label:'Dano Crítico %', color:'#ffd54a', nodes:[
+      { key:'battleCritDmgPercent', x:17, y:50 },
     ]},
   ]
 };

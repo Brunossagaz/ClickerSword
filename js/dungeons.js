@@ -12,9 +12,10 @@ const DungeonModule = {
   progressLabel(key){
     // Sem "/total" fixo: todo mundo dungeon é infinita na prática (o padrão
     // de monstros repete depois do último ciclo definido, só o HP continua
-    // subindo — ver MonsterModule.typeFor), então o ciclo só cresce sempre.
+    // subindo — ver MonsterModule.spawn), então o ciclo só cresce sempre.
     const d = state.dungeons[key];
-    const cycleNum = Math.floor(d.killCount / CONFIG.cycleLength) + 1;
+    const kpc = MonsterModule.killsPerCycleFor(key);
+    const cycleNum = Math.floor(d.killCount / kpc) + 1;
     return `Ciclo ${cycleNum}`;
   },
   enter(key){

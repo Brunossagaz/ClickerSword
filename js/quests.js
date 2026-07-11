@@ -48,7 +48,7 @@ const QuestModule = {
     const have = Math.min(state.inventory[def.itemKey], def.itemQty);
     const canDeliver = this.canDeliver('slimeGelDelivery');
     el.innerHTML = `
-      <div class="quest-banner-text">🔧 Encomenda do Creiton — ${itemDef.icon} ${itemDef.name}: ${have}/${def.itemQty}</div>
+      <div class="quest-banner-text">Encomenda do Creiton — <div class="icon icon-${itemDef.icon}"></div> ${itemDef.name}: ${have}/${def.itemQty}</div>
       <button class="buy-btn" id="questDeliverBtn" ${canDeliver ? '' : 'disabled'}>Entregar</button>`;
     if(canDeliver){
       document.getElementById('questDeliverBtn').addEventListener('click', () => this.deliver('slimeGelDelivery'));

@@ -15,7 +15,21 @@ const UI = {
     document.getElementById('resetBtn').addEventListener('click', ()=>{
       if(confirm('Tem certeza que deseja apagar esse save permanentemente?')) SaveModule.reset();
     });
-    document.getElementById('leaveDungeonBtn').addEventListener('click', ()=>DungeonModule.leaveToCity());
+    // Sair no meio de uma luta (monstro ainda vivo) custa o progresso do
+    // ciclo atual — pergunta antes (modal próprio, não confirm() nativo do
+    // navegador), e se confirmar volta pro monstro 1 do ciclo na próxima vez
+    // que entrar (ver MonsterModule.abandonCycle).
+    document.getElementById('leaveDungeonBtn').addEventListener('click', ()=>{
+      document.getElementById('leaveConfirmModal').classList.add('open');
+    });
+    document.getElementById('leaveConfirmYesBtn').addEventListener('click', ()=>{
+      document.getElementById('leaveConfirmModal').classList.remove('open');
+      MonsterModule.abandonCycle();
+      DungeonModule.leaveToCity();
+    });
+    document.getElementById('leaveConfirmNoBtn').addEventListener('click', ()=>{
+      document.getElementById('leaveConfirmModal').classList.remove('open');
+    });
 
     document.getElementById('cycleContinueBtn').addEventListener('click', ()=>{
       document.getElementById('cycleCompleteModal').classList.remove('open');
@@ -47,6 +61,7 @@ const UI = {
     this.wireBuildingModal('openCavernaBtn', 'cavernaModal', 'cavernaCloseBtn');
     this.wireBuildingModal('openDungeonBtn', 'dungeonModal', 'dungeonCloseBtn');
     this.wireBuildingModal('openInventarioBtn', 'inventarioModal', 'inventarioCloseBtn');
+    this.wireBuildingModal('openAcademiaBtn', 'academiaModal', 'academiaCloseBtn');
     this.initModalTabs('inventarioModal');
 
     // Igreja é especial: na 1ª vez (personagem novo, sem arma escolhida e
@@ -111,7 +126,7 @@ const UI = {
   showDungeonView(){ this.showScreen('view-dungeon'); },
   renderPlayerName(){
     const el = document.getElementById('playerNameTag');
-    el.textContent = state.playerName ? `🧙 Bem-vindo, ${state.playerName}` : '';
+    el.textContent = state.playerName ? `Bem-vindo, ${state.playerName}` : '';
     el.style.display = state.playerName ? '' : 'none';
   },
   // Trava/destrava os prédios da cidade (botão `disabled` nativo já impede o
@@ -119,7 +134,8 @@ const UI = {
   renderCityBuildingLocks(){
     const buildingByBtn = {
       openFerreiroBtn:'ferreiro', openGuildaBtn:'guilda', openCavernaBtn:'caverna',
-      openLojaBtn:'loja', openIgrejaBtn:'igreja', openDungeonBtn:'dungeon', openInventarioBtn:'inventario'
+      openLojaBtn:'loja', openIgrejaBtn:'igreja', openDungeonBtn:'dungeon', openInventarioBtn:'inventario',
+      openAcademiaBtn:'academia'
     };
     for(const btnId in buildingByBtn){
       document.getElementById(btnId).disabled = !OnboardingModule.isBuildingUnlocked(buildingByBtn[btnId]);
@@ -130,8 +146,9 @@ const UI = {
   // jogador escolher continuar pro próximo ciclo ou voltar pra cidade.
   showCycleCompleteModal(){
     const d = state.dungeons[state.currentDungeon];
-    const justFinishedCycle = Math.floor((d.killCount - 1) / CONFIG.cycleLength) + 1;
-    const nextCycle = Math.floor(d.killCount / CONFIG.cycleLength) + 1;
+    const kpc = MonsterModule.killsPerCycleFor(state.currentDungeon);
+    const justFinishedCycle = Math.floor((d.killCount - 1) / kpc) + 1;
+    const nextCycle = Math.floor(d.killCount / kpc) + 1;
     document.getElementById('cycleCompleteText').textContent =
       `Você derrotou o chefe do Ciclo ${justFinishedCycle} de ${MAPS[state.currentDungeon].name}! Quer continuar para o Ciclo ${nextCycle}?`;
     document.getElementById('cycleCompleteModal').classList.add('open');
@@ -141,7 +158,8 @@ const UI = {
   // voltar pra cidade, em vez de resetar sozinho.
   showTimeUpModal(){
     const d = state.dungeons[state.currentDungeon];
-    const cycleNum = Math.floor(d.killCount / CONFIG.cycleLength) + 1;
+    const kpc = MonsterModule.killsPerCycleFor(state.currentDungeon);
+    const cycleNum = Math.floor(d.killCount / kpc) + 1;
     document.getElementById('timeUpText').textContent =
       `Tempo esgotado! Você não derrotou o monstro a tempo. Quer tentar de novo o Ciclo ${cycleNum} de ${MAPS[state.currentDungeon].name} ou voltar pra cidade?`;
     document.getElementById('timeUpModal').classList.add('open');
@@ -216,10 +234,15 @@ const UI = {
     if(!MonsterModule.current) return; // sem monstro ativo (jogador está na cidade)
     const t = MonsterModule.current.type;
     const d = state.dungeons[state.currentDungeon];
-    const posInCycle = d.killCount % CONFIG.cycleLength;
-    const loop = Math.floor(d.killCount / CONFIG.cycleLength) + 1;
-    document.getElementById('monsterName').textContent = (MonsterModule.current.isBoss ? '★ CHEFE: ' : '') + t.name;
-    document.getElementById('tierLabel').textContent = `${MAPS[state.currentDungeon].name} · CICLO ${loop} · MONSTRO ${posInCycle+1}/${CONFIG.cycleLength} (ABATIDOS NO TOTAL: ${state.totalKillsAll})`;
+    const kpc = MonsterModule.killsPerCycleFor(state.currentDungeon);
+    const loop = Math.floor(d.killCount / kpc) + 1;
+    // posição no ciclo é por SLOT (1-10), não por monstro morto — uma posição
+    // dupla (ver MAPS.slimes) vale 1 posição só, mesmo consumindo 2 mortes
+    const slotPos = MonsterModule.current.slotIdx + 1;
+    const totalSlots = MonsterModule.current.totalSlots;
+    const monsterNameEl = document.getElementById('monsterName');
+    monsterNameEl.innerHTML = (MonsterModule.current.isBoss ? '<div class="icon icon-boss"></div>CHEFE: ' : '') + t.name;
+    document.getElementById('tierLabel').textContent = `${MAPS[state.currentDungeon].name} · CICLO ${loop} · MONSTRO ${slotPos}/${totalSlots} (ABATIDOS NO TOTAL: ${state.totalKillsAll})`;
   },
   renderHpBar(){
     if(!MonsterModule.current) return;
@@ -262,7 +285,7 @@ const UI = {
         row.className = 'shop-row locked';
         row.innerHTML = `
           <div class="shop-info">
-            <div class="name">🔒 ${map.name}</div>
+            <div class="name"><div class="icon icon-lock"></div>${map.name}</div>
             <div class="desc">Requer ${req.kills} mortes na ${MAPS[req.dungeon].name}</div>
           </div>`;
         el.appendChild(row);
@@ -287,10 +310,10 @@ const UI = {
     const hasAny = qty > 0;
     const row = document.createElement('div');
     row.className = 'shop-row'+(hasAny?'':' disabled');
-    const sellBtnHtml = opts.showSellButton ? `<button class="buy-btn" ${hasAny?'':'disabled'}>💰 Vender tudo</button>` : '';
+    const sellBtnHtml = opts.showSellButton ? `<button class="buy-btn" ${hasAny?'':'disabled'}>Vender tudo</button>` : '';
     row.innerHTML = `
       <div class="shop-info">
-        <div class="name">${def.icon} ${def.name}</div>
+        <div class="name"><div class="icon icon-${def.icon}"></div>${def.name}</div>
         <div class="desc">${opts.showSellButton ? 'Vende por '+def.sellPrice+' ouro cada' : ''}</div>
         <div class="owned">Possui: ${qty}</div>
       </div>${sellBtnHtml}`;
@@ -335,9 +358,47 @@ const UI = {
       row.className = 'shop-row';
       row.innerHTML = `
         <div class="shop-info">
-          <div class="name">${def.icon} ${def.name}</div>
+          <div class="name"><div class="icon icon-${def.icon}"></div>${def.name}</div>
           <div class="desc">+${def.clickDamageBonus} dano por clique</div>
         </div>`;
+      el.appendChild(row);
+    }
+  },
+  // Loja de armas do Ferreiro — vende as armas que o jogador ainda não tem
+  // (a 1ª já veio de graça do Clérigo). Comprar aplica o mesmo bônus de
+  // dano por clique de escolher a arma no onboarding.
+  renderFerreiroWeapons(){
+    const el = document.getElementById('ferreiroWeaponList');
+    el.innerHTML = '';
+    for(const def of WEAPON_DEFS){
+      const owned = state.weapons[def.key] > 0;
+      const canAfford = state.gold >= def.buyCost;
+      const row = document.createElement('div');
+      if(owned){
+        row.className = 'shop-row';
+        row.innerHTML = `
+          <div class="shop-info">
+            <div class="name"><div class="icon icon-${def.icon}"></div>${def.name}</div>
+            <div class="desc">+${def.clickDamageBonus} dano por clique</div>
+            <div class="owned">Equipada</div>
+          </div>`;
+      } else {
+        row.className = 'shop-row'+(canAfford?'':' disabled');
+        row.innerHTML = `
+          <div class="shop-info">
+            <div class="name"><div class="icon icon-${def.icon}"></div>${def.name}</div>
+            <div class="desc">+${def.clickDamageBonus} dano por clique</div>
+          </div>
+          <button class="buy-btn" ${canAfford?'':'disabled'}><div class="icon icon-gold"></div> ${UI.fmt(def.buyCost)}</button>`;
+        if(canAfford){
+          row.querySelector('button').addEventListener('click', ()=>{
+            state.gold -= def.buyCost;
+            state.weapons[def.key] = 1;
+            state.clickDamageFlat += def.clickDamageBonus;
+            UI.renderAll();
+          });
+        }
+      }
       el.appendChild(row);
     }
   },
@@ -356,29 +417,19 @@ const UI = {
           <div class="desc">${def.desc} cada</div>
           <div class="owned">Possui: ${owned}</div>
         </div>
-        <button class="buy-btn" ${canAfford?'':'disabled'}>💰 ${UI.fmt(cost)}</button>`;
+        <button class="buy-btn" ${canAfford?'':'disabled'}><div class="icon icon-gold"></div> ${UI.fmt(cost)}</button>`;
       row.querySelector('button').addEventListener('click', ()=>MiningModule.buy(def.key));
       el.appendChild(row);
     }
   },
+  // Tropas não dependem mais da árvore de upgrades (Guilda vai ganhar seu
+  // próprio conceito depois) — liberadas só por ouro, mesmo padrão da
+  // Caverna (ver renderMinerList).
   renderTroopList(){
     const el = document.getElementById('troopList');
     el.innerHTML = '';
-    // ordem de exibição vem da PROGRESSION_CHAIN (não de TROOP_DEFS), pra
-    // sempre bater com a ordem real de desbloqueio — fonte única de verdade
-    const orderedDefs = PROGRESSION_CHAIN.filter(e=>e.type==='troop').map(e=>TROOP_DEFS.find(t=>t.key===e.key));
-    for(const def of orderedDefs){
+    for(const def of TROOP_DEFS){
       const row = document.createElement('div');
-      if(!ProgressionModule.isUnlocked('troop', def.key)){
-        row.className = 'shop-row locked';
-        row.innerHTML = `
-          <div class="shop-info">
-            <div class="name">🔒 ${def.name}</div>
-            <div class="desc">${ProgressionModule.lockLabel('troop', def.key)}</div>
-          </div>`;
-        el.appendChild(row);
-        continue;
-      }
       const owned = state.troops[def.key];
       const cost = TroopsModule.costFor(def);
       const canAfford = state.gold >= cost;
@@ -389,7 +440,7 @@ const UI = {
           <div class="desc">${def.desc} cada</div>
           <div class="owned">Possui: ${owned}</div>
         </div>
-        <button class="buy-btn" ${canAfford?'':'disabled'}>💰 ${UI.fmt(cost)}</button>`;
+        <button class="buy-btn" ${canAfford?'':'disabled'}><div class="icon icon-gold"></div> ${UI.fmt(cost)}</button>`;
       row.querySelector('button').addEventListener('click', ()=>TroopsModule.buy(def.key));
       el.appendChild(row);
     }
@@ -417,10 +468,19 @@ const UI = {
 
     for(const branch of UPGRADE_TREE.branches){
       // rótulo da branch, um pouco além do último nó (o mais afastado do hub)
-      // — perto do primeiro nó ele colidia com o círculo (fica perto demais do hub)
+      // — perto do nó colide com o círculo. Distância FIXA (não proporcional
+      // à distância hub->nó) porque agora todo nó fica ~mesma distância do
+      // hub (só 1 por branch) — um fator proporcional deixava o rótulo perto
+      // demais do nó (colidindo) ou vazando pra fora do .tree-wrap.
       const outer = branch.nodes[branch.nodes.length-1];
-      const labelX = Math.max(6, Math.min(94, outer.x + (outer.x-hub.x)*0.22));
-      const labelY = Math.max(4, Math.min(96, outer.y + (outer.y-hub.y)*0.22));
+      const dx = outer.x - hub.x, dy = outer.y - hub.y;
+      const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+      const EXTEND = 13; // pontos percentuais além do centro do nó
+      // clamp com mais margem que os nós (12/6) — o rótulo tem largura
+      // própria (até 100px), então precisa de mais respiro da borda do
+      // .tree-wrap pra não cortar o texto, mesmo já andando pra dentro
+      const labelX = Math.max(12, Math.min(88, outer.x + (dx/dist)*EXTEND));
+      const labelY = Math.max(6, Math.min(94, outer.y + (dy/dist)*EXTEND));
       const label = document.createElement('div');
       label.className = 'tree-branch-label';
       label.style.left = labelX+'%';
@@ -446,8 +506,9 @@ const UI = {
 
         if(!ProgressionModule.isUnlocked('upgrade', node.key)){
           el.classList.add('locked');
-          el.innerHTML = `<div class="node-name">🔒 ${def.name}</div>`;
-          el.title = ProgressionModule.lockLabel('upgrade', node.key);
+          el.innerHTML = `
+            <div class="node-name"><div class="icon icon-lock"></div>${def.name}</div>
+            <div class="node-tooltip">${ProgressionModule.lockLabel('upgrade', node.key)}</div>`;
           nodesEl.appendChild(el);
           continue;
         }
@@ -457,14 +518,17 @@ const UI = {
         const cost = UpgradesModule.costFor(def);
         const canAfford = !maxed && state.gold >= cost;
         if(maxed) el.classList.add('maxed');
-        else if(!canAfford) el.classList.add('disabled');
 
         el.innerHTML = `
           <div class="node-name">${def.name}</div>
           <div class="node-level">${lvl}/${def.maxLevel}</div>
-          <div class="node-cost">${maxed ? 'MÁX' : '💰'+UI.fmt(cost)}</div>`;
-        el.title = def.desc;
-        if(!maxed) el.addEventListener('click', ()=>UpgradesModule.buy(node.key));
+          <div class="node-cost">${maxed ? 'MÁX' : '<div class=\"icon icon-gold\"></div> '+UI.fmt(cost)}</div>
+          ${maxed ? '' : `<button class="node-plus-btn" ${canAfford?'':'disabled'}>+</button>`}
+          <div class="node-tooltip">${def.desc}</div>`;
+        if(!maxed){
+          const plusBtn = el.querySelector('.node-plus-btn');
+          plusBtn.addEventListener('click', (e)=>{ e.stopPropagation(); UpgradesModule.buy(node.key); });
+        }
         nodesEl.appendChild(el);
       }
     }
@@ -506,7 +570,7 @@ const UI = {
           <div class="desc">${def.desc}</div>
           <div class="owned">Nível: ${state.prestige[def.key]}</div>
         </div>
-        <button class="buy-btn" ${canAfford?'':'disabled'}>✦ ${UI.fmt(cost)}</button>`;
+        <button class="buy-btn" ${canAfford?'':'disabled'}><div class="icon icon-essence"></div> ${UI.fmt(cost)}</button>`;
       row.querySelector('button').addEventListener('click', ()=>PrestigeModule.buy(def.key));
       el.appendChild(row);
     }
@@ -522,6 +586,7 @@ const UI = {
     this.renderShop();
     this.renderInventoryBag();
     this.renderWeaponsList();
+    this.renderFerreiroWeapons();
     this.renderCityBuildingLocks();
     QuestModule.renderQuestBanner();
     this.renderUpgradeTree();
@@ -544,7 +609,7 @@ const UI = {
     const div = document.createElement('div');
     div.className = 'float-dmg';
     div.style.color = '#ffd54a';
-    div.textContent = '+'+this.fmt(amount)+' 🪙';
+    div.textContent = '+'+this.fmt(amount)+' ouro';
     div.style.left = '50%';
     div.style.top = '50%';
     stage.appendChild(div);
@@ -555,7 +620,7 @@ const UI = {
     const div = document.createElement('div');
     div.className = 'float-dmg';
     div.style.color = '#ffd54a';
-    div.textContent = '+'+this.fmt(amount)+' 🪙';
+    div.textContent = '+'+this.fmt(amount)+' ouro';
     const rect = stage.getBoundingClientRect();
     const relX = evt && evt.clientX ? (evt.clientX-rect.left) : rect.width/2;
     div.style.left = relX+'px';
@@ -568,7 +633,7 @@ const UI = {
     const div = document.createElement('div');
     div.className = 'float-dmg';
     div.style.color = '#8fe0c8';
-    div.textContent = '+'+qty+' '+itemDef.icon+' '+itemDef.name;
+    div.textContent = '+'+qty+' '+itemDef.name;
     div.style.left = '50%';
     div.style.top = '50%';
     stage.appendChild(div);
@@ -579,7 +644,7 @@ const UI = {
     const div = document.createElement('div');
     div.className = 'float-dmg';
     div.style.color = '#8fe0c8';
-    div.textContent = '+'+qty+' '+itemDef.icon;
+    div.textContent = '+'+qty;
     const rect = stage.getBoundingClientRect();
     const relX = evt && evt.clientX ? (evt.clientX-rect.left) : rect.width/2;
     div.style.left = relX+'px';

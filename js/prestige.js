@@ -43,7 +43,7 @@ const PrestigeModule = {
     MonsterModule.current = null;
     UI.showCityView();
     UI.renderAll();
-    UI.showToast('✨ ASCENSÃO ✨', `Você ganhou ${gained} de Essência! Multiplicadores permanentes aplicados.`);
+    UI.showToast('ASCENSÃO', `Você ganhou ${gained} de Essência! Multiplicadores permanentes aplicados.`);
   },
   costFor(def){
     const lvl = state.prestige[def.key];

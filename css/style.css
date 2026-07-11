@@ -327,7 +327,6 @@
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     text-align:center;
     padding:4px;
-    cursor:pointer;
     transition:transform .12s ease, box-shadow .12s ease;
     z-index:2;
   }
@@ -348,16 +347,53 @@
     color:var(--gold-glow);
     margin-top:2px;
   }
+  .node-plus-btn{
+    margin-top:3px;
+    width:22px; height:22px;
+    border-radius:50%;
+    border:2px solid var(--ember-dim);
+    background:linear-gradient(180deg, var(--ember), var(--ember-dim));
+    color:#1a1208;
+    font-family:'Press Start 2P', monospace;
+    font-size:12px;
+    line-height:1;
+    cursor:pointer;
+    box-shadow:0 2px 0 rgba(0,0,0,0.4);
+  }
+  .node-plus-btn:active{transform:translateY(1px); box-shadow:none;}
+  .node-plus-btn:disabled{
+    background:#4a4458; color:#8a839a; border-color:#3a3550; cursor:not-allowed; box-shadow:none;
+  }
+  /* Tooltip só em CSS (:hover) — mostra o que a habilidade faz, ou o
+     requisito de desbloqueio se ainda estiver trancada */
+  .node-tooltip{
+    position:absolute;
+    bottom:100%;
+    left:50%;
+    transform:translateX(-50%) translateY(-8px);
+    width:150px;
+    background:var(--stone-dark);
+    border:2px solid var(--ember);
+    border-radius:6px;
+    padding:8px 10px;
+    font-family:'VT323', monospace;
+    font-size:14px;
+    line-height:1.3;
+    color:var(--parchment);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .12s ease;
+    z-index:5;
+    box-shadow:0 4px 12px rgba(0,0,0,0.5);
+  }
+  .tree-node:hover .node-tooltip{opacity:1;}
   .tree-node.locked{
-    cursor:not-allowed;
     opacity:0.4;
     border-color:var(--stone);
     background:repeating-linear-gradient(135deg, var(--stone-dark) 0 8px, #1a1522 8px 16px);
   }
   .tree-node.locked:hover{transform:translate(-50%,-50%);}
   .tree-node.locked .node-name{color:var(--parchment-dim);}
-  .tree-node.disabled{opacity:0.55; cursor:not-allowed;}
-  .tree-node.disabled:hover{transform:translate(-50%,-50%);}
   .tree-node.maxed{
     border-color:var(--gold-glow);
     box-shadow:0 0 12px rgba(255,213,74,0.5);
@@ -370,8 +406,12 @@
     font-size:9px;
     letter-spacing:1px;
     text-shadow:1px 1px 0 #000;
-    z-index:2;
-    white-space:nowrap;
+    /* acima dos nós (z-index:2) de propósito — com só 1 nó por branch agora,
+       o rótulo fica perto o bastante do nó pro círculo (pintado depois no
+       DOM) cobrir parte do texto se ficarem no mesmo nível de empilhamento */
+    z-index:3;
+    text-align:center;
+    max-width:100px;
   }
 
   .view-content{display:none;}
@@ -400,7 +440,7 @@
     transition:transform .1s ease;
   }
   .building-card:active{transform:translateY(2px); box-shadow:none;}
-  .building-card .building-icon{font-size:26px;}
+  .building-card .building-icon{width:32px; height:32px;}
   .building-card .building-name{font-size:10px; letter-spacing:0.5px;}
   /* prédio ainda trancado (ver OnboardingModule.isBuildingUnlocked) — o
      atributo `disabled` nativo do <button> já impede o clique */
@@ -411,11 +451,66 @@
     box-shadow:none;
   }
   .building-card:disabled::after{
-    content:'🔒';
+    content:'';
+    background-image:var(--icon-lock);
+    width:14px; height:14px;
     position:absolute;
     top:4px; right:6px;
-    font-size:14px;
   }
+
+  /* ---- Ícones pixel art (ver assets/icons/) ----
+     Cada .icon-* aponta pra um PNG que ainda não existe — até o arquivo ser
+     criado, o espaço fica em branco (sem quebrar layout). Ver lista de
+     ícones pendentes combinada com o usuário. */
+  .icon{
+    display:inline-block;
+    background-size:contain;
+    background-repeat:no-repeat;
+    background-position:center;
+    image-rendering:pixelated;
+    image-rendering:-moz-crisp-edges;
+    vertical-align:middle;
+  }
+  :root{
+    --icon-ferreiro:url('../assets/icons/ferreiro.png');
+    --icon-guilda:url('../assets/icons/guilda.png');
+    --icon-caverna:url('../assets/icons/caverna.png');
+    --icon-loja:url('../assets/icons/loja.png');
+    --icon-igreja:url('../assets/icons/igreja.png');
+    --icon-dungeon:url('../assets/icons/dungeon.png');
+    --icon-inventario:url('../assets/icons/inventario.png');
+    --icon-academia:url('../assets/icons/academia.png');
+    --icon-gear:url('../assets/icons/gear.png');
+    --icon-trophy:url('../assets/icons/trophy.png');
+    --icon-lock:url('../assets/icons/lock.png');
+    --icon-gold:url('../assets/icons/gold.png');
+    --icon-essence:url('../assets/icons/essence.png');
+    --icon-boss:url('../assets/icons/boss.png');
+    --icon-golden:url('../assets/icons/golden-monster.png');
+    --icon-item-slimegel:url('../assets/icons/item-slimegel.png');
+    --icon-weapon-sword:url('../assets/icons/weapon-sword.png');
+    --icon-weapon-bow:url('../assets/icons/weapon-bow.png');
+    --icon-weapon-axe:url('../assets/icons/weapon-axe.png');
+  }
+  .icon-ferreiro{background-image:var(--icon-ferreiro);}
+  .icon-guilda{background-image:var(--icon-guilda);}
+  .icon-caverna{background-image:var(--icon-caverna);}
+  .icon-loja{background-image:var(--icon-loja);}
+  .icon-igreja{background-image:var(--icon-igreja);}
+  .icon-dungeon{background-image:var(--icon-dungeon);}
+  .icon-inventario{background-image:var(--icon-inventario);}
+  .icon-academia{background-image:var(--icon-academia);}
+  .icon-gear{background-image:var(--icon-gear); width:18px; height:18px;}
+  .icon-trophy{background-image:var(--icon-trophy); width:40px; height:40px;}
+  .icon-gold{background-image:var(--icon-gold); width:14px; height:14px;}
+  .icon-essence{background-image:var(--icon-essence); width:14px; height:14px;}
+  .icon-lock{background-image:var(--icon-lock); width:12px; height:12px; margin-right:4px;}
+  .icon-boss{background-image:var(--icon-boss); width:16px; height:16px; margin-right:4px;}
+  .icon-golden{background-image:var(--icon-golden); width:16px; height:16px;}
+  .icon-item-slimegel{background-image:var(--icon-item-slimegel); width:20px; height:20px;}
+  .icon-weapon-sword{background-image:var(--icon-weapon-sword); width:20px; height:20px;}
+  .icon-weapon-bow{background-image:var(--icon-weapon-bow); width:20px; height:20px;}
+  .icon-weapon-axe{background-image:var(--icon-weapon-axe); width:20px; height:20px;}
   /* cores só pra diferenciar cada prédio por enquanto — sprites de verdade
      entram depois */
   .building-ferreiro{background:linear-gradient(180deg, #8a5a2e, #5c3a1c);}
@@ -425,6 +520,7 @@
   .building-igreja{background:linear-gradient(180deg, #7a4fd1, #4a2f8a);}
   .building-dungeon{background:linear-gradient(180deg, #8a3a3a, #5c2323);}
   .building-inventario{background:linear-gradient(180deg, #c9a13f, #8a6a24);}
+  .building-academia{background:linear-gradient(180deg, #4a6a8a, #2a3f5c);}
 
   /* modal mais largo pro Ferreiro — a árvore radial precisa de espaço horizontal */
   .modal-box.modal-wide{max-width:720px;}
@@ -477,7 +573,7 @@
   }
   .weapon-choice-card:hover{ border-color:var(--ember); }
   .weapon-choice-card:active{ transform:translateY(2px); box-shadow:none; }
-  .weapon-choice-card .weapon-icon{ font-size:28px; }
+  .weapon-choice-card .weapon-icon{ width:28px; height:28px; }
   .weapon-choice-card .weapon-name{ font-size:10px; text-align:center; }
   .weapon-choice-card .weapon-desc{ font-family:'VT323', monospace; font-size:13px; color:var(--arcane); }
 

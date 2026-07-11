@@ -3,12 +3,12 @@
    Introdução do Clérigo (1ª vez que clica na Igreja): pede o nome (se ainda
    não tiver), conta a história da dungeon e deixa escolher uma arma inicial.
    Também calcula quais prédios da cidade estão liberados — Igreja/Dungeon/
-   Inventário/Loja são computados aqui a partir de state.weapons/
-   state.totalKillsAll (nunca guardados em flag própria, mesmo padrão de
-   DungeonModule/ProgressionModule); Ferreiro depende da missão do Barnabé
-   (ver QuestModule/state.quests) porque entregar itens é uma ação
+   Inventário/Academia/Loja/Guilda são computados aqui a partir de
+   state.weapons/state.totalKillsAll (nunca guardados em flag própria, mesmo
+   padrão de DungeonModule/ProgressionModule); Ferreiro depende da missão do
+   Barnabé (ver QuestModule/state.quests) porque entregar itens é uma ação
    irreversível, não dá pra computar isso de volta a partir do progresso.
-   Guilda/Caverna ainda não têm gatilho de desbloqueio definido.
+   Caverna ainda não tem gatilho de desbloqueio definido.
 --------------------------------------------------------------------- */
 const OnboardingModule = {
   hasChosenWeapon(){
@@ -25,10 +25,10 @@ const OnboardingModule = {
   },
   isBuildingUnlocked(key){
     if(key === 'igreja') return true;
-    if(key === 'dungeon' || key === 'inventario') return this.hasChosenWeapon() || this.hasFacedDungeon();
-    if(key === 'loja') return this.hasFacedDungeon();
+    if(key === 'dungeon' || key === 'inventario' || key === 'academia') return this.hasChosenWeapon() || this.hasFacedDungeon();
+    if(key === 'loja' || key === 'guilda') return this.hasFacedDungeon();
     if(key === 'ferreiro') return !!state.quests.slimeGelDelivery; // ver QuestModule
-    return false; // guilda/caverna: sem gatilho definido ainda
+    return false; // caverna: sem gatilho definido ainda
   },
 
   openClericIntro(){
@@ -56,7 +56,7 @@ const OnboardingModule = {
       const btn = document.createElement('button');
       btn.className = 'weapon-choice-card';
       btn.innerHTML = `
-        <div class="weapon-icon">${def.icon}</div>
+        <div class="weapon-icon icon icon-${def.icon}"></div>
         <div class="weapon-name">${def.name}</div>
         <div class="weapon-desc">+${def.clickDamageBonus} dano por clique</div>`;
       btn.addEventListener('click', () => this.finishWeaponChoice(def.key));
