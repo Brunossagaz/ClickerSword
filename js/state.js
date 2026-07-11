@@ -13,11 +13,14 @@ function freshState(){
     // Dungeons com posições de monstro duplo (ver MAPS/MonsterModule) — guarda
     // qual par de monstros foi sorteado pra posição atual (e o quanto o 1º já
     // rendeu de item), pra o 2º monstro da dupla usar o MESMO sorteio em vez
-    // de rolar de novo.
+    // de rolar de novo. `maxCycleCompleted` guarda o maior ciclo cujo chefe
+    // já foi derrotado nessa Dungeon (vitalício, não reseta ao abandonar/
+    // tentar de novo) — habilita o seletor de ciclo (ver DungeonModule/
+    // UI.openCyclePicker): só é possível reiniciar em ciclos já concluídos.
     dungeons:{
-      slimes:{killCount:0, pendingSlot:null},
-      goblins:{killCount:0, pendingSlot:null},
-      wilds:{killCount:0, pendingSlot:null}
+      slimes:{killCount:0, pendingSlot:null, maxCycleCompleted:0},
+      goblins:{killCount:0, pendingSlot:null, maxCycleCompleted:0},
+      wilds:{killCount:0, pendingSlot:null, maxCycleCompleted:0}
     },
     totalKillsAll:0,
     monsterHp:0,

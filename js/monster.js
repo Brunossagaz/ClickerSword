@@ -198,6 +198,12 @@ const MonsterModule = {
     state.totalKillsAll += 1; // continua vitalício e global, alimenta a Ascensão
 
     if(wasBoss){
+      // marca esse ciclo como concluído pra sempre (vitalício, não reseta ao
+      // abandonar/tentar de novo) — habilita o seletor de ciclo pra voltar
+      // até aqui depois (ver DungeonModule.startAtCycle/UI.openCyclePicker)
+      const kpc = this.killsPerCycleFor(state.currentDungeon);
+      const justFinishedCycle = Math.floor((d.killCount - 1) / kpc) + 1;
+      d.maxCycleCompleted = Math.max(d.maxCycleCompleted || 0, justFinishedCycle);
       // fim de ciclo: pausa e pergunta se o jogador quer seguir pro próximo
       // ciclo ou voltar pra cidade, em vez de continuar sozinho
       this.current = null;

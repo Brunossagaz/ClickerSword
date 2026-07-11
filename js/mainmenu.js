@@ -31,8 +31,11 @@ const MainMenuModule = {
       box.className = 'slot-box'+(meta.occupied ? '' : ' empty');
       if(meta.occupied){
         const dateStr = new Date(meta.lastSave).toLocaleString('pt-BR');
+        // playerName vem do save (pode ter sido editado à mão ou importado de
+        // um arquivo de terceiros) — nunca interpolar em innerHTML, sempre
+        // via textContent, senão vira XSS armazenado.
         box.innerHTML = `
-          <div class="slot-name">${meta.playerName || '(sem nome)'}</div>
+          <div class="slot-name"></div>
           <div class="slot-date">Último acesso: ${dateStr}</div>
           <div class="slot-actions">
             <button class="menu-btn slot-continue" data-slot="${n}">Continuar</button>
@@ -40,6 +43,7 @@ const MainMenuModule = {
             <button class="small-btn slot-delete" data-slot="${n}">Apagar</button>
             <button class="small-btn slot-newhere" data-slot="${n}">Novo aqui</button>
           </div>`;
+        box.querySelector('.slot-name').textContent = meta.playerName || '(sem nome)';
       } else {
         box.innerHTML = `
           <div class="slot-name">Slot ${n} vazio</div>

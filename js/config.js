@@ -146,7 +146,7 @@ const MAPS = {
 // Itens (drop alternativo ao ouro — ver campo `dropsItem` em MAPS). Simples
 // por enquanto: sem raridade, só um preço fixo de venda na Loja da cidade.
 const ITEM_DEFS = [
-  { key:'slimeGel', name:'Geleia de Slime', icon:'item-slimegel', sellPrice:1 },
+  { key:'slimeGel', name:'Geleia de Slime', icon:'item-slimegel', sellPrice:2 },
 ];
 
 // Armas — a 1ª é escolhida de graça na conversa com o Clérigo (ver
@@ -190,51 +190,37 @@ const MINER_DEFS = [
   { key:'crystalGolem', name:'Golem de Cristal',   desc:'+250 ouro/seg', baseCost:60000, costGrowth:1.35, goldPerSec:250 },
 ];
 
-// Árvore de habilidades de BATALHA (Academia de Combate) — reformulada:
-// 4 nós só, cada um com nível máximo 5, focados 100% em combate (sem ouro
-// nem sinergia de DPS, que saíram da árvore por enquanto). Os dois primeiros
-// bônus são flat (dano por clique fixo); os dois últimos são percentuais
-// (multiplicam em cima do que já foi acumulado).
-const UPGRADE_DEFS = [
-  { key:'battleClickDmg',     name:'Fúria do Guerreiro', desc:'+5 dano por clique',        baseCost:20,    costGrowth:1.4, apply:s=>s.clickDamageFlat+=5,     maxLevel:5 },
-  { key:'battleCritChance',   name:'Olho Certeiro',      desc:'+3% chance de crítico',      baseCost:300,   costGrowth:1.5, apply:s=>s.critChance=Math.min(0.75,s.critChance+0.03), maxLevel:5 },
-  { key:'battleDmgPercent',   name:'Força Bruta',        desc:'+5% de dano por clique',     baseCost:3000,  costGrowth:1.6, apply:s=>s.clickDamagePercent+=0.05, maxLevel:5 },
-  { key:'battleCritDmgPercent', name:'Golpe Devastador', desc:'+10% de dano crítico',       baseCost:30000, costGrowth:1.7, apply:s=>s.critDamagePercent+=0.10, maxLevel:5 },
-];
-
-// Corrente de progressão só entre upgrades agora — tropas (Guilda) não
-// dependem mais disso, ficam liberadas só por ouro (ver TroopsModule/
-// UI.renderTroopList). Cada upgrade só desbloqueia depois que o ANTERIOR
-// atinge UNLOCK_REQUIREMENT níveis — como maxLevel também é 5 em todos,
-// isso significa "maxar o anterior libera o próximo".
+// Árvore de habilidades de BATALHA (Academia de Combate) — 4 nós, nível
+// máximo 5 cada, focados 100% em combate. "Fúria do Guerreiro" é a RAIZ: os
+// outros 3 (`requires:'battleClickDmg'`) só liberam quando ela alcança
+// UNLOCK_REQUIREMENT níveis — ver ProgressionModule.isUnlocked. Custos bem
+// mais baixos que a versão anterior (o começo do jogo estava lento demais
+// pra render ouro suficiente).
 const UNLOCK_REQUIREMENT = 5;
-const PROGRESSION_CHAIN = [
-  { type:'upgrade', key:'battleClickDmg' },
-  { type:'upgrade', key:'battleCritChance' },
-  { type:'upgrade', key:'battleDmgPercent' },
-  { type:'upgrade', key:'battleCritDmgPercent' },
+const UPGRADE_DEFS = [
+  { key:'battleClickDmg',     name:'Fúria do Guerreiro', desc:'+5 dano por clique',        baseCost:10,   costGrowth:1.3,  apply:s=>s.clickDamageFlat+=5,     maxLevel:5, requires:null },
+  { key:'battleCritChance',   name:'Olho Certeiro',      desc:'+3% chance de crítico',      baseCost:60,   costGrowth:1.35, apply:s=>s.critChance=Math.min(0.75,s.critChance+0.03), maxLevel:5, requires:'battleClickDmg' },
+  { key:'battleDmgPercent',   name:'Força Bruta',        desc:'+5% de dano por clique',     baseCost:400,  costGrowth:1.4,  apply:s=>s.clickDamagePercent+=0.05, maxLevel:5, requires:'battleClickDmg' },
+  { key:'battleCritDmgPercent', name:'Golpe Devastador', desc:'+10% de dano crítico',       baseCost:3000, costGrowth:1.45, apply:s=>s.critDamagePercent+=0.10, maxLevel:5, requires:'battleClickDmg' },
 ];
 
-// Layout visual da árvore de Upgrades (Academia de Combate) — círculo com 4
-// ramificações partindo do hub central, uma pra cada direção cardeal.
-// Puramente apresentacional — não afeta a lógica de desbloqueio (isso é
-// sempre PROGRESSION_CHAIN). Pra adicionar um upgrade novo numa branch
-// existente, só acrescente um item em `nodes` (mais afastado do hub); pra
-// criar uma branch nova, copie o padrão.
+// Layout visual da árvore de Upgrades (Academia de Combate): `root` fica no
+// centro (`hub`) e os outros brotam dele feito raiz de verdade (ver
+// UI.renderUpgradeTree — as linhas são curvas, não retas). O desbloqueio
+// real vem de `requires` em UPGRADE_DEFS, não daqui — isto é só o layout.
+// Pra criar uma branch nova, copie o padrão (1 nó por branch).
 const UPGRADE_TREE = {
+  root: 'battleClickDmg',
   hub: { x:50, y:50 },
   branches: [
-    { label:'Dano por Clique', color:'#e8974a', nodes:[
-      { key:'battleClickDmg', x:50, y:15 },
-    ]},
     { label:'Crítico', color:'#4fd1c5', nodes:[
-      { key:'battleCritChance', x:83, y:50 },
+      { key:'battleCritChance', x:50, y:15 },
     ]},
     { label:'Dano %', color:'#c9432f', nodes:[
-      { key:'battleDmgPercent', x:50, y:85 },
+      { key:'battleDmgPercent', x:81, y:80 },
     ]},
     { label:'Dano Crítico %', color:'#ffd54a', nodes:[
-      { key:'battleCritDmgPercent', x:17, y:50 },
+      { key:'battleCritDmgPercent', x:19, y:80 },
     ]},
   ]
 };

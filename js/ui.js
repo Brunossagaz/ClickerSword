@@ -60,6 +60,14 @@ const UI = {
     this.wireBuildingModal('openGuildaBtn', 'guildaModal', 'guildaCloseBtn');
     this.wireBuildingModal('openCavernaBtn', 'cavernaModal', 'cavernaCloseBtn');
     this.wireBuildingModal('openDungeonBtn', 'dungeonModal', 'dungeonCloseBtn');
+    // cyclePickerModal não tem botão que o "abre" fixo na cidade (é aberto
+    // via UI.openCyclePicker, disparado de dentro do dungeonModal) — só
+    // precisa do fechar/clique-fora, igual aos outros modais.
+    {
+      const cyclePickerModal = document.getElementById('cyclePickerModal');
+      document.getElementById('cyclePickerCloseBtn').addEventListener('click', ()=>cyclePickerModal.classList.remove('open'));
+      cyclePickerModal.addEventListener('click', (e)=>{ if(e.target === cyclePickerModal) cyclePickerModal.classList.remove('open'); });
+    }
     this.wireBuildingModal('openInventarioBtn', 'inventarioModal', 'inventarioCloseBtn');
     this.wireBuildingModal('openAcademiaBtn', 'academiaModal', 'academiaCloseBtn');
     this.initModalTabs('inventarioModal');
@@ -243,6 +251,16 @@ const UI = {
     const monsterNameEl = document.getElementById('monsterName');
     monsterNameEl.innerHTML = (MonsterModule.current.isBoss ? '<div class="icon icon-boss"></div>CHEFE: ' : '') + t.name;
     document.getElementById('tierLabel').textContent = `${MAPS[state.currentDungeon].name} · CICLO ${loop} · MONSTRO ${slotPos}/${totalSlots} (ABATIDOS NO TOTAL: ${state.totalKillsAll})`;
+
+    // Posição de monstro duplo (ver MAPS.slimes): destaca bem qual dos 2
+    // monstros da dupla está na tela agora (1/2 ou 2/2).
+    const badge = document.getElementById('doubleMonsterBadge');
+    if(MonsterModule.current.isDouble){
+      badge.textContent = `MONSTRO ${MonsterModule.current.doubleSubKill+1}/2`;
+      badge.style.display = '';
+    } else {
+      badge.style.display = 'none';
+    }
   },
   renderHpBar(){
     if(!MonsterModule.current) return;
@@ -291,16 +309,39 @@ const UI = {
         el.appendChild(row);
         continue;
       }
+      const maxCycleCompleted = state.dungeons[key].maxCycleCompleted || 0;
       row.className = 'shop-row';
       row.innerHTML = `
         <div class="shop-info">
           <div class="name">${map.name}</div>
           <div class="desc">${DungeonModule.progressLabel(key)}${map.dropsItem ? ' · dropa itens em vez de ouro' : ''}</div>
         </div>
-        <button class="buy-btn">ENTRAR</button>`;
-      row.querySelector('button').addEventListener('click', ()=>DungeonModule.enter(key));
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <button class="buy-btn dungeon-enter-btn">ENTRAR</button>
+          ${maxCycleCompleted > 0 ? '<button class="small-btn dungeon-cyclepicker-btn">Escolher ciclo</button>' : ''}
+        </div>`;
+      row.querySelector('.dungeon-enter-btn').addEventListener('click', ()=>DungeonModule.enter(key));
+      const cycleBtn = row.querySelector('.dungeon-cyclepicker-btn');
+      if(cycleBtn) cycleBtn.addEventListener('click', ()=>UI.openCyclePicker(key));
       el.appendChild(row);
     }
+  },
+  // Seletor de ciclo (ver DungeonModule.startAtCycle) — só lista ciclos que
+  // o jogador já concluiu (derrotou o chefe) nessa Dungeon.
+  openCyclePicker(key){
+    const map = MAPS[key];
+    const max = state.dungeons[key].maxCycleCompleted || 0;
+    document.getElementById('cyclePickerTitle').textContent = `ESCOLHER CICLO — ${map.name}`;
+    const el = document.getElementById('cyclePickerList');
+    el.innerHTML = '';
+    for(let n=1; n<=max; n++){
+      const row = document.createElement('div');
+      row.className = 'shop-row';
+      row.innerHTML = `<div class="shop-info"><div class="name">Ciclo ${n}</div></div><button class="buy-btn">INICIAR</button>`;
+      row.querySelector('button').addEventListener('click', ()=>DungeonModule.startAtCycle(key, n));
+      el.appendChild(row);
+    }
+    document.getElementById('cyclePickerModal').classList.add('open');
   },
   // Monta uma linha de item reutilizável — com botão de vender (Loja) ou só
   // visualização (Mochila do Inventário), conforme opts.showSellButton.
@@ -446,9 +487,11 @@ const UI = {
     }
   },
   // Desenha a árvore de upgrades (aba UPGRADES) a partir dos dados puramente
-  // visuais em UPGRADE_TREE (config.js). O desbloqueio continua sendo
-  // decidido só pela PROGRESSION_CHAIN via ProgressionModule — esta função
-  // só posiciona os mesmos nós que renderUpgradeList() desenhava em lista.
+  // visuais em UPGRADE_TREE (config.js): a raiz (`UPGRADE_TREE.root`) fica
+  // no centro (`hub`) e é um nó de verdade (clicável, com nível/custo), não
+  // só um rótulo decorativo — os outros brotam dela por linhas curvas, feito
+  // raiz de planta. O desbloqueio real é decidido por ProgressionModule
+  // (via `requires` em UPGRADE_DEFS) — esta função só posiciona os nós.
   renderUpgradeTree(){
     const linesEl = document.getElementById('upgradeTreeLines');
     const nodesEl = document.getElementById('upgradeTreeNodes');
@@ -456,31 +499,75 @@ const UI = {
     nodesEl.innerHTML = '';
 
     const hub = UPGRADE_TREE.hub;
-    const svgLine = (x1,y1,x2,y2,color)=>{
-      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
-      line.setAttribute('x1', x1+'%'); line.setAttribute('y1', y1+'%');
-      line.setAttribute('x2', x2+'%'); line.setAttribute('y2', y2+'%');
-      line.setAttribute('stroke', color);
-      line.setAttribute('stroke-width', '2');
-      line.setAttribute('opacity', '0.7');
-      linesEl.appendChild(line);
+
+    // Curva suave (Bezier quadrática) em vez de linha reta, pra parecer raiz
+    // de verdade brotando do centro — o SVG usa viewBox 0-100 (ver
+    // index.html), então as mesmas coordenadas dos nós (%) valem aqui.
+    const rootPath = (x1,y1,x2,y2,color)=>{
+      const dx = x2-x1, dy = y2-y1;
+      const len = Math.hypot(dx,dy) || 1;
+      const CURVE = 8; // deslocamento perpendicular do ponto de controle
+      const ctrlX = (x1+x2)/2 + (-dy/len)*CURVE;
+      const ctrlY = (y1+y2)/2 + (dx/len)*CURVE;
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d', `M ${x1} ${y1} Q ${ctrlX} ${ctrlY} ${x2} ${y2}`);
+      path.setAttribute('stroke', color);
+      path.setAttribute('stroke-width', '2');
+      path.setAttribute('fill', 'none');
+      path.setAttribute('opacity', '0.7');
+      linesEl.appendChild(path);
     };
 
+    // Monta um nó (raiz ou branch) — mesmo card pros dois casos, só o da
+    // raiz ganha a classe extra `root-node` (maior, brilho de brasa fixo).
+    const buildNode = (key, x, y, color, isRoot)=>{
+      const def = UPGRADE_DEFS.find(u=>u.key===key);
+      const el = document.createElement('div');
+      el.className = 'tree-node'+(isRoot ? ' root-node' : '');
+      el.style.left = x+'%';
+      el.style.top = y+'%';
+      if(!isRoot) el.style.borderColor = color;
+
+      if(!ProgressionModule.isUnlocked('upgrade', key)){
+        el.classList.add('locked');
+        el.innerHTML = `
+          <div class="node-name"><div class="icon icon-lock"></div>${def.name}</div>
+          <div class="node-tooltip">${ProgressionModule.lockLabel('upgrade', key)}</div>`;
+        nodesEl.appendChild(el);
+        return;
+      }
+
+      const lvl = state.upgrades[key];
+      const maxed = lvl >= def.maxLevel;
+      const cost = UpgradesModule.costFor(def);
+      const canAfford = !maxed && state.gold >= cost;
+      if(maxed) el.classList.add('maxed');
+
+      el.innerHTML = `
+        <div class="node-name">${def.name}</div>
+        <div class="node-level">${lvl}/${def.maxLevel}</div>
+        <div class="node-cost">${maxed ? 'MÁX' : '<div class=\"icon icon-gold\"></div> '+UI.fmt(cost)}</div>
+        ${maxed ? '' : `<button class="node-plus-btn" ${canAfford?'':'disabled'}>+</button>`}
+        <div class="node-tooltip">${def.desc}</div>`;
+      if(!maxed){
+        const plusBtn = el.querySelector('.node-plus-btn');
+        plusBtn.addEventListener('click', (e)=>{ e.stopPropagation(); UpgradesModule.buy(key); });
+      }
+      nodesEl.appendChild(el);
+    };
+
+    // raiz no centro, primeiro (fica embaixo das raízes na ordem do DOM,
+    // mas ambos têm z-index próprio via CSS então não faz diferença visual)
+    buildNode(UPGRADE_TREE.root, hub.x, hub.y, null, true);
+
     for(const branch of UPGRADE_TREE.branches){
-      // rótulo da branch, um pouco além do último nó (o mais afastado do hub)
-      // — perto do nó colide com o círculo. Distância FIXA (não proporcional
-      // à distância hub->nó) porque agora todo nó fica ~mesma distância do
-      // hub (só 1 por branch) — um fator proporcional deixava o rótulo perto
-      // demais do nó (colidindo) ou vazando pra fora do .tree-wrap.
-      const outer = branch.nodes[branch.nodes.length-1];
-      const dx = outer.x - hub.x, dy = outer.y - hub.y;
+      const node = branch.nodes[0];
+      // rótulo da branch, um pouco além do nó (perto colide com o círculo)
+      const dx = node.x - hub.x, dy = node.y - hub.y;
       const dist = Math.sqrt(dx*dx + dy*dy) || 1;
       const EXTEND = 13; // pontos percentuais além do centro do nó
-      // clamp com mais margem que os nós (12/6) — o rótulo tem largura
-      // própria (até 100px), então precisa de mais respiro da borda do
-      // .tree-wrap pra não cortar o texto, mesmo já andando pra dentro
-      const labelX = Math.max(12, Math.min(88, outer.x + (dx/dist)*EXTEND));
-      const labelY = Math.max(6, Math.min(94, outer.y + (dy/dist)*EXTEND));
+      const labelX = Math.max(12, Math.min(88, node.x + (dx/dist)*EXTEND));
+      const labelY = Math.max(6, Math.min(94, node.y + (dy/dist)*EXTEND));
       const label = document.createElement('div');
       label.className = 'tree-branch-label';
       label.style.left = labelX+'%';
@@ -489,48 +576,8 @@ const UI = {
       label.textContent = branch.label;
       nodesEl.appendChild(label);
 
-      // linhas conectando hub -> nó1 -> nó2 -> ...
-      let prev = hub;
-      for(const node of branch.nodes){
-        svgLine(prev.x, prev.y, node.x, node.y, branch.color);
-        prev = node;
-      }
-
-      for(const node of branch.nodes){
-        const def = UPGRADE_DEFS.find(u=>u.key===node.key);
-        const el = document.createElement('div');
-        el.className = 'tree-node';
-        el.style.left = node.x+'%';
-        el.style.top = node.y+'%';
-        el.style.borderColor = branch.color;
-
-        if(!ProgressionModule.isUnlocked('upgrade', node.key)){
-          el.classList.add('locked');
-          el.innerHTML = `
-            <div class="node-name"><div class="icon icon-lock"></div>${def.name}</div>
-            <div class="node-tooltip">${ProgressionModule.lockLabel('upgrade', node.key)}</div>`;
-          nodesEl.appendChild(el);
-          continue;
-        }
-
-        const lvl = state.upgrades[node.key];
-        const maxed = lvl >= def.maxLevel;
-        const cost = UpgradesModule.costFor(def);
-        const canAfford = !maxed && state.gold >= cost;
-        if(maxed) el.classList.add('maxed');
-
-        el.innerHTML = `
-          <div class="node-name">${def.name}</div>
-          <div class="node-level">${lvl}/${def.maxLevel}</div>
-          <div class="node-cost">${maxed ? 'MÁX' : '<div class=\"icon icon-gold\"></div> '+UI.fmt(cost)}</div>
-          ${maxed ? '' : `<button class="node-plus-btn" ${canAfford?'':'disabled'}>+</button>`}
-          <div class="node-tooltip">${def.desc}</div>`;
-        if(!maxed){
-          const plusBtn = el.querySelector('.node-plus-btn');
-          plusBtn.addEventListener('click', (e)=>{ e.stopPropagation(); UpgradesModule.buy(node.key); });
-        }
-        nodesEl.appendChild(el);
-      }
+      rootPath(hub.x, hub.y, node.x, node.y, branch.color);
+      buildNode(node.key, node.x, node.y, branch.color, false);
     }
   },
   renderPrestigeTab(){

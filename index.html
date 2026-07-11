@@ -158,8 +158,7 @@
     <div class="modal-body">
       <div class="panel-title">Academia de Combate — Upgrades de Batalha</div>
       <div class="tree-wrap" id="upgradeTreeWrap">
-        <svg class="tree-lines" id="upgradeTreeLines"></svg>
-        <div class="tree-hub">BATALHA</div>
+        <svg class="tree-lines" id="upgradeTreeLines" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
         <div class="tree-nodes" id="upgradeTreeNodes"></div>
       </div>
     </div>
@@ -237,6 +236,19 @@
     <div class="modal-body">
       <div class="panel-title">Portal de Dungeons</div>
       <div id="dungeonList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="cyclePickerModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="pixel" id="cyclePickerTitle">ESCOLHER CICLO</span>
+      <button class="modal-close" id="cyclePickerCloseBtn">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="footer-note" style="margin:0 0 10px;">Só é possível reiniciar em ciclos que você já concluiu (derrotou o chefe).</div>
+      <div id="cyclePickerList"></div>
     </div>
   </div>
 </div>
@@ -413,6 +425,7 @@
       <button class="small-btn" id="leaveDungeonBtn" style="margin-bottom:10px;">Voltar pra cidade</button>
       <div class="arena-frame">
         <div class="tier-label" id="tierLabel">CICLO I · MONSTRO 1</div>
+        <div class="double-monster-badge" id="doubleMonsterBadge" style="display:none;"></div>
         <div class="monster-name" id="monsterName">SLIME</div>
         <div class="monster-stage" id="monsterStage">
           <canvas id="monsterCanvas" width="128" height="128"></canvas>

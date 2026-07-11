@@ -24,10 +24,27 @@ const DungeonModule = {
     // já que é um .modal-overlay solto no body — sem isso ficaria visível
     // por cima da arena depois de entrar
     document.getElementById('dungeonModal').classList.remove('open');
+    this._enterAt(key, state.dungeons[key].killCount);
+  },
+  // Reinicia a Dungeon no INÍCIO de um ciclo já concluído antes (ver
+  // UI.openCyclePicker) — só é chamado pra ciclos com maxCycleCompleted>=n,
+  // então nunca "pula na frente" de onde o jogador realmente chegou.
+  startAtCycle(key, cycleNum){
+    if(!this.isUnlocked(key)) return;
+    const d = state.dungeons[key];
+    if(cycleNum > (d.maxCycleCompleted || 0)) return;
+    document.getElementById('cyclePickerModal').classList.remove('open');
+    document.getElementById('dungeonModal').classList.remove('open');
+    const kpc = MonsterModule.killsPerCycleFor(key);
+    d.pendingSlot = null; // descarta qualquer dupla em andamento de uma run anterior
+    this._enterAt(key, (cycleNum - 1) * kpc);
+  },
+  _enterAt(key, killCount){
     state.currentDungeon = key;
-    // isFirst só quando a Dungeon nunca foi visitada (killCount=0) — assim
+    state.dungeons[key].killCount = killCount;
+    // isFirst só quando a Dungeon começa exatamente no monstro 1 — assim
     // reentrar no meio de uma luta de chefe não "desliga" o chefe à toa
-    MonsterModule.spawn(state.dungeons[key].killCount === 0);
+    MonsterModule.spawn(killCount === 0);
     UI.showDungeonView();
     UI.renderAll();
   },

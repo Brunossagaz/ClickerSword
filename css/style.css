@@ -132,6 +132,21 @@
     margin-bottom:10px;
     text-shadow:1px 1px 0 #000;
   }
+  /* Posição de monstro duplo (ver MAPS.slimes/MonsterModule) — bem destacado
+     de propósito, pra ficar óbvio que tem um 2º monstro chegando em seguida. */
+  .double-monster-badge{
+    display:inline-block;
+    font-family:'Press Start 2P', monospace;
+    font-size:15px;
+    color:#2a1608;
+    background:linear-gradient(180deg, var(--ember), var(--ember-dim));
+    border:2px solid #fff2e0;
+    border-radius:20px;
+    padding:6px 16px;
+    margin-bottom:8px;
+    box-shadow:0 3px 0 rgba(0,0,0,0.4);
+    animation:pulse 0.7s infinite alternate;
+  }
   .monster-stage{
     position:relative;
     display:inline-block;
@@ -295,24 +310,6 @@
     height:100%;
     pointer-events:none;
   }
-  .tree-hub{
-    position:absolute;
-    left:50%; top:52%;
-    transform:translate(-50%,-50%);
-    width:84px; height:84px;
-    border-radius:50%;
-    background:radial-gradient(circle, #3a2e1a 0%, var(--stone-dark) 100%);
-    border:3px solid var(--ember);
-    display:flex; align-items:center; justify-content:center;
-    flex-direction:column;
-    font-family:'Press Start 2P', monospace;
-    font-size:8px;
-    color:var(--ember);
-    text-align:center;
-    line-height:1.6;
-    box-shadow:0 0 16px rgba(232,151,74,0.35);
-    z-index:2;
-  }
   .tree-nodes{
     position:absolute;
     inset:0;
@@ -331,6 +328,17 @@
     z-index:2;
   }
   .tree-node:hover{transform:translate(-50%,-50%) scale(1.06);}
+  /* Nó raiz (Fúria do Guerreiro) — maior e com o brilho de brasa que antes
+     era só do hub decorativo, pra ficar claro que é o "tronco" de onde os
+     outros brotam. */
+  .tree-node.root-node{
+    width:96px; height:96px;
+    border-color:var(--ember);
+    background:radial-gradient(circle, #3a2e1a 0%, var(--stone-dark) 100%);
+    box-shadow:0 0 16px rgba(232,151,74,0.35);
+    z-index:3;
+  }
+  .tree-node.root-node.locked{ box-shadow:none; }
   .tree-node .node-name{
     font-size:10px;
     line-height:1.15;

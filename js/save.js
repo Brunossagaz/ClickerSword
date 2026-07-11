@@ -87,6 +87,11 @@ const SaveModule = {
   // (arquivo baixado pelo jogador) — mesma lógica de compatibilidade nos dois casos.
   applyLoaded(loaded){
     state = Object.assign(freshState(), loaded);
+    // loaded pode vir de um arquivo de terceiros (upload de save) — nunca
+    // confiar no tipo/tamanho de playerName, mesmo que os pontos de
+    // renderização atuais já usem textContent (defesa em profundidade).
+    if(typeof state.playerName !== 'string') state.playerName = '';
+    state.playerName = state.playerName.slice(0, 20);
     // guard against missing nested keys from older saves (ou de novos
     // upgrades/tropas/mineradores/itens adicionados depois que o save foi criado)
     state.troops = Object.assign(Object.fromEntries(TROOP_DEFS.map(d => [d.key, 0])), loaded.troops||{});
@@ -98,13 +103,22 @@ const SaveModule = {
     state.prestige = Object.assign({pClick:0,pDps:0,pGold:0,pCrit:0}, loaded.prestige||{});
 
     // Merge por-Dungeon (não substitui o objeto inteiro): saves antigos podem
-    // não ter `pendingSlot` (adicionado junto das posições de monstro duplo),
-    // então cada Dungeon recebe o default de freshState() por baixo do que
-    // já tinha salvo.
+    // não ter `pendingSlot`/`maxCycleCompleted` (adicionados depois), então
+    // cada Dungeon recebe o default de freshState() por baixo do que já
+    // tinha salvo.
     const freshDungeons = freshState().dungeons;
     const mergedDungeons = {};
     for(const key of Object.keys(freshDungeons)){
-      mergedDungeons[key] = Object.assign({}, freshDungeons[key], (loaded.dungeons && loaded.dungeons[key]) || {});
+      const loadedD = (loaded.dungeons && loaded.dungeons[key]) || {};
+      mergedDungeons[key] = Object.assign({}, freshDungeons[key], loadedD);
+      // Save de antes do seletor de ciclo: infere quantos ciclos já foram
+      // concluídos a partir do próprio killCount (só chega até ali matando o
+      // chefe de cada ciclo anterior), em vez de zerar o progresso pro
+      // seletor — assim quem já tinha avançado não perde a opção de voltar.
+      if(loadedD.maxCycleCompleted === undefined && mergedDungeons[key].killCount > 0){
+        const kpc = MonsterModule.killsPerCycleFor(key);
+        mergedDungeons[key].maxCycleCompleted = Math.floor(mergedDungeons[key].killCount / kpc);
+      }
     }
     state.dungeons = mergedDungeons;
 
@@ -117,7 +131,11 @@ const SaveModule = {
       const cycleLen = CONFIG.cycleLength;
       const cap = 3 * cycleLen; // 30 — tamanho de Slime e de Goblin no sistema antigo
       const oldKill = loaded.killCount || 0;
-      const dungeons = { slimes:{killCount:0, pendingSlot:null}, goblins:{killCount:0, pendingSlot:null}, wilds:{killCount:0, pendingSlot:null} };
+      const dungeons = {
+        slimes:{killCount:0, pendingSlot:null, maxCycleCompleted:0},
+        goblins:{killCount:0, pendingSlot:null, maxCycleCompleted:0},
+        wilds:{killCount:0, pendingSlot:null, maxCycleCompleted:0}
+      };
       let current;
       if(oldKill <= cap){
         dungeons.slimes.killCount = oldKill; current = 'slimes';
