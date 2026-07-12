@@ -34,7 +34,6 @@ function freshState(){
     clickDamageFlat:0,
     critChance:0,
     critMult:2,
-    goldMult:1,
     dpsSynergyRatio:0, // fração do dano por clique somada como DPS extra (upgrade antigo, removido da árvore — só existe pra quem já tinha comprado)
     // percentuais da Academia de Combate — multiplicam em cima do que já foi
     // acumulado (ver PlayerModule.clickDamage())
@@ -45,8 +44,12 @@ function freshState(){
     troops: Object.fromEntries(TROOP_DEFS.map(d => [d.key, 0])),
     // mineradores da Caverna de Mineração — mesmo motivo, derivado de MINER_DEFS
     miners: Object.fromEntries(MINER_DEFS.map(d => [d.key, 0])),
-    // itens coletados em Dungeons que dropam item em vez de ouro (ex: Slime)
+    // itens coletados matando monstros em Dungeons (ver MONSTER_TYPES.drops)
     inventory: Object.fromEntries(ITEM_DEFS.map(d => [d.key, 0])),
+    // itens de ITEM_DEFS com `equip` já equipados (0 ou 1 por chave) — igual
+    // a `weapons`, mas pra equipamento dropado em vez de comprado no Ferreiro
+    // (ver UI.buildItemRow)
+    equipment: Object.fromEntries(ITEM_DEFS.filter(d => d.equip).map(d => [d.key, 0])),
     // arma inicial escolhida com o Clérigo (0 ou 1 por chave) — também usada
     // pra saber se o onboarding já passou (ver OnboardingModule.hasChosenWeapon)
     weapons: Object.fromEntries(WEAPON_DEFS.map(d => [d.key, 0])),

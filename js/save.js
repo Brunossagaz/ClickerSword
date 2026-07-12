@@ -98,6 +98,7 @@ const SaveModule = {
     state.miners = Object.assign(Object.fromEntries(MINER_DEFS.map(d => [d.key, 0])), loaded.miners||{});
     state.upgrades = Object.assign(Object.fromEntries(UPGRADE_DEFS.map(d => [d.key, 0])), loaded.upgrades||{});
     state.inventory = Object.assign(Object.fromEntries(ITEM_DEFS.map(d => [d.key, 0])), loaded.inventory||{});
+    state.equipment = Object.assign(Object.fromEntries(ITEM_DEFS.filter(d => d.equip).map(d => [d.key, 0])), loaded.equipment||{});
     state.weapons = Object.assign(Object.fromEntries(WEAPON_DEFS.map(d => [d.key, 0])), loaded.weapons||{});
     state.quests = Object.assign(Object.fromEntries(QUEST_DEFS.map(d => [d.key, false])), loaded.quests||{});
     state.prestige = Object.assign({pClick:0,pDps:0,pGold:0,pCrit:0}, loaded.prestige||{});

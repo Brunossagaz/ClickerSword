@@ -3,10 +3,15 @@
 --------------------------------------------------------------------- */
 const UI = {
   canvas:null, ctx:null,
+  // Pan/zoom da árvore de Upgrades (Academia de Combate) — só transform
+  // visual, não mexe nas coordenadas (%) dos nós em UPGRADE_TREE. Resetado
+  // toda vez que o modal é aberto (ver initTreePanZoom).
+  treeView:{ x:0, y:0, scale:1 },
   init(){
     this.canvas = document.getElementById('monsterCanvas');
     this.ctx = this.canvas.getContext('2d');
     this.canvas.parentElement.addEventListener('click', (e)=>PlayerModule.handleClick(e));
+    this.initModalBodyLock();
 
     document.getElementById('ascendBtn').addEventListener('click', ()=>PrestigeModule.ascend());
     document.getElementById('switchCharacterBtn').addEventListener('click', ()=>{
@@ -71,6 +76,27 @@ const UI = {
     this.wireBuildingModal('openInventarioBtn', 'inventarioModal', 'inventarioCloseBtn');
     this.wireBuildingModal('openAcademiaBtn', 'academiaModal', 'academiaCloseBtn');
     this.initModalTabs('inventarioModal');
+    // sempre abre a Academia com a view centralizada (zoom 1, sem pan) —
+    // sem isso o jogador podia reabrir o modal ainda deslocado/dado zoom de
+    // uma visita anterior, o que é confuso.
+    document.getElementById('openAcademiaBtn').addEventListener('click', ()=>this.resetTreeView());
+    this.initTreePanZoom();
+
+    // Botão "?" (ajuda) — alterna o popover com as instruções de pan/zoom,
+    // em vez de deixar o texto sempre visível ocupando espaço no cabeçalho.
+    {
+      const helpBtn = document.getElementById('academiaHelpBtn');
+      const helpPopover = document.getElementById('academiaHelpPopover');
+      helpBtn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        helpPopover.classList.toggle('open');
+      });
+      document.addEventListener('click', (e)=>{
+        if(helpPopover.classList.contains('open') && !helpPopover.contains(e.target) && e.target !== helpBtn){
+          helpPopover.classList.remove('open');
+        }
+      });
+    }
 
     // Igreja é especial: na 1ª vez (personagem novo, sem arma escolhida e
     // sem nenhuma morte) abre a introdução do Clérigo em vez da Ascensão
@@ -97,11 +123,86 @@ const UI = {
 
     this.initSettingsModal();
   },
+  // Trava a rolagem da PÁGINA (body) sempre que qualquer .modal-overlay
+  // estiver aberto — sem isso, se o conteúdo de algum modal (ex.: Academia)
+  // ficasse por qualquer motivo um pouco mais alto que a viewport do
+  // jogador (fonte/zoom/DPI variam por máquina), a barra de rolagem
+  // aparecia na PÁGINA inteira (feia, na borda da janela) em vez de ficar
+  // contida dentro do próprio modal. Usa um MutationObserver central em vez
+  // de mexer em cada handler de abrir/fechar modal espalhado pelo código.
+  initModalBodyLock(){
+    const sync = () => {
+      const anyOpen = !!document.querySelector('.modal-overlay.open');
+      document.body.classList.toggle('modal-open', anyOpen);
+    };
+    const observer = new MutationObserver(sync);
+    document.querySelectorAll('.modal-overlay').forEach(modal=>{
+      observer.observe(modal, { attributes:true, attributeFilter:['class'] });
+    });
+    sync();
+  },
   wireBuildingModal(openBtnId, modalId, closeBtnId){
     const modal = document.getElementById(modalId);
     document.getElementById(openBtnId).addEventListener('click', ()=>modal.classList.add('open'));
     document.getElementById(closeBtnId).addEventListener('click', ()=>modal.classList.remove('open'));
     modal.addEventListener('click', (e)=>{ if(e.target === modal) modal.classList.remove('open'); });
+  },
+  // Aplica this.treeView (pan+zoom) no .tree-canvas — chamado depois de
+  // qualquer mudança de scale/x/y. transform-origin:0 0 (ver CSS), então
+  // translate() acontece no espaço em px do .tree-wrap (não é afetado pelo
+  // scale que vem depois no mesmo transform).
+  applyTreeTransform(){
+    const canvas = document.getElementById('upgradeTreeCanvas');
+    const v = this.treeView;
+    canvas.style.transform = `translate(${v.x}px, ${v.y}px) scale(${v.scale})`;
+  },
+  resetTreeView(){
+    this.treeView = { x:0, y:0, scale:1 };
+    this.applyTreeTransform();
+  },
+  // Scroll do mouse = zoom (centrado no cursor, pra não "fugir" da posição
+  // que o jogador está olhando); clique+arraste no espaço vazio (fora de
+  // .tree-node) = pan. Nada disso mexe nas coordenadas de UPGRADE_TREE —
+  // só o transform CSS do .tree-canvas (ver applyTreeTransform).
+  initTreePanZoom(){
+    const wrap = document.getElementById('upgradeTreeWrap');
+    const MIN_SCALE = 0.4, MAX_SCALE = 2.5;
+
+    wrap.addEventListener('wheel', (e)=>{
+      e.preventDefault();
+      const rect = wrap.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      const v = this.treeView;
+      const factor = e.deltaY < 0 ? 1.1 : (1/1.1);
+      const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, v.scale * factor));
+      // mantém o ponto do mundo sob o cursor fixo na tela ao mudar o zoom
+      const worldX = (mx - v.x) / v.scale, worldY = (my - v.y) / v.scale;
+      v.scale = newScale;
+      v.x = mx - worldX * newScale;
+      v.y = my - worldY * newScale;
+      this.applyTreeTransform();
+    }, { passive:false });
+
+    let dragging = false, lastX = 0, lastY = 0;
+    wrap.addEventListener('mousedown', (e)=>{
+      if(e.target.closest('.tree-node') || e.target.closest('.tree-reset-btn')) return; // só arrasta no espaço vazio
+      dragging = true;
+      lastX = e.clientX; lastY = e.clientY;
+      wrap.classList.add('dragging');
+    });
+    window.addEventListener('mousemove', (e)=>{
+      if(!dragging) return;
+      this.treeView.x += e.clientX - lastX;
+      this.treeView.y += e.clientY - lastY;
+      lastX = e.clientX; lastY = e.clientY;
+      this.applyTreeTransform();
+    });
+    window.addEventListener('mouseup', ()=>{
+      dragging = false;
+      wrap.classList.remove('dragging');
+    });
+
+    document.getElementById('upgradeTreeResetBtn').addEventListener('click', ()=>this.resetTreeView());
   },
   // Abas internas escopadas a um modal específico (hoje só o Inventário usa)
   // — não é o sistema global de tabs (removido na reestruturação anterior).
@@ -314,7 +415,7 @@ const UI = {
       row.innerHTML = `
         <div class="shop-info">
           <div class="name">${map.name}</div>
-          <div class="desc">${DungeonModule.progressLabel(key)}${map.dropsItem ? ' · dropa itens em vez de ouro' : ''}</div>
+          <div class="desc">${DungeonModule.progressLabel(key)}</div>
         </div>
         <div style="display:flex; flex-direction:column; gap:6px;">
           <button class="buy-btn dungeon-enter-btn">ENTRAR</button>
@@ -343,26 +444,42 @@ const UI = {
     }
     document.getElementById('cyclePickerModal').classList.add('open');
   },
-  // Monta uma linha de item reutilizável — com botão de vender (Loja) ou só
-  // visualização (Mochila do Inventário), conforme opts.showSellButton.
+  // Monta uma linha de item reutilizável — com botão de vender (Loja) e/ou
+  // equipar (Mochila do Inventário, só pra itens com `equip` — ver
+  // opts.showSellButton/opts.showEquipButton).
   buildItemRow(def, opts){
     opts = opts || {};
     const qty = state.inventory[def.key];
     const hasAny = qty > 0;
+    const isEquipped = !!(def.equip && state.equipment[def.key] > 0);
     const row = document.createElement('div');
-    row.className = 'shop-row'+(hasAny?'':' disabled');
-    const sellBtnHtml = opts.showSellButton ? `<button class="buy-btn" ${hasAny?'':'disabled'}>Vender tudo</button>` : '';
+    row.className = 'shop-row'+(hasAny||isEquipped?'':' disabled');
+    const sellBtnHtml = opts.showSellButton ? `<button class="buy-btn sell-btn" ${hasAny?'':'disabled'}>Vender tudo</button>` : '';
+    const equipBtnHtml = (opts.showEquipButton && def.equip && !isEquipped) ? `<button class="buy-btn equip-btn" ${hasAny?'':'disabled'}>Equipar</button>` : '';
+    const equipDesc = def.equip ? `+${def.equip.clickDamageBonus} dano por clique${isEquipped ? ' (equipada)' : ''}` : '';
+    const sellDesc = opts.showSellButton ? 'Vende por '+def.sellPrice+' ouro cada' : '';
     row.innerHTML = `
       <div class="shop-info">
         <div class="name"><div class="icon icon-${def.icon}"></div>${def.name}</div>
-        <div class="desc">${opts.showSellButton ? 'Vende por '+def.sellPrice+' ouro cada' : ''}</div>
+        <div class="desc">${[sellDesc, equipDesc].filter(Boolean).join(' · ')}</div>
         <div class="owned">Possui: ${qty}</div>
-      </div>${sellBtnHtml}`;
+      </div>${equipBtnHtml}${sellBtnHtml}`;
     if(opts.showSellButton && hasAny){
-      row.querySelector('button').addEventListener('click', ()=>{
-        state.gold += qty * def.sellPrice;
+      row.querySelector('.sell-btn').addEventListener('click', ()=>{
+        const earned = qty * def.sellPrice;
+        state.gold += earned;
+        state.goldEarnedThisRun += earned;
         state.inventory[def.key] = 0;
         UI.renderAll();
+      });
+    }
+    if(opts.showEquipButton && def.equip && !isEquipped && hasAny){
+      row.querySelector('.equip-btn').addEventListener('click', ()=>{
+        state.inventory[def.key] -= 1;
+        state.equipment[def.key] = 1;
+        state.clickDamageFlat += def.equip.clickDamageBonus;
+        UI.renderAll();
+        UI.showToast('EQUIPADO', `${def.name} equipada! +${def.equip.clickDamageBonus} dano por clique.`);
       });
     }
     return row;
@@ -372,35 +489,48 @@ const UI = {
     el.innerHTML = '';
     for(const def of ITEM_DEFS) el.appendChild(this.buildItemRow(def, { showSellButton:true }));
   },
-  // Mochila do Inventário: mesma lista de itens, só visualização (sem vender
-  // — vender continua exclusivo da Loja).
+  // Mochila do Inventário: mesma lista de itens, com botão de equipar pros
+  // que têm `equip` (vender continua exclusivo da Loja). Item equipado
+  // continua aparecendo mesmo com 0 unidades restantes, pra mostrar o status.
   renderInventoryBag(){
     const el = document.getElementById('inventoryBagList');
     el.innerHTML = '';
-    const owned = ITEM_DEFS.filter(d=>state.inventory[d.key] > 0);
+    const owned = ITEM_DEFS.filter(d=>state.inventory[d.key] > 0 || (d.equip && state.equipment[d.key] > 0));
     if(owned.length === 0){
       el.innerHTML = '<div class="footer-note">Sua mochila está vazia. Explore as Dungeons para coletar itens.</div>';
       return;
     }
-    for(const def of owned) el.appendChild(this.buildItemRow(def, { showSellButton:false }));
+    for(const def of owned) el.appendChild(this.buildItemRow(def, { showSellButton:false, showEquipButton:true }));
   },
-  // Aba Armas do Inventário: mostra a(s) arma(s) escolhida(s) com o Clérigo —
-  // só visualização, sem loja de armas por enquanto.
+  // Aba Armas do Inventário: mostra a(s) arma(s) escolhida(s) com o Clérigo/
+  // compradas no Ferreiro E os equipamentos dropados em Dungeons já
+  // equipados (ver ITEM_DEFS.equip/state.equipment) — só visualização.
   renderWeaponsList(){
     const el = document.getElementById('weaponsList');
     el.innerHTML = '';
-    const owned = WEAPON_DEFS.filter(d=>state.weapons[d.key] > 0);
-    if(owned.length === 0){
+    const ownedWeapons = WEAPON_DEFS.filter(d=>state.weapons[d.key] > 0);
+    const ownedGear = ITEM_DEFS.filter(d=>d.equip && state.equipment[d.key] > 0);
+    if(ownedWeapons.length === 0 && ownedGear.length === 0){
       el.innerHTML = '<div class="footer-note">Nenhuma arma equipada ainda.</div>';
       return;
     }
-    for(const def of owned){
+    for(const def of ownedWeapons){
       const row = document.createElement('div');
       row.className = 'shop-row';
       row.innerHTML = `
         <div class="shop-info">
           <div class="name"><div class="icon icon-${def.icon}"></div>${def.name}</div>
           <div class="desc">+${def.clickDamageBonus} dano por clique</div>
+        </div>`;
+      el.appendChild(row);
+    }
+    for(const def of ownedGear){
+      const row = document.createElement('div');
+      row.className = 'shop-row';
+      row.innerHTML = `
+        <div class="shop-info">
+          <div class="name"><div class="icon icon-${def.icon}"></div>${def.name}</div>
+          <div class="desc">+${def.equip.clickDamageBonus} dano por clique</div>
         </div>`;
       el.appendChild(row);
     }
@@ -578,6 +708,15 @@ const UI = {
 
       rootPath(hub.x, hub.y, node.x, node.y, branch.color);
       buildNode(node.key, node.x, node.y, branch.color, false);
+
+      // Nível 2 do ramo: brota do nó de Nível 1 (não do hub) — mesma curva,
+      // só a origem muda. De propósito ficam fora da área 0-100 visível a
+      // zoom 1 (ver posições em UPGRADE_TREE), então só aparecem dando
+      // zoom out ou arrastando o mapa.
+      for(const child of (branch.children || [])){
+        rootPath(node.x, node.y, child.x, child.y, branch.color);
+        buildNode(child.key, child.x, child.y, branch.color, false);
+      }
     }
   },
   renderPrestigeTab(){
@@ -675,14 +814,17 @@ const UI = {
     stage.appendChild(div);
     setTimeout(()=>div.remove(), 850);
   },
-  showFloatingItem(qty, itemDef){
+  // `index` (opcional): quando um monstro dropa vários itens na mesma
+  // morte (ver MonsterModule.onDeath), escalona as mensagens na vertical pra
+  // não ficarem todas empilhadas exatamente no mesmo pixel.
+  showFloatingItem(qty, itemDef, index){
     const stage = document.getElementById('monsterStage');
     const div = document.createElement('div');
     div.className = 'float-dmg';
     div.style.color = '#8fe0c8';
     div.textContent = '+'+qty+' '+itemDef.name;
     div.style.left = '50%';
-    div.style.top = '50%';
+    div.style.top = 'calc(50% + '+((index||0)*22)+'px)';
     stage.appendChild(div);
     setTimeout(()=>div.remove(), 850);
   },

@@ -144,20 +144,26 @@ const MonsterModule = {
     UI.renderMonsterInfo();
     UI.renderHpBar();
   },
-  goldReward(){
-    let base = state.monsterMaxHp * CONFIG.goldPerHpFactor;
-    if(state.isBoss) base *= CONFIG.bossRewardMult;
-    if(state.isGolden) base *= CONFIG.goldenRewardMult;
-    base *= state.goldMult * (1+state.pGoldMult);
-    return Math.max(1, Math.floor(base));
-  },
-  // Quantidade de item dropada — FIXA por tipo de monstro (type.dropQty),
-  // sem escalar com HP/posição no ciclo, pra ficar previsível (ver tabela em
-  // config.js). Monstro dourado ainda multiplica, como bônus de evento.
-  itemRewardQty(){
-    let qty = (this.current && this.current.type.dropQty) || 1;
+  // Sorteia a quantidade de UMA entrada de `drops` (qtyMin-qtyMax, ambos
+  // iguais = fixo). Monstro dourado multiplica, como bônus de evento (não
+  // escala com HP/posição no ciclo, só com isso — ver tabela em config.js).
+  itemQtyFor(dropDef){
+    const span = dropDef.qtyMax - dropDef.qtyMin;
+    let qty = dropDef.qtyMin + (span > 0 ? Math.floor(Math.random()*(span+1)) : 0);
     if(state.isGolden) qty *= CONFIG.goldenRewardMult;
     return Math.max(1, Math.floor(qty));
+  },
+  // Roda a chance de cada entrada em type.drops de forma independente — um
+  // monstro pode dar 0, 1 ou vários itens diferentes na mesma morte (ver
+  // MONSTER_TYPES). Retorna [{item, qty}] só com o que efetivamente dropou.
+  rollDrops(){
+    const drops = (this.current && this.current.type.drops) || [];
+    const results = [];
+    for(const d of drops){
+      const chance = d.chance == null ? 1 : d.chance;
+      if(Math.random() < chance) results.push({ item:d.item, qty:this.itemQtyFor(d) });
+    }
+    return results;
   },
   applyDamage(dmg){
     state.monsterHp -= dmg;
@@ -171,29 +177,27 @@ const MonsterModule = {
     const wasBoss = this.current.isBoss; // captura antes do spawn() sobrescrever this.current
     const wasDouble = this.current.isDouble;
     const doubleSubKill = this.current.doubleSubKill;
-    const itemKey = MAPS[state.currentDungeon].dropsItem;
-    if(itemKey){
-      let qty = this.itemRewardQty();
-      if(wasDouble){
-        if(doubleSubKill === 0){
-          // guarda a recompensa do 1º da dupla — o bônus só é calculado
-          // quando o 2º morrer (precisa da soma dos dois, ver MAPS.slimes)
-          d.pendingSlot.firstQty = qty;
-        } else {
-          const firstQty = (d.pendingSlot && d.pendingSlot.firstQty) || 0;
-          const bonus = Math.ceil((firstQty + qty) * 0.10);
-          qty += bonus;
-          d.pendingSlot = null;
-        }
+    const drops = this.rollDrops();
+
+    if(wasDouble && doubleSubKill === 1){
+      // bônus de 10% pra cada item que TAMBÉM caiu no 1º da dupla (recompensa
+      // a posição "dupla", mais difícil — soma os dois antes de aplicar,
+      // ver MAPS.slimes). Itens que só um dos dois dropou não ganham bônus.
+      const firstDrops = (d.pendingSlot && d.pendingSlot.firstDrops) || [];
+      for(const drop of drops){
+        const firstMatch = firstDrops.find(f=>f.item===drop.item);
+        if(firstMatch) drop.qty += Math.ceil((firstMatch.qty + drop.qty) * 0.10);
       }
-      state.inventory[itemKey] += qty;
-      UI.showFloatingItem(qty, ITEM_DEFS.find(i=>i.key===itemKey));
-    } else {
-      const reward = this.goldReward();
-      state.gold += reward;
-      state.goldEarnedThisRun += reward;
-      UI.showFloatingGold(reward);
     }
+    drops.forEach((drop, i)=>{
+      state.inventory[drop.item] += drop.qty;
+      UI.showFloatingItem(drop.qty, ITEM_DEFS.find(item=>item.key===drop.item), i);
+    });
+    if(wasDouble){
+      if(doubleSubKill === 0) d.pendingSlot.firstDrops = drops;
+      else d.pendingSlot = null;
+    }
+
     d.killCount += 1;
     state.totalKillsAll += 1; // continua vitalício e global, alimenta a Ascensão
 

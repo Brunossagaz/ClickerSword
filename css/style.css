@@ -14,6 +14,12 @@
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
+  /* Enquanto qualquer modal está aberto, a página de trás não pode rolar —
+     ver UI.initModalBodyLock. Qualquer overflow de conteúdo (ex.: Academia
+     numa tela mais baixa) fica então obrigado a rolar DENTRO do próprio
+     modal (.modal-overlay/.modal-box já têm overflow-y:auto), nunca como
+     barra de rolagem da janela inteira. */
+  body.modal-open{overflow:hidden;}
   body{
     background:
       radial-gradient(ellipse at 50% -10%, #2a2038 0%, var(--bg-deep) 60%);
@@ -293,15 +299,37 @@
     background:#4a4458; color:#8a839a; border-color:#3a3550; cursor:not-allowed; box-shadow:none;
   }
 
-  /* ---- Árvore de Upgrades (radial) ---- */
+  /* ---- Árvore de Upgrades (radial, com pan/zoom) ----
+     .tree-wrap é a "janela" — tamanho FIXO, nunca cresce nem ganha barra de
+     rolagem própria, não importa quantos upgrades existam. .tree-canvas é o
+     "mapa" de verdade, sempre do mesmo tamanho de .tree-wrap em repouso
+     (zoom 1, pan 0,0) — UI.initTreePanZoom aplica só um transform
+     (translate+scale) nele em resposta ao scroll/arrasto do mouse, então
+     nós fora da área visível a zoom 1 (ver UPGRADE_TREE, nós de Nível 2 mais
+     afastados do centro) ficam alcançáveis dando zoom out ou arrastando. */
   .tree-wrap{
     position:relative;
     width:100%;
-    height:640px;
+    height:520px;
     background:radial-gradient(circle at 50% 52%, #241a30 0%, #150f1e 75%);
     border:2px solid var(--stone);
     border-radius:6px;
     overflow:hidden;
+    cursor:grab;
+    touch-action:none;
+  }
+  .tree-wrap.dragging{cursor:grabbing;}
+  .tree-canvas{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    transform-origin:0 0;
+  }
+  .tree-reset-btn{
+    position:absolute;
+    top:8px; right:8px;
+    z-index:10;
   }
   .tree-lines{
     position:absolute;
@@ -309,6 +337,12 @@
     width:100%;
     height:100%;
     pointer-events:none;
+    /* SVG recorta por padrão qualquer coisa fora do viewBox (0-100) — sem
+       isso, as curvas dos nós de Nível 2 que ficam fora dessa área de
+       propósito (ver UPGRADE_TREE) eram cortadas quase inteiras, mesmo com
+       o resto do mapa visível via pan/zoom. O corte de verdade continua
+       acontecendo (só que na borda do .tree-wrap, que é o que queremos). */
+    overflow:visible;
   }
   .tree-nodes{
     position:absolute;
@@ -395,9 +429,10 @@
     box-shadow:0 4px 12px rgba(0,0,0,0.5);
   }
   .tree-node:hover .node-tooltip{opacity:1;}
+  /* Trancado = opacidade normal (só ficava "lavado"/apagado antes) — o
+     estado de bloqueio já fica claro pelo ícone de cadeado, o nome
+     esmaecido e o fundo listrado, sem precisar deixar o nó transparente. */
   .tree-node.locked{
-    opacity:0.4;
-    border-color:var(--stone);
     background:repeating-linear-gradient(135deg, var(--stone-dark) 0 8px, #1a1522 8px 16px);
   }
   .tree-node.locked:hover{transform:translate(-50%,-50%);}
@@ -425,11 +460,16 @@
   .view-content{display:none;}
   .view-content.active{display:block;}
 
-  /* ---- Prédios da cidade ---- */
+  /* ---- Prédios da cidade ----
+     Cartão-diretório: fundo neutro (igual ao resto da UI) + acento da cor do
+     prédio só na borda de cima e no brilho por trás do ícone — em vez de
+     pintar o cartão inteiro com uma cor sólida (era isso que deixava tudo
+     parecendo "blocos de cor" sem hierarquia). Ícone maior (44px, era 32px)
+     + descrição de 1 linha embaixo do nome, pra contexto extra. */
   .city-buildings{
     display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(110px, 1fr));
-    gap:10px;
+    grid-template-columns:repeat(auto-fit, minmax(136px, 1fr));
+    gap:12px;
     margin-bottom:6px;
   }
   .building-card{
@@ -438,32 +478,51 @@
     display:flex;
     flex-direction:column;
     align-items:center;
-    gap:8px;
-    padding:14px 8px;
-    border-radius:6px;
+    gap:4px;
+    padding:16px 10px 12px;
+    border-radius:8px;
+    background:linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-panel-2) 100%);
     border:2px solid var(--stone);
-    color:#fff2e0;
+    border-top:4px solid var(--accent, var(--stone));
+    color:var(--parchment);
     cursor:pointer;
     box-shadow:0 3px 0 rgba(0,0,0,0.35);
-    transition:transform .1s ease;
+    transition:transform .1s ease, box-shadow .1s ease;
   }
   .building-card:active{transform:translateY(2px); box-shadow:none;}
-  .building-card .building-icon{width:32px; height:32px;}
-  .building-card .building-name{font-size:10px; letter-spacing:0.5px;}
+  .building-icon-badge{
+    width:58px; height:58px;
+    border-radius:50%;
+    background:radial-gradient(circle, var(--accent-glow, rgba(255,255,255,0.08)) 0%, transparent 72%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .building-card .building-icon{width:44px; height:44px;}
+  .building-card .building-name{font-size:11px; letter-spacing:0.5px;}
+  .building-card .building-desc{
+    font-family:'VT323', monospace;
+    font-size:13px;
+    color:var(--parchment-dim);
+    text-align:center;
+    line-height:1.2;
+  }
   /* prédio ainda trancado (ver OnboardingModule.isBuildingUnlocked) — o
-     atributo `disabled` nativo do <button> já impede o clique */
+     atributo `disabled` nativo do <button> já impede o clique. Opacidade
+     normal de propósito (só ficava "lavado" antes) — o cadeado + a
+     dessaturação já deixam claro que está trancado. */
   .building-card:disabled{
-    opacity:0.35;
-    filter:grayscale(1);
+    filter:grayscale(0.9);
     cursor:not-allowed;
     box-shadow:none;
+    border-top-color:var(--stone);
   }
   .building-card:disabled::after{
     content:'';
     background-image:var(--icon-lock);
-    width:14px; height:14px;
+    width:16px; height:16px;
     position:absolute;
-    top:4px; right:6px;
+    top:8px; right:8px;
   }
 
   /* ---- Ícones pixel art (ver assets/icons/) ----
@@ -496,6 +555,21 @@
     --icon-boss:url('../assets/icons/boss.png');
     --icon-golden:url('../assets/icons/golden-monster.png');
     --icon-item-slimegel:url('../assets/icons/item-slimegel.png');
+    --icon-item-slimecompound:url('../assets/icons/item-slimecompound.png');
+    --icon-item-slimesword:url('../assets/icons/item-slimesword.png');
+    --icon-item-slimeaxe:url('../assets/icons/item-slimeaxe.png');
+    --icon-item-slimeaxegreater:url('../assets/icons/item-slimeaxegreater.png');
+    --icon-item-goblinear:url('../assets/icons/item-goblinear.png');
+    --icon-item-goblinfang:url('../assets/icons/item-goblinfang.png');
+    --icon-item-goblinshard:url('../assets/icons/item-goblinshard.png');
+    --icon-item-goblinscale:url('../assets/icons/item-goblinscale.png');
+    --icon-item-goblinamulet:url('../assets/icons/item-goblinamulet.png');
+    --icon-item-goblinseal:url('../assets/icons/item-goblinseal.png');
+    --icon-item-goblincrown:url('../assets/icons/item-goblincrown.png');
+    --icon-item-orctusk:url('../assets/icons/item-orctusk.png');
+    --icon-item-trollhide:url('../assets/icons/item-trollhide.png');
+    --icon-item-dragonscale:url('../assets/icons/item-dragonscale.png');
+    --icon-item-demonhorn:url('../assets/icons/item-demonhorn.png');
     --icon-weapon-sword:url('../assets/icons/weapon-sword.png');
     --icon-weapon-bow:url('../assets/icons/weapon-bow.png');
     --icon-weapon-axe:url('../assets/icons/weapon-axe.png');
@@ -516,21 +590,41 @@
   .icon-boss{background-image:var(--icon-boss); width:16px; height:16px; margin-right:4px;}
   .icon-golden{background-image:var(--icon-golden); width:16px; height:16px;}
   .icon-item-slimegel{background-image:var(--icon-item-slimegel); width:20px; height:20px;}
+  .icon-item-slimecompound{background-image:var(--icon-item-slimecompound); width:20px; height:20px;}
+  .icon-item-slimesword{background-image:var(--icon-item-slimesword); width:20px; height:20px;}
+  .icon-item-slimeaxe{background-image:var(--icon-item-slimeaxe); width:20px; height:20px;}
+  .icon-item-slimeaxegreater{background-image:var(--icon-item-slimeaxegreater); width:20px; height:20px;}
+  .icon-item-goblinear{background-image:var(--icon-item-goblinear); width:20px; height:20px;}
+  .icon-item-goblinfang{background-image:var(--icon-item-goblinfang); width:20px; height:20px;}
+  .icon-item-goblinshard{background-image:var(--icon-item-goblinshard); width:20px; height:20px;}
+  .icon-item-goblinscale{background-image:var(--icon-item-goblinscale); width:20px; height:20px;}
+  .icon-item-goblinamulet{background-image:var(--icon-item-goblinamulet); width:20px; height:20px;}
+  .icon-item-goblinseal{background-image:var(--icon-item-goblinseal); width:20px; height:20px;}
+  .icon-item-goblincrown{background-image:var(--icon-item-goblincrown); width:20px; height:20px;}
+  .icon-item-orctusk{background-image:var(--icon-item-orctusk); width:20px; height:20px;}
+  .icon-item-trollhide{background-image:var(--icon-item-trollhide); width:20px; height:20px;}
+  .icon-item-dragonscale{background-image:var(--icon-item-dragonscale); width:20px; height:20px;}
+  .icon-item-demonhorn{background-image:var(--icon-item-demonhorn); width:20px; height:20px;}
   .icon-weapon-sword{background-image:var(--icon-weapon-sword); width:20px; height:20px;}
   .icon-weapon-bow{background-image:var(--icon-weapon-bow); width:20px; height:20px;}
   .icon-weapon-axe{background-image:var(--icon-weapon-axe); width:20px; height:20px;}
   /* cores só pra diferenciar cada prédio por enquanto — sprites de verdade
      entram depois */
-  .building-ferreiro{background:linear-gradient(180deg, #8a5a2e, #5c3a1c);}
-  .building-guilda{background:linear-gradient(180deg, #3a5a8a, #23375c);}
-  .building-caverna{background:linear-gradient(180deg, #5a5a5a, #333333);}
-  .building-loja{background:linear-gradient(180deg, #3f8a52, #245c33);}
-  .building-igreja{background:linear-gradient(180deg, #7a4fd1, #4a2f8a);}
-  .building-dungeon{background:linear-gradient(180deg, #8a3a3a, #5c2323);}
-  .building-inventario{background:linear-gradient(180deg, #c9a13f, #8a6a24);}
-  .building-academia{background:linear-gradient(180deg, #4a6a8a, #2a3f5c);}
+  .building-ferreiro{ --accent:#e8974a; --accent-glow:rgba(232,151,74,0.35); }
+  .building-guilda{ --accent:#5c8ad1; --accent-glow:rgba(92,138,209,0.35); }
+  .building-caverna{ --accent:#8fd9c4; --accent-glow:rgba(143,217,196,0.3); }
+  .building-loja{ --accent:#c9a13f; --accent-glow:rgba(201,161,63,0.35); }
+  .building-igreja{ --accent:#9a7fe0; --accent-glow:rgba(154,127,224,0.35); }
+  .building-dungeon{ --accent:#b0b0bc; --accent-glow:rgba(176,176,188,0.3); }
+  .building-inventario{ --accent:#c9a13f; --accent-glow:rgba(201,161,63,0.35); }
+  .building-academia{ --accent:#e05d4a; --accent-glow:rgba(224,93,74,0.35); }
 
-  /* modal mais largo pro Ferreiro — a árvore radial precisa de espaço horizontal */
+  /* modal mais largo pra Academia — a árvore radial precisa de espaço
+     horizontal. O .tree-wrap dentro dela tem altura fixa (520px, pensada
+     pra caber com header+legenda dentro de 90vh nas telas comuns) e
+     pan/zoom próprios — o `overflow-y:auto` do .modal-box genérico (ver
+     acima) fica só como rede de segurança em telas bem baixas, não deve
+     disparar no uso normal. */
   .modal-box.modal-wide{max-width:720px;}
 
   /* ---- Menu principal / seletor de saves ---- */
@@ -665,6 +759,11 @@
     align-items:center;
     justify-content:center;
     padding:16px;
+    /* Sem isso, um modal-box mais alto que a viewport (ex.: Academia) vazava
+       pra fora do overlay fixo e virava barra de rolagem da PÁGINA inteira
+       (feia, na borda da janela) em vez de ficar contida aqui dentro,
+       centralizada por cima do fundo escurecido. */
+    overflow-y:auto;
   }
   .modal-overlay.open{display:flex;}
   .modal-box{
@@ -676,7 +775,27 @@
     max-width:420px;
     max-height:90vh;
     overflow-y:auto;
+    position:relative;
   }
+  /* Popover de ajuda (botão "?" no cabeçalho) — escondido por padrão,
+     alterna com .open no clique (ver UI.init). */
+  .help-popover{
+    display:none;
+    position:absolute;
+    top:56px; right:14px;
+    max-width:260px;
+    background:var(--stone-dark);
+    border:2px solid var(--ember);
+    border-radius:6px;
+    padding:10px 12px;
+    font-family:'VT323', monospace;
+    font-size:15px;
+    line-height:1.35;
+    color:var(--parchment);
+    z-index:20;
+    box-shadow:0 4px 12px rgba(0,0,0,0.5);
+  }
+  .help-popover.open{display:block;}
   .modal-header{
     display:flex;
     align-items:center;

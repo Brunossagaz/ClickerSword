@@ -153,13 +153,19 @@
   <div class="modal-box modal-wide">
     <div class="modal-header">
       <span class="pixel">ACADEMIA DE COMBATE</span>
-      <button class="modal-close" id="academiaCloseBtn">✕</button>
+      <div style="display:flex; gap:8px;">
+        <button class="modal-close" id="academiaHelpBtn" title="Ajuda">?</button>
+        <button class="modal-close" id="academiaCloseBtn">✕</button>
+      </div>
     </div>
+    <div class="help-popover" id="academiaHelpPopover">Scroll do mouse: zoom. Clique e arraste no espaço vazio: navegar pelo mapa.</div>
     <div class="modal-body">
-      <div class="panel-title">Academia de Combate — Upgrades de Batalha</div>
       <div class="tree-wrap" id="upgradeTreeWrap">
-        <svg class="tree-lines" id="upgradeTreeLines" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
-        <div class="tree-nodes" id="upgradeTreeNodes"></div>
+        <button class="small-btn tree-reset-btn" id="upgradeTreeResetBtn" title="Centralizar view">Centralizar</button>
+        <div class="tree-canvas" id="upgradeTreeCanvas">
+          <svg class="tree-lines" id="upgradeTreeLines" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+          <div class="tree-nodes" id="upgradeTreeNodes"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -387,36 +393,44 @@
       <div class="panel-title">Cidade Abandonada</div>
       <div class="city-buildings">
         <button class="building-card building-ferreiro" id="openFerreiroBtn">
-          <div class="building-icon icon icon-ferreiro"></div>
+          <div class="building-icon-badge"><div class="building-icon icon icon-ferreiro"></div></div>
           <div class="building-name">Ferreiro</div>
+          <div class="building-desc">Compre armas</div>
         </button>
         <button class="building-card building-guilda" id="openGuildaBtn">
-          <div class="building-icon icon icon-guilda"></div>
+          <div class="building-icon-badge"><div class="building-icon icon icon-guilda"></div></div>
           <div class="building-name">Guilda</div>
+          <div class="building-desc">Tropas automáticas</div>
         </button>
         <button class="building-card building-caverna" id="openCavernaBtn">
-          <div class="building-icon icon icon-caverna"></div>
+          <div class="building-icon-badge"><div class="building-icon icon icon-caverna"></div></div>
           <div class="building-name">Caverna</div>
+          <div class="building-desc">Ouro passivo</div>
         </button>
         <button class="building-card building-loja" id="openLojaBtn">
-          <div class="building-icon icon icon-loja"></div>
+          <div class="building-icon-badge"><div class="building-icon icon icon-loja"></div></div>
           <div class="building-name">Loja</div>
+          <div class="building-desc">Venda itens</div>
         </button>
         <button class="building-card building-igreja" id="openIgrejaBtn">
-          <div class="building-icon icon icon-igreja"></div>
+          <div class="building-icon-badge"><div class="building-icon icon icon-igreja"></div></div>
           <div class="building-name">Igreja</div>
+          <div class="building-desc">Ascensão</div>
         </button>
         <button class="building-card building-dungeon" id="openDungeonBtn">
-          <div class="building-icon icon icon-dungeon"></div>
+          <div class="building-icon-badge"><div class="building-icon icon icon-dungeon"></div></div>
           <div class="building-name">Dungeons</div>
+          <div class="building-desc">Batalhe monstros</div>
         </button>
         <button class="building-card building-inventario" id="openInventarioBtn">
-          <div class="building-icon icon icon-inventario"></div>
+          <div class="building-icon-badge"><div class="building-icon icon icon-inventario"></div></div>
           <div class="building-name">Inventário</div>
+          <div class="building-desc">Itens e stats</div>
         </button>
         <button class="building-card building-academia" id="openAcademiaBtn">
-          <div class="building-icon icon icon-academia"></div>
+          <div class="building-icon-badge"><div class="building-icon icon icon-academia"></div></div>
           <div class="building-name">Academia</div>
+          <div class="building-desc">Upgrades de combate</div>
         </button>
       </div>
     </div>

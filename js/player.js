@@ -14,8 +14,7 @@ const PlayerModule = {
     // monstro, applyDamage já dispara o spawn do próximo (que reseta
     // isGolden/monsterMaxHp) antes da checagem do bônus dourado abaixo.
     const wasGolden = state.isGolden;
-    const goldenMaxHp = state.monsterMaxHp;
-    const goldenDropQty = (MonsterModule.current && MonsterModule.current.type.dropQty) || 1;
+    const goldenType = MonsterModule.current && MonsterModule.current.type;
 
     let dmg = this.clickDamage();
     let isCrit = Math.random() < (state.critChance + state.pCritChance);
@@ -27,20 +26,16 @@ const PlayerModule = {
     UI.screenShake();
     UI.hitFlash();
 
-    // Monstro Dourado: cada clique já rende ouro (ou item, em Dungeons que
-    // dropam item) na hora, sem precisar terminar de matá-lo dentro da
-    // janela dourada.
+    // Monstro Dourado: cada clique já rende um pouco do item PRINCIPAL
+    // (a 1ª entrada de `drops`, sempre garantida) na hora, sem precisar
+    // terminar de matá-lo dentro da janela dourada.
     if(wasGolden){
-      const itemKey = MAPS[state.currentDungeon].dropsItem;
-      if(itemKey){
-        const qty = Math.max(1, Math.round(goldenDropQty * 0.1));
-        state.inventory[itemKey] += qty;
-        UI.showFloatingItemAt(qty, ITEM_DEFS.find(i=>i.key===itemKey), evt);
-      } else {
-        const bonus = Math.max(1, Math.floor(goldenMaxHp * CONFIG.goldPerHpFactor * 0.02 * state.goldMult * (1+state.pGoldMult)));
-        state.gold += bonus;
-        state.goldEarnedThisRun += bonus;
-        UI.showFloatingGoldAt(bonus, evt);
+      const mainDrop = goldenType && goldenType.drops && goldenType.drops[0];
+      if(mainDrop){
+        const avgQty = (mainDrop.qtyMin + mainDrop.qtyMax) / 2;
+        const qty = Math.max(1, Math.round(avgQty * 0.1));
+        state.inventory[mainDrop.item] += qty;
+        UI.showFloatingItemAt(qty, ITEM_DEFS.find(i=>i.key===mainDrop.item), evt);
       }
       UI.renderStats();
     }
