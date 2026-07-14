@@ -884,6 +884,10 @@ const UI = {
 
     for(const branch of UPGRADE_TREE.branches){
       const node = branch.nodes[0];
+      // Nó/linha de Nível 1 só aparecem depois que a raiz foi comprada pela
+      // 1ª vez (nível >= 1) — antes disso nem o cadeado é mostrado, o ramo
+      // inteiro fica reservado/invisível (rótulo incluso).
+      if(state.upgrades[UPGRADE_TREE.root] <= 0) continue;
       // rótulo da branch, um pouco além do nó (perto colide com o círculo)
       const dx = node.x - hub.x, dy = node.y - hub.y;
       const dist = Math.sqrt(dx*dx + dy*dy) || 1;
@@ -904,8 +908,10 @@ const UI = {
       // Nível 2 do ramo: brota do nó de Nível 1 (não do hub) — mesma curva,
       // só a origem muda. De propósito ficam fora da área 0-100 visível a
       // zoom 1 (ver posições em UPGRADE_TREE), então só aparecem dando
-      // zoom out ou arrastando o mapa.
+      // zoom out ou arrastando o mapa. Mesma regra de revelação progressiva:
+      // só aparecem depois que o nó de Nível 1 (pai) foi comprado 1x.
       for(const child of (branch.children || [])){
+        if(state.upgrades[node.key] <= 0) continue;
         rootPath(node.x, node.y, child.x, child.y, branch.color);
         buildNode(child.key, child.x, child.y, branch.color, false);
       }

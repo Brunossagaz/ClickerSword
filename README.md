@@ -238,8 +238,8 @@ já configurado — não precisa suavizar/antialiasing.
 - Onboarding com o Clérigo (nome, história, escolha da 1ª arma) + missão de
   entrega pro Barnabé (Loja) que libera o Ferreiro — desbloqueio de prédios
   100% computado a partir do progresso, nunca uma flag solta
-- Academia de Combate: árvore radial de upgrades (4 nós, corrente de
-  desbloqueio sequencial)
+- Academia de Combate: árvore radial de upgrades (14 nós em 4 ramos, corrente
+  de desbloqueio sequencial, revelação progressiva conforme compra)
 - Caverna: mineração automática de minério por raridade, separada do combate
 - Ascensão baseada em mortes vitalícias (`totalKillsAll`), com limiar
   crescente a cada ascensão

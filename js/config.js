@@ -375,6 +375,12 @@ const UPGRADE_DEFS = [
   { key:'battleCritChance',   name:'Olho Certeiro',      desc:'+3% chance de crítico',      baseCost:60, costGrowth:1.35, apply:s=>s.critChance=Math.min(0.75,s.critChance+0.03), maxLevel:5, requires:'battleClickDmg' },
   { key:'battleDmgPercent',   name:'Força Bruta',        desc:'+5% de dano por clique',     baseCost:60, costGrowth:1.4,  apply:s=>s.clickDamagePercent+=0.05, maxLevel:5, requires:'battleClickDmg' },
   { key:'battleCritDmgPercent', name:'Golpe Devastador', desc:'+10% de dano crítico',       baseCost:60, costGrowth:1.45, apply:s=>s.critDamagePercent+=0.10, maxLevel:5, requires:'battleClickDmg' },
+  // Clique Automático — só 1 nível (compra única, sem escalar): liga um
+  // clique automático periódico enquanto houver monstro ativo (ver
+  // main.js/tick). `autoClickIntervalMs` é lido de lá, não é um stat de
+  // state — `apply` fica vazio de propósito, o efeito é 100% dinâmico a
+  // partir de state.upgrades.battleAutoClick > 0.
+  { key:'battleAutoClick', name:'Clique Automático', desc:'Clica sozinho a cada 2 segundos', baseCost:1000, costGrowth:1.5, apply:s=>{}, maxLevel:1, requires:'battleClickDmg', autoClickIntervalMs:2000 },
 
   // --- Nível 2 do ramo Crítico (requer Olho Certeiro nível 5) ---
   { key:'critChance2A', name:'Visão de Falcão',    desc:'+4% chance de crítico, +4 dano por clique', baseCost:400, costGrowth:1.5, maxLevel:5, requires:'battleCritChance',
@@ -434,6 +440,11 @@ const UPGRADE_TREE = {
       { key:'critDmgPercent2A', x:6, y:113 },
       { key:'critDmgPercent2B', x:-6, y:104 },
       { key:'critDmgPercent2C', x:-14, y:91 },
+    ]},
+    // Sem `children` — Clique Automático tem 1 nível só, não tem ramo de
+    // Nível 2 como os outros 3.
+    { label:'Automação', color:'#8fd9c4', nodes:[
+      { key:'battleAutoClick', x:82, y:20 },
     ]},
   ]
 };

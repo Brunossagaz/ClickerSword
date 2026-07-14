@@ -6,6 +6,10 @@
 // soma nesse intervalo já bate com o próprio valor de DPS exibido no stat.
 let dpsFloatAccum = 0;
 let dpsFloatElapsedMs = 0;
+// Acumulador do upgrade Clique Automático (Academia, ver UPGRADE_DEFS
+// battleAutoClick) — dispara um clique de verdade (PlayerModule.handleClick,
+// sem evento de mouse) a cada `autoClickIntervalMs`.
+let autoClickElapsedMs = 0;
 function tick(){
   MonsterModule.checkGoldenExpiry();
   MonsterModule.maybeTriggerGolden();
@@ -20,6 +24,18 @@ function tick(){
       UI.showFloatingDpsDamage(dpsFloatAccum);
       dpsFloatAccum = 0;
       dpsFloatElapsedMs = 0;
+    }
+  }
+  // Clique Automático: PlayerModule.handleClick() sem `evt` já cai pro
+  // centro da arena sozinho (ver UI.showFloatingDamage/showFloatingItemAt),
+  // então dá pra reaproveitar 100% da lógica de clique manual (crítico,
+  // bônus de monstro dourado, tudo) sem duplicar nada aqui.
+  if(state.upgrades.battleAutoClick > 0 && MonsterModule.current){
+    autoClickElapsedMs += CONFIG.tickMs;
+    const interval = UPGRADE_DEFS.find(u=>u.key==='battleAutoClick').autoClickIntervalMs;
+    if(autoClickElapsedMs >= interval){
+      autoClickElapsedMs -= interval;
+      PlayerModule.handleClick();
     }
   }
   CavernModule.tick(CONFIG.tickMs/1000);

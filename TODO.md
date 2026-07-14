@@ -5,8 +5,11 @@ detalhados no roadmap do `README.md` são referenciados, não duplicados.
 
 ## Fase 1 — Ganhos rápidos / reaproveita infra existente
 
-- [ ] **Auto click** — clique automático periódico. Não existe nada hoje;
-      feature nova e isolada, sem dependências.
+- [x] **Auto click** — clique automático periódico. Feito como upgrade da
+      Academia de Combate (`battleAutoClick`, 1000 moeda, 1 nível só, saindo
+      direto da raiz): liga um clique automático a cada 2s enquanto houver
+      monstro ativo, reaproveitando `PlayerModule.handleClick()` sem evento
+      de mouse (ver `js/main.js`/`tick()`).
 - [ ] **Classificação de tipo de item** — `ITEM_DEFS` já usa `type` pra
       `'mineral'` e `'brokenWeapon'` (ver Fase 4), mas os drops comuns
       (Geleia de Slime, Orelha de Goblin etc.) ainda não têm `type`
@@ -25,7 +28,8 @@ detalhados no roadmap do `README.md` são referenciados, não duplicados.
 - [ ] **Liberar Guilda por missão** — idem, aplicado à Guilda (hoje libera só
       por progresso genérico em `OnboardingModule.isBuildingUnlocked`).
 - [ ] **Mais upgrades** — estender a árvore radial da Academia de Combate
-      (`upgrades.js`/`progression.js`), hoje com 13 nós em 3 níveis.
+      (`upgrades.js`/`progression.js`), hoje com 14 nós (4 ramos saindo da
+      raiz, 3 deles com Nível 2).
 
 ## Fase 2 — Conteúdo
 
