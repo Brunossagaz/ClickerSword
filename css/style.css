@@ -1045,6 +1045,29 @@
     overflow-y:auto;
     position:relative;
   }
+  /* Telas de "loja" com NPC (Loja/Ferreiro): personagem num painel PRÓPRIO
+     ao lado da janela de produtos/upgrades, em vez de empilhado dentro dela
+     — .modal-group é o único filho de .modal-overlay nesses casos (o
+     centering de .modal-overlay não muda, só ganha 2 caixas lado a lado em
+     vez de 1). Em telas estreitas, quebra e empilha (ver flex-wrap). */
+  .modal-group{
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    gap:14px;
+  }
+  .modal-group .modal-box{ width:auto; flex:0 1 420px; }
+  .npc-side-panel{
+    flex:0 0 200px;
+    background:linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-panel-2) 100%);
+    border:2px solid var(--stone);
+    border-radius:6px;
+    box-shadow: inset 0 0 0 2px var(--stone-dark), 0 8px 24px rgba(0,0,0,0.6);
+    padding:14px;
+    text-align:center;
+  }
+  .npc-side-panel .npc-portrait{ width:100%; height:auto; }
+  .npc-side-panel .npc-speech{ margin-top:10px; }
   /* Popover de ajuda (botão "?" no cabeçalho) — escondido por padrão,
      alterna com .open no clique (ver UI.init). */
   .help-popover{

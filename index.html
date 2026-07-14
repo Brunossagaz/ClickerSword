@@ -136,29 +136,31 @@
 </div>
 
 <div class="modal-overlay" id="ferreiroModal">
-  <div class="modal-box">
-    <div class="modal-header">
-      <span class="pixel">FERREIRO</span>
-      <button class="modal-close" id="ferreiroCloseBtn">✕</button>
+  <div class="modal-group">
+    <div class="npc-side-panel">
+      <img class="npc-portrait" src="assets/portraits/creiton.png" alt="Creiton">
+      <div class="npc-speech" id="ferreiroCreitonLine"></div>
     </div>
-    <div class="modal-body">
-      <div class="npc-banner">
-        <img class="npc-portrait" src="assets/portraits/creiton.png" alt="Creiton">
-        <div class="npc-speech" id="ferreiroCreitonLine"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="pixel">FERREIRO</span>
+        <button class="modal-close" id="ferreiroCloseBtn">✕</button>
       </div>
-      <div class="modal-tabs">
-        <button class="modal-tab-btn active" data-tab="ferreiroTabBuy">Comprar</button>
-        <button class="modal-tab-btn" data-tab="ferreiroTabForge">Forjar</button>
-      </div>
-      <div class="modal-tab-content active" id="ferreiroTabBuy">
-        <div class="panel-title">Ferreiro — Armas</div>
-        <div class="footer-note" style="margin:0 0 10px;">Creiton forja armas novas — compre as que ainda não tem.</div>
-        <div id="ferreiroWeaponList"></div>
-      </div>
-      <div class="modal-tab-content" id="ferreiroTabForge">
-        <div class="panel-title">Consertar Armas Brutas</div>
-        <div class="footer-note" style="margin:0 0 10px;">Junte os materiais pedidos e Creiton conserta a arma, tornando-a utilizável.</div>
-        <div id="forgeList"></div>
+      <div class="modal-body">
+        <div class="modal-tabs">
+          <button class="modal-tab-btn active" data-tab="ferreiroTabBuy">Comprar</button>
+          <button class="modal-tab-btn" data-tab="ferreiroTabForge">Forjar</button>
+        </div>
+        <div class="modal-tab-content active" id="ferreiroTabBuy">
+          <div class="panel-title">Ferreiro — Armas</div>
+          <div class="footer-note" style="margin:0 0 10px;">Creiton forja armas novas — compre as que ainda não tem.</div>
+          <div id="ferreiroWeaponList"></div>
+        </div>
+        <div class="modal-tab-content" id="ferreiroTabForge">
+          <div class="panel-title">Consertar Armas Brutas</div>
+          <div class="footer-note" style="margin:0 0 10px;">Junte os materiais pedidos e Creiton conserta a arma, tornando-a utilizável.</div>
+          <div id="forgeList"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -223,44 +225,46 @@
 </div>
 
 <div class="modal-overlay" id="lojaModal">
-  <div class="modal-box">
-    <div class="modal-header">
-      <span class="pixel">LOJA</span>
-      <button class="modal-close" id="lojaCloseBtn">✕</button>
+  <div class="modal-group">
+    <div class="npc-side-panel">
+      <img class="npc-portrait" src="assets/portraits/barnabe.png" alt="Barnabé">
+      <div class="npc-speech" id="lojaBarnabeLine"></div>
     </div>
-    <div class="modal-body">
-      <div class="panel-title">Loja da Cidade</div>
-      <div class="npc-banner">
-        <img class="npc-portrait" src="assets/portraits/barnabe.png" alt="Barnabé">
-        <div class="npc-speech" id="lojaBarnabeLine"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="pixel">LOJA</span>
+        <button class="modal-close" id="lojaCloseBtn">✕</button>
       </div>
-      <div class="footer-note" style="margin:0 0 10px;">Venda os itens coletados nas Dungeons e na Caverna por moeda.</div>
-      <div class="quest-banner" id="lojaQuestBanner"></div>
-      <div class="modal-tabs">
-        <button class="modal-tab-btn active" data-tab="lojaTabDrops">Drops</button>
-        <button class="modal-tab-btn" data-tab="lojaTabWeapons">Armas</button>
-        <button class="modal-tab-btn" data-tab="lojaTabMinerals">Minérios</button>
-      </div>
-      <div class="modal-tab-content active" id="lojaTabDrops">
-        <div class="shop-bulk-actions">
-          <button class="small-btn" id="lojaDropsAllBtn">Tudo Geral</button>
-          <button class="small-btn" id="lojaDropsNoneBtn">Zero Geral</button>
+      <div class="modal-body">
+        <div class="panel-title">Loja da Cidade</div>
+        <div class="footer-note" style="margin:0 0 10px;">Venda os itens coletados nas Dungeons e na Caverna por moeda.</div>
+        <div class="quest-banner" id="lojaQuestBanner"></div>
+        <div class="modal-tabs">
+          <button class="modal-tab-btn active" data-tab="lojaTabDrops">Drops</button>
+          <button class="modal-tab-btn" data-tab="lojaTabWeapons">Armas</button>
+          <button class="modal-tab-btn" data-tab="lojaTabMinerals">Minérios</button>
         </div>
-        <div id="shopListDrops"></div>
-      </div>
-      <div class="modal-tab-content" id="lojaTabWeapons">
-        <div class="shop-bulk-actions">
-          <button class="small-btn" id="lojaWeaponsAllBtn">Tudo Geral</button>
-          <button class="small-btn" id="lojaWeaponsNoneBtn">Zero Geral</button>
+        <div class="modal-tab-content active" id="lojaTabDrops">
+          <div class="shop-bulk-actions">
+            <button class="small-btn" id="lojaDropsAllBtn">Tudo Geral</button>
+            <button class="small-btn" id="lojaDropsNoneBtn">Zero Geral</button>
+          </div>
+          <div id="shopListDrops"></div>
         </div>
-        <div id="shopListWeapons"></div>
-      </div>
-      <div class="modal-tab-content" id="lojaTabMinerals">
-        <div class="shop-bulk-actions">
-          <button class="small-btn" id="lojaMineralsAllBtn">Tudo Geral</button>
-          <button class="small-btn" id="lojaMineralsNoneBtn">Zero Geral</button>
+        <div class="modal-tab-content" id="lojaTabWeapons">
+          <div class="shop-bulk-actions">
+            <button class="small-btn" id="lojaWeaponsAllBtn">Tudo Geral</button>
+            <button class="small-btn" id="lojaWeaponsNoneBtn">Zero Geral</button>
+          </div>
+          <div id="shopListWeapons"></div>
         </div>
-        <div id="shopListMinerals"></div>
+        <div class="modal-tab-content" id="lojaTabMinerals">
+          <div class="shop-bulk-actions">
+            <button class="small-btn" id="lojaMineralsAllBtn">Tudo Geral</button>
+            <button class="small-btn" id="lojaMineralsNoneBtn">Zero Geral</button>
+          </div>
+          <div id="shopListMinerals"></div>
+        </div>
       </div>
     </div>
   </div>
