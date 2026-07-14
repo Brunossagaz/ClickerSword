@@ -95,13 +95,22 @@ const SaveModule = {
     // guard against missing nested keys from older saves (ou de novos
     // upgrades/tropas/mineradores/itens adicionados depois que o save foi criado)
     state.troops = Object.assign(Object.fromEntries(TROOP_DEFS.map(d => [d.key, 0])), loaded.troops||{});
-    state.miners = Object.assign(Object.fromEntries(MINER_DEFS.map(d => [d.key, 0])), loaded.miners||{});
+    state.prospectors = Object.assign(Object.fromEntries(PROSPECTOR_DEFS.map(d => [d.key, 0])), loaded.prospectors||{});
+    state.cavernUpgrades = Object.assign(Object.fromEntries(CAVERN_UPGRADE_DEFS.map(d => [d.key, 0])), loaded.cavernUpgrades||{});
+    state.cavernChest = Object.assign(Object.fromEntries(MINERAL_DEFS.map(d => [d.key, 0])), loaded.cavernChest||{});
+    state.oreProgress = typeof loaded.oreProgress === 'number' ? loaded.oreProgress : 0;
     state.upgrades = Object.assign(Object.fromEntries(UPGRADE_DEFS.map(d => [d.key, 0])), loaded.upgrades||{});
     state.inventory = Object.assign(Object.fromEntries(ITEM_DEFS.map(d => [d.key, 0])), loaded.inventory||{});
-    state.equipment = Object.assign(Object.fromEntries(ITEM_DEFS.filter(d => d.equip).map(d => [d.key, 0])), loaded.equipment||{});
-    state.weapons = Object.assign(Object.fromEntries(WEAPON_DEFS.map(d => [d.key, 0])), loaded.weapons||{});
+    state.weapons = Object.assign(Object.fromEntries([...WEAPON_DEFS, ...FORGED_WEAPON_DEFS].map(d => [d.key, 0])), loaded.weapons||{});
+    // Save de antes da arma equipada ser um conceito separado (tudo
+    // empilhava pra sempre): se o campo nem existia ainda, escolhe pro
+    // jogador a 1ª arma que ele já possuir, só pra não ficar "sem nada
+    // equipado" do nada — o bônus antigo já cravado em clickDamageFlat
+    // continua lá, isso aqui não soma nada de novo.
+    state.equippedWeapon = typeof loaded.equippedWeapon === 'string' ? loaded.equippedWeapon
+      : (Object.keys(state.weapons).find(k => state.weapons[k] > 0) || null);
     state.quests = Object.assign(Object.fromEntries(QUEST_DEFS.map(d => [d.key, false])), loaded.quests||{});
-    state.prestige = Object.assign({pClick:0,pDps:0,pGold:0,pCrit:0}, loaded.prestige||{});
+    state.prestige = Object.assign({pClick:0,pDps:0,pOreRate:0,pCrit:0}, loaded.prestige||{});
 
     // Merge por-Dungeon (não substitui o objeto inteiro): saves antigos podem
     // não ter `pendingSlot`/`maxCycleCompleted` (adicionados depois), então
@@ -196,12 +205,17 @@ const SaveModule = {
     const seconds = Math.max(0, cappedMs/1000);
     if(seconds < 5) return 0;
     const dps = TroopsModule.totalDps();
-    const gps = MiningModule.totalGoldPerSecond();
-    const earned = Math.floor((dps + gps) * seconds * CONFIG.offlineEfficiency);
+    const earned = Math.floor(dps * seconds * CONFIG.offlineEfficiency);
     if(earned > 0){
       state.gold += earned;
       state.goldEarnedThisRun += earned;
     }
+    // Minério minerado offline vai direto pro baú (mesmo cap/eficiência do
+    // dps acima) — fica lá esperando o jogador coletar, não aparece no
+    // toast de boas-vindas (ver mainmenu.js), só na próxima vez que abrir a
+    // Caverna.
+    const ops = CavernModule.totalOrePerSecond();
+    if(ops > 0) CavernModule.mineOreAmount(ops * seconds * CONFIG.offlineEfficiency);
     return {earned, seconds};
   }
 };

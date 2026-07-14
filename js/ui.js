@@ -62,6 +62,13 @@ const UI = {
     // trancados (ver renderCityBuildingLocks) ficam com o atributo `disabled`,
     // que já impede o clique nativamente — sem precisar checar de novo aqui.
     this.wireBuildingModal('openFerreiroBtn', 'ferreiroModal', 'ferreiroCloseBtn');
+    this.initModalTabs('ferreiroModal');
+    // Fala solta do Creiton — mesmo padrão do Barnabé na Loja (BARNABE_LINES/
+    // lojaBarnabeLine), sorteada de novo toda vez que o Ferreiro é aberto.
+    document.getElementById('openFerreiroBtn').addEventListener('click', ()=>{
+      document.getElementById('ferreiroCreitonLine').textContent =
+        '"'+CREITON_LINES[Math.floor(Math.random()*CREITON_LINES.length)]+'"';
+    });
     this.wireBuildingModal('openGuildaBtn', 'guildaModal', 'guildaCloseBtn');
     this.wireBuildingModal('openCavernaBtn', 'cavernaModal', 'cavernaCloseBtn');
     this.wireBuildingModal('openDungeonBtn', 'dungeonModal', 'dungeonCloseBtn');
@@ -73,9 +80,10 @@ const UI = {
       document.getElementById('cyclePickerCloseBtn').addEventListener('click', ()=>cyclePickerModal.classList.remove('open'));
       cyclePickerModal.addEventListener('click', (e)=>{ if(e.target === cyclePickerModal) cyclePickerModal.classList.remove('open'); });
     }
-    this.wireBuildingModal('openInventarioBtn', 'inventarioModal', 'inventarioCloseBtn');
     this.wireBuildingModal('openAcademiaBtn', 'academiaModal', 'academiaCloseBtn');
-    this.initModalTabs('inventarioModal');
+    this.initModalTabs('sidebarInventory');
+    this.initSidebarToggle();
+    document.getElementById('cavernChestBtn').addEventListener('click', ()=>CavernModule.collectChest());
     // sempre abre a Academia com a view centralizada (zoom 1, sem pan) —
     // sem isso o jogador podia reabrir o modal ainda deslocado/dado zoom de
     // uma visita anterior, o que é confuso.
@@ -111,14 +119,28 @@ const UI = {
     OnboardingModule.init();
 
     // Loja também é especial: na 1ª vez, o Barnabé se apresenta antes de
-    // abrir a loja normal — ver QuestModule.openBarnabeIntro.
+    // abrir a loja normal — ver QuestModule.openBarnabeIntro. Nas próximas
+    // vezes, sorteia uma fala solta dele (BARNABE_LINES) só de clima.
     const lojaModal = document.getElementById('lojaModal');
     document.getElementById('openLojaBtn').addEventListener('click', ()=>{
-      if(!state.metBarnabe) QuestModule.openBarnabeIntro();
-      else lojaModal.classList.add('open');
+      if(!state.metBarnabe){
+        QuestModule.openBarnabeIntro();
+      } else {
+        document.getElementById('lojaBarnabeLine').textContent =
+          '"'+BARNABE_LINES[Math.floor(Math.random()*BARNABE_LINES.length)]+'"';
+        lojaModal.classList.add('open');
+      }
     });
     document.getElementById('lojaCloseBtn').addEventListener('click', ()=>lojaModal.classList.remove('open'));
     lojaModal.addEventListener('click', (e)=>{ if(e.target === lojaModal) lojaModal.classList.remove('open'); });
+    this.initModalTabs('lojaModal');
+    // Botões "Tudo Geral"/"Zero Geral" de cada aba da Loja (ver setAllSellQty).
+    document.getElementById('lojaDropsAllBtn').addEventListener('click', ()=>this.setAllSellQty(this.shopCategoryDefs().drops, true));
+    document.getElementById('lojaDropsNoneBtn').addEventListener('click', ()=>this.setAllSellQty(this.shopCategoryDefs().drops, false));
+    document.getElementById('lojaWeaponsAllBtn').addEventListener('click', ()=>this.setAllSellQty(this.shopCategoryDefs().weapons, true));
+    document.getElementById('lojaWeaponsNoneBtn').addEventListener('click', ()=>this.setAllSellQty(this.shopCategoryDefs().weapons, false));
+    document.getElementById('lojaMineralsAllBtn').addEventListener('click', ()=>this.setAllSellQty(this.shopCategoryDefs().minerals, true));
+    document.getElementById('lojaMineralsNoneBtn').addEventListener('click', ()=>this.setAllSellQty(this.shopCategoryDefs().minerals, false));
     QuestModule.init();
 
     this.initSettingsModal();
@@ -206,6 +228,16 @@ const UI = {
   },
   // Abas internas escopadas a um modal específico (hoje só o Inventário usa)
   // — não é o sistema global de tabs (removido na reestruturação anterior).
+  // Sidebar do Inventário: fixa à esquerda, expande/encolhe clicando no
+  // botão-aba (ver .sidebar-inventory/.sidebar-toggle-btn em style.css) —
+  // alternativa ao modal antigo, sempre visível durante Cidade/Dungeon
+  // (mesma regra do statBar que ela substituiu, ver showScreen).
+  initSidebarToggle(){
+    const sidebar = document.getElementById('sidebarInventory');
+    document.getElementById('sidebarToggleBtn').addEventListener('click', ()=>{
+      sidebar.classList.toggle('expanded');
+    });
+  },
   initModalTabs(modalId){
     const modal = document.getElementById(modalId);
     const tabBtns = modal.querySelectorAll('.modal-tab-btn');
@@ -227,7 +259,9 @@ const UI = {
     ['view-mainmenu','view-slotpicker','view-city','view-dungeon'].forEach(vid=>{
       document.getElementById(vid).classList.toggle('active', vid===id);
     });
-    document.getElementById('statBar').style.display = (id==='view-city'||id==='view-dungeon') ? '' : 'none';
+    // sidebar do inventário substitui o antigo statBar — mesma regra de
+    // visibilidade (só durante Cidade/Dungeon, nunca no menu/seletor de save)
+    document.getElementById('sidebarInventory').style.display = (id==='view-city'||id==='view-dungeon') ? '' : 'none';
   },
   showMainMenu(){ this.showScreen('view-mainmenu'); },
   showSlotPicker(){ MainMenuModule.renderSlotPicker(); this.showScreen('view-slotpicker'); },
@@ -243,7 +277,7 @@ const UI = {
   renderCityBuildingLocks(){
     const buildingByBtn = {
       openFerreiroBtn:'ferreiro', openGuildaBtn:'guilda', openCavernaBtn:'caverna',
-      openLojaBtn:'loja', openIgrejaBtn:'igreja', openDungeonBtn:'dungeon', openInventarioBtn:'inventario',
+      openLojaBtn:'loja', openIgrejaBtn:'igreja', openDungeonBtn:'dungeon',
       openAcademiaBtn:'academia'
     };
     for(const btnId in buildingByBtn){
@@ -381,17 +415,26 @@ const UI = {
   },
   setGoldenVisible(v){
     document.getElementById('goldenTag').style.display = v ? 'block' : 'none';
-    this.renderMonsterSprite();
+    // MonsterModule.maybeTriggerGolden roda a cada tick mesmo fora de uma
+    // Dungeon (ver main.js) — sem essa guarda, o sorteio do monstro dourado
+    // acertando enquanto o jogador está na cidade quebrava aqui
+    // (MonsterModule.current nulo).
+    if(MonsterModule.current) this.renderMonsterSprite();
   },
+  // Aba Estatísticas da sidebar do Inventário — substitui o antigo statBar
+  // (que só tinha 4 valores) por um resumo mais completo do personagem.
   renderStats(){
-    document.getElementById('statGold').textContent = this.fmt(state.gold);
-    document.getElementById('statClickDmg').textContent = this.fmt(PlayerModule.clickDamage());
-    document.getElementById('statDps').textContent = this.fmt(TroopsModule.totalDps());
-    document.getElementById('statCrit').textContent = Math.round((state.critChance+state.pCritChance)*100)+'%';
-    document.getElementById('statMiningGps').textContent = this.fmt(MiningModule.totalGoldPerSecond());
-    // espelham os mesmos valores na aba Estatísticas do Inventário
+    document.getElementById('invStatGold').textContent = this.fmt(state.gold);
     document.getElementById('invStatClickDmg').textContent = this.fmt(PlayerModule.clickDamage());
     document.getElementById('invStatDps').textContent = this.fmt(TroopsModule.totalDps());
+    document.getElementById('invStatCrit').textContent = Math.round((state.critChance+state.pCritChance)*100)+'%';
+    // toFixed em vez de fmt() aqui: taxas de minério começam fracionárias
+    // (ex.: 0.10/seg) e fmt() arredonda pra baixo em inteiro, mostraria "0"
+    const orePerSec = CavernModule.totalOrePerSecond().toFixed(2);
+    document.getElementById('invStatOrePerSec').textContent = orePerSec;
+    document.getElementById('statOrePerSec').textContent = orePerSec; // mesma taxa, exibida de novo dentro do modal da Caverna
+    document.getElementById('invStatEssence').textContent = this.fmt(state.essence);
+    document.getElementById('invStatKills').textContent = this.fmt(state.totalKillsAll);
   },
   renderDungeonList(){
     const el = document.getElementById('dungeonList');
@@ -444,100 +487,164 @@ const UI = {
     }
     document.getElementById('cyclePickerModal').classList.add('open');
   },
-  // Monta uma linha de item reutilizável — com botão de vender (Loja) e/ou
-  // equipar (Mochila do Inventário, só pra itens com `equip` — ver
-  // opts.showSellButton/opts.showEquipButton).
+  // Quantidade selecionada pra vender de cada item (Loja) — sobrevive a
+  // re-renders (renderShop() é chamado a cada clique de -/+/Tudo), só reseta
+  // depois de uma venda de verdade. Inicializado sob demanda em buildItemRow.
+  shopSellQty:{},
+  // Monta uma linha de item reutilizável — com seletor de quantidade +
+  // vender (Loja, ver opts.showSellButton). Equipar arma NÃO passa mais por
+  // aqui — nenhum ITEM_DEFS tem mais `equip` (armas dropadas são
+  // `type:'brokenWeapon'`, precisam ser forjadas primeiro, ver
+  // renderForgeList); equipar acontece só na aba Armas do Inventário
+  // (ver renderWeaponsList/PlayerModule.equipWeapon).
   buildItemRow(def, opts){
     opts = opts || {};
     const qty = state.inventory[def.key];
     const hasAny = qty > 0;
-    const isEquipped = !!(def.equip && state.equipment[def.key] > 0);
     const row = document.createElement('div');
-    row.className = 'shop-row'+(hasAny||isEquipped?'':' disabled');
-    const sellBtnHtml = opts.showSellButton ? `<button class="buy-btn sell-btn" ${hasAny?'':'disabled'}>Vender tudo</button>` : '';
-    const equipBtnHtml = (opts.showEquipButton && def.equip && !isEquipped) ? `<button class="buy-btn equip-btn" ${hasAny?'':'disabled'}>Equipar</button>` : '';
-    const equipDesc = def.equip ? `+${def.equip.clickDamageBonus} dano por clique${isEquipped ? ' (equipada)' : ''}` : '';
-    const sellDesc = opts.showSellButton ? 'Vende por '+def.sellPrice+' ouro cada' : '';
+    row.className = 'shop-row'+(hasAny?'':' disabled');
+    const sellDesc = opts.showSellButton ? 'Vende por '+def.sellPrice+' moeda(s) cada' : '';
+    const rarityHtml = def.rarity ? `<span class="rarity-tag rarity-${def.rarity}">${RARITY_DEFS[def.rarity].label}</span>` : '';
+
+    let sellControlsHtml = '';
+    if(opts.showSellButton){
+      // Sempre começa em 0 (nunca pré-seleciona 1) — o jogador escolhe
+      // quanto vender explicitamente, com +/-/Tudo ou os botões "Geral" da
+      // aba (ver setAllSellQty). Clampado entre 0 e o quanto ele possui.
+      const selQty = Math.max(0, Math.min(this.shopSellQty[def.key] || 0, qty));
+      this.shopSellQty[def.key] = selQty;
+      const dis = hasAny ? '' : 'disabled';
+      const minusDis = (hasAny && selQty > 0) ? '' : 'disabled';
+      const plusDis = (hasAny && selQty < qty) ? '' : 'disabled';
+      const sellDis = (hasAny && selQty > 0) ? '' : 'disabled';
+      sellControlsHtml = `
+        <div class="qty-stepper">
+          <button class="qty-btn qty-minus" ${minusDis}>−</button>
+          <span class="qty-value">${selQty}</span>
+          <button class="qty-btn qty-plus" ${plusDis}>+</button>
+          <button class="small-btn qty-all-btn" ${dis}>Tudo</button>
+          <button class="buy-btn sell-btn" ${sellDis}>Vender</button>
+        </div>`;
+    }
+
     row.innerHTML = `
       <div class="shop-info">
-        <div class="name"><div class="icon icon-${def.icon}"></div>${def.name}</div>
-        <div class="desc">${[sellDesc, equipDesc].filter(Boolean).join(' · ')}</div>
+        <div class="name"><div class="icon icon-${def.icon}"></div>${def.name}${rarityHtml}</div>
+        <div class="desc">${sellDesc}</div>
         <div class="owned">Possui: ${qty}</div>
-      </div>${equipBtnHtml}${sellBtnHtml}`;
+      </div>${sellControlsHtml}`;
+
     if(opts.showSellButton && hasAny){
+      row.querySelector('.qty-minus').addEventListener('click', ()=>{
+        this.shopSellQty[def.key] = Math.max(0, (this.shopSellQty[def.key]||0) - 1);
+        this.renderShop();
+      });
+      row.querySelector('.qty-plus').addEventListener('click', ()=>{
+        this.shopSellQty[def.key] = Math.min(qty, (this.shopSellQty[def.key]||0) + 1);
+        this.renderShop();
+      });
+      row.querySelector('.qty-all-btn').addEventListener('click', ()=>{
+        this.shopSellQty[def.key] = qty;
+        this.renderShop();
+      });
       row.querySelector('.sell-btn').addEventListener('click', ()=>{
-        const earned = qty * def.sellPrice;
+        const sellQty = Math.max(0, Math.min(this.shopSellQty[def.key] || 0, qty));
+        if(sellQty <= 0) return;
+        const earned = sellQty * def.sellPrice;
         state.gold += earned;
         state.goldEarnedThisRun += earned;
-        state.inventory[def.key] = 0;
+        state.inventory[def.key] -= sellQty;
+        this.shopSellQty[def.key] = 0;
         UI.renderAll();
-      });
-    }
-    if(opts.showEquipButton && def.equip && !isEquipped && hasAny){
-      row.querySelector('.equip-btn').addEventListener('click', ()=>{
-        state.inventory[def.key] -= 1;
-        state.equipment[def.key] = 1;
-        state.clickDamageFlat += def.equip.clickDamageBonus;
-        UI.renderAll();
-        UI.showToast('EQUIPADO', `${def.name} equipada! +${def.equip.clickDamageBonus} dano por clique.`);
       });
     }
     return row;
   },
-  renderShop(){
-    const el = document.getElementById('shopList');
-    el.innerHTML = '';
-    for(const def of ITEM_DEFS) el.appendChild(this.buildItemRow(def, { showSellButton:true }));
+  // Loja separada em 3 abas por categoria — derivadas dos mesmos campos que
+  // já existem em ITEM_DEFS (sem precisar de um campo `type` formal pra
+  // cada item, ver TODO.md): `type:'mineral'` já marca os minérios da
+  // Caverna; `type:'brokenWeapon'` já marca as armas brutas dropadas
+  // (precisam ser forjadas no Ferreiro pra virar equipáveis, ver
+  // renderForgeList); o resto é drop comum de monstro. Reaproveitado pelos
+  // botões "Tudo Geral"/"Zero Geral" de cada aba (ver setAllSellQty).
+  shopCategoryDefs(){
+    return {
+      drops: ITEM_DEFS.filter(d=>d.type!=='mineral' && d.type!=='brokenWeapon'),
+      weapons: ITEM_DEFS.filter(d=>d.type==='brokenWeapon'),
+      minerals: ITEM_DEFS.filter(d=>d.type==='mineral'),
+    };
   },
-  // Mochila do Inventário: mesma lista de itens, com botão de equipar pros
-  // que têm `equip` (vender continua exclusivo da Loja). Item equipado
-  // continua aparecendo mesmo com 0 unidades restantes, pra mostrar o status.
+  renderShop(){
+    const cats = this.shopCategoryDefs();
+    const fillList = (elId, defs)=>{
+      const el = document.getElementById(elId);
+      el.innerHTML = '';
+      for(const def of defs) el.appendChild(this.buildItemRow(def, { showSellButton:true }));
+    };
+    fillList('shopListDrops', cats.drops);
+    fillList('shopListWeapons', cats.weapons);
+    fillList('shopListMinerals', cats.minerals);
+  },
+  // Botão "Tudo Geral"/"Zero Geral" de uma aba da Loja — só ajusta o
+  // seletor de quantidade de TODOS os itens daquela categoria de uma vez
+  // (mesmo efeito do botão "Tudo" de uma linha, só que pra lista inteira);
+  // não vende nada sozinho, o jogador ainda confirma com "Vender" em cada
+  // linha.
+  setAllSellQty(defs, toMax){
+    for(const def of defs){
+      this.shopSellQty[def.key] = toMax ? state.inventory[def.key] : 0;
+    }
+    this.renderShop();
+  },
+  // Mochila do Inventário: mesma lista de itens (vender continua exclusivo
+  // da Loja) — inclui armas brutas ainda não forjadas, minérios e drops
+  // comuns, tudo só visualização aqui.
   renderInventoryBag(){
     const el = document.getElementById('inventoryBagList');
     el.innerHTML = '';
-    const owned = ITEM_DEFS.filter(d=>state.inventory[d.key] > 0 || (d.equip && state.equipment[d.key] > 0));
+    const owned = ITEM_DEFS.filter(d=>state.inventory[d.key] > 0);
     if(owned.length === 0){
       el.innerHTML = '<div class="footer-note">Sua mochila está vazia. Explore as Dungeons para coletar itens.</div>';
       return;
     }
-    for(const def of owned) el.appendChild(this.buildItemRow(def, { showSellButton:false, showEquipButton:true }));
+    for(const def of owned) el.appendChild(this.buildItemRow(def, { showSellButton:false }));
   },
-  // Aba Armas do Inventário: mostra a(s) arma(s) escolhida(s) com o Clérigo/
-  // compradas no Ferreiro E os equipamentos dropados em Dungeons já
-  // equipados (ver ITEM_DEFS.equip/state.equipment) — só visualização.
+  // Aba Armas do Inventário — "seleção de arma equipada": lista TODA arma
+  // que o jogador já possui (iniciais de WEAPON_DEFS + forjadas de
+  // FORGED_WEAPON_DEFS, mesmo pool state.weapons), cada uma com um botão
+  // Equipar (chama PlayerModule.equipWeapon) ou o selo "Equipada" se for a
+  // state.equippedWeapon atual — só UMA fica ativa por vez, ver
+  // PlayerModule.clickDamage/TroopsModule.totalDps.
   renderWeaponsList(){
     const el = document.getElementById('weaponsList');
     el.innerHTML = '';
-    const ownedWeapons = WEAPON_DEFS.filter(d=>state.weapons[d.key] > 0);
-    const ownedGear = ITEM_DEFS.filter(d=>d.equip && state.equipment[d.key] > 0);
-    if(ownedWeapons.length === 0 && ownedGear.length === 0){
-      el.innerHTML = '<div class="footer-note">Nenhuma arma equipada ainda.</div>';
+    const owned = [...WEAPON_DEFS, ...FORGED_WEAPON_DEFS].filter(d=>state.weapons[d.key] > 0);
+    if(owned.length === 0){
+      el.innerHTML = '<div class="footer-note">Nenhuma arma ainda. Escolha uma com o Clérigo ou compre/forje no Ferreiro.</div>';
       return;
     }
-    for(const def of ownedWeapons){
+    for(const def of owned){
+      const isEquipped = state.equippedWeapon === def.key;
+      const bonusParts = [`+${def.clickDamageBonus} dano por clique`];
+      if(def.dpsBonus) bonusParts.push(`+${def.dpsBonus} DPS`);
       const row = document.createElement('div');
-      row.className = 'shop-row';
+      row.className = 'shop-row'+(isEquipped ? ' equipped' : '');
       row.innerHTML = `
         <div class="shop-info">
           <div class="name"><div class="icon icon-${def.icon}"></div>${def.name}</div>
-          <div class="desc">+${def.clickDamageBonus} dano por clique</div>
-        </div>`;
-      el.appendChild(row);
-    }
-    for(const def of ownedGear){
-      const row = document.createElement('div');
-      row.className = 'shop-row';
-      row.innerHTML = `
-        <div class="shop-info">
-          <div class="name"><div class="icon icon-${def.icon}"></div>${def.name}</div>
-          <div class="desc">+${def.equip.clickDamageBonus} dano por clique</div>
-        </div>`;
+          <div class="desc">${bonusParts.join(' · ')}</div>
+        </div>
+        ${isEquipped ? '<div class="owned">Equipada</div>' : '<button class="buy-btn equip-btn">Equipar</button>'}`;
+      if(!isEquipped){
+        row.querySelector('.equip-btn').addEventListener('click', ()=>PlayerModule.equipWeapon(def.key));
+      }
       el.appendChild(row);
     }
   },
   // Loja de armas do Ferreiro — vende as armas que o jogador ainda não tem
-  // (a 1ª já veio de graça do Clérigo). Comprar aplica o mesmo bônus de
-  // dano por clique de escolher a arma no onboarding.
+  // (a 1ª já veio de graça do Clérigo). Comprar só dá posse (state.weapons)
+  // — não equipa sozinho, o jogador escolhe na aba Armas do Inventário
+  // (ver renderWeaponsList/PlayerModule.equipWeapon).
   renderFerreiroWeapons(){
     const el = document.getElementById('ferreiroWeaponList');
     el.innerHTML = '';
@@ -551,7 +658,7 @@ const UI = {
           <div class="shop-info">
             <div class="name"><div class="icon icon-${def.icon}"></div>${def.name}</div>
             <div class="desc">+${def.clickDamageBonus} dano por clique</div>
-            <div class="owned">Equipada</div>
+            <div class="owned">Possui</div>
           </div>`;
       } else {
         row.className = 'shop-row'+(canAfford?'':' disabled');
@@ -560,12 +667,11 @@ const UI = {
             <div class="name"><div class="icon icon-${def.icon}"></div>${def.name}</div>
             <div class="desc">+${def.clickDamageBonus} dano por clique</div>
           </div>
-          <button class="buy-btn" ${canAfford?'':'disabled'}><div class="icon icon-gold"></div> ${UI.fmt(def.buyCost)}</button>`;
+          <button class="buy-btn" ${canAfford?'':'disabled'}><div class="icon icon-coin"></div> ${UI.fmt(def.buyCost)}</button>`;
         if(canAfford){
           row.querySelector('button').addEventListener('click', ()=>{
             state.gold -= def.buyCost;
             state.weapons[def.key] = 1;
-            state.clickDamageFlat += def.clickDamageBonus;
             UI.renderAll();
           });
         }
@@ -573,12 +679,56 @@ const UI = {
       el.appendChild(row);
     }
   },
-  renderMinerList(){
-    const el = document.getElementById('minerList');
+  // Aba Forjar do Ferreiro — conserta uma arma bruta (ver ITEM_DEFS
+  // type:'brokenWeapon') em FORGED_WEAPON_DEFS. Cada material mostra
+  // possui/precisa, verde se já tem o suficiente. Já forjada não mostra
+  // botão de novo (state.weapons[key] só vai a 1, não empilha).
+  renderForgeList(){
+    const el = document.getElementById('forgeList');
     el.innerHTML = '';
-    for(const def of MINER_DEFS){
-      const owned = state.miners[def.key];
-      const cost = MiningModule.costFor(def);
+    for(const def of FORGED_WEAPON_DEFS){
+      const owned = state.weapons[def.key] > 0;
+      const row = document.createElement('div');
+      const bonusParts = [`+${def.clickDamageBonus} dano por clique`, `+${def.dpsBonus} DPS`];
+      const materialsHtml = def.recipe.materials.map(m=>{
+        const itemDef = ITEM_DEFS.find(i=>i.key===m.itemKey);
+        const have = state.inventory[m.itemKey];
+        const met = have >= m.qty;
+        return `<div class="recipe-material ${met?'met':'unmet'}">${itemDef.name}: ${have}/${m.qty}</div>`;
+      }).join('');
+      if(owned){
+        row.className = 'shop-row';
+        row.innerHTML = `
+          <div class="shop-info">
+            <div class="name"><div class="icon icon-${def.icon}"></div>${def.name}</div>
+            <div class="desc">${bonusParts.join(' · ')}</div>
+            <div class="owned">Já forjada</div>
+          </div>`;
+      } else {
+        const canForge = ForgeModule.canForge(def);
+        row.className = 'shop-row'+(canForge?'':' disabled');
+        row.innerHTML = `
+          <div class="shop-info">
+            <div class="name"><div class="icon icon-${def.icon}"></div>${def.name}</div>
+            <div class="desc">${bonusParts.join(' · ')}</div>
+            <div class="recipe-materials">${materialsHtml}</div>
+          </div>
+          <button class="buy-btn" ${canForge?'':'disabled'}><div class="icon icon-coin"></div> ${UI.fmt(def.recipe.coinCost)}</button>`;
+        if(canForge){
+          row.querySelector('button').addEventListener('click', ()=>ForgeModule.forge(def.key));
+        }
+      }
+      el.appendChild(row);
+    }
+  },
+  // Mineradores de MINÉRIO da Caverna — mesmo template das outras listas de
+  // compra escalável (ex.: renderTroopList), usando PROSPECTOR_DEFS/CavernModule.
+  renderOreProspectorList(){
+    const el = document.getElementById('oreProspectorList');
+    el.innerHTML = '';
+    for(const def of PROSPECTOR_DEFS){
+      const owned = state.prospectors[def.key];
+      const cost = CavernModule.costForProspector(def);
       const canAfford = state.gold >= cost;
       const row = document.createElement('div');
       row.className = 'shop-row'+(canAfford?'':' disabled');
@@ -588,14 +738,56 @@ const UI = {
           <div class="desc">${def.desc} cada</div>
           <div class="owned">Possui: ${owned}</div>
         </div>
-        <button class="buy-btn" ${canAfford?'':'disabled'}><div class="icon icon-gold"></div> ${UI.fmt(cost)}</button>`;
-      row.querySelector('button').addEventListener('click', ()=>MiningModule.buy(def.key));
+        <button class="buy-btn" ${canAfford?'':'disabled'}><div class="icon icon-coin"></div> ${UI.fmt(cost)}</button>`;
+      row.querySelector('button').addEventListener('click', ()=>CavernModule.buyProspector(def.key));
+      el.appendChild(row);
+    }
+  },
+  // Upgrades da Caverna — mesmo template de renderPrestigeTab
+  // (nível/maxLevel em vez de "Possui: N"), mas pagando moeda e sem
+  // ProgressionModule (lista simples, sem árvore).
+  renderCavernUpgradeList(){
+    const el = document.getElementById('cavernUpgradeList');
+    el.innerHTML = '';
+    for(const def of CAVERN_UPGRADE_DEFS){
+      const lvl = state.cavernUpgrades[def.key];
+      const maxed = lvl >= def.maxLevel;
+      const cost = CavernModule.costForUpgrade(def);
+      const canAfford = !maxed && state.gold >= cost;
+      const row = document.createElement('div');
+      row.className = 'shop-row'+(canAfford?'':' disabled');
+      row.innerHTML = `
+        <div class="shop-info">
+          <div class="name">${def.name}</div>
+          <div class="desc">${def.desc}</div>
+          <div class="owned">Nível: ${lvl}/${def.maxLevel}</div>
+        </div>
+        ${maxed ? '<div class="owned">MÁX</div>' : `<button class="buy-btn" ${canAfford?'':'disabled'}><div class="icon icon-coin"></div> ${UI.fmt(cost)}</button>`}`;
+      if(!maxed) row.querySelector('button').addEventListener('click', ()=>CavernModule.buyUpgrade(def.key));
+      el.appendChild(row);
+    }
+  },
+  // Baú da Caverna — botão grande com o total acumulado
+  // (desabilitado se vazio) + detalhamento por minério com a cor da
+  // raridade (ver RARITY_DEFS). Clicar no botão chama CavernModule.collectChest.
+  renderCavernChest(){
+    const total = CavernModule.chestTotal();
+    document.getElementById('cavernChestCount').textContent = total;
+    document.getElementById('cavernChestBtn').disabled = total === 0;
+    const el = document.getElementById('cavernChestBreakdown');
+    el.innerHTML = '';
+    for(const def of MINERAL_DEFS){
+      const qty = state.cavernChest[def.key];
+      if(qty <= 0) continue;
+      const row = document.createElement('div');
+      row.className = 'chest-breakdown-row';
+      row.innerHTML = `<span class="rarity-dot rarity-${def.rarity}"></span>${def.name}: ${qty}`;
       el.appendChild(row);
     }
   },
   // Tropas não dependem mais da árvore de upgrades (Guilda vai ganhar seu
-  // próprio conceito depois) — liberadas só por ouro, mesmo padrão da
-  // Caverna (ver renderMinerList).
+  // próprio conceito depois) — liberadas só por moeda, mesmo padrão da
+  // Caverna (ver renderOreProspectorList).
   renderTroopList(){
     const el = document.getElementById('troopList');
     el.innerHTML = '';
@@ -611,7 +803,7 @@ const UI = {
           <div class="desc">${def.desc} cada</div>
           <div class="owned">Possui: ${owned}</div>
         </div>
-        <button class="buy-btn" ${canAfford?'':'disabled'}><div class="icon icon-gold"></div> ${UI.fmt(cost)}</button>`;
+        <button class="buy-btn" ${canAfford?'':'disabled'}><div class="icon icon-coin"></div> ${UI.fmt(cost)}</button>`;
       row.querySelector('button').addEventListener('click', ()=>TroopsModule.buy(def.key));
       el.appendChild(row);
     }
@@ -676,7 +868,7 @@ const UI = {
       el.innerHTML = `
         <div class="node-name">${def.name}</div>
         <div class="node-level">${lvl}/${def.maxLevel}</div>
-        <div class="node-cost">${maxed ? 'MÁX' : '<div class=\"icon icon-gold\"></div> '+UI.fmt(cost)}</div>
+        <div class="node-cost">${maxed ? 'MÁX' : '<div class=\"icon icon-coin\"></div> '+UI.fmt(cost)}</div>
         ${maxed ? '' : `<button class="node-plus-btn" ${canAfford?'':'disabled'}>+</button>`}
         <div class="node-tooltip">${def.desc}</div>`;
       if(!maxed){
@@ -740,7 +932,7 @@ const UI = {
     } else if(!killsOk){
       btn.textContent = `MATE ${threshold} MONSTROS NO TOTAL PARA ASCENDER`;
     } else {
-      btn.textContent = 'GANHE MAIS OURO NESTE RUN PARA ASCENDER';
+      btn.textContent = 'GANHE MAIS MOEDA NESTE RUN PARA ASCENDER';
     }
 
     const el = document.getElementById('prestigeUpgradeList');
@@ -768,11 +960,14 @@ const UI = {
     this.renderTimer();
     this.renderDungeonList();
     this.renderTroopList();
-    this.renderMinerList();
+    this.renderOreProspectorList();
+    this.renderCavernUpgradeList();
+    this.renderCavernChest();
     this.renderShop();
     this.renderInventoryBag();
     this.renderWeaponsList();
     this.renderFerreiroWeapons();
+    this.renderForgeList();
     this.renderCityBuildingLocks();
     QuestModule.renderQuestBanner();
     this.renderUpgradeTree();
@@ -790,12 +985,25 @@ const UI = {
     stage.appendChild(div);
     setTimeout(()=>div.remove(), 850);
   },
+  // Dano acumulado das tropas (DPS automático) — chamado periodicamente pelo
+  // game loop (ver main.js/tick), não a cada tick de 200ms (viraria poluição
+  // visual), daí não receber posição de clique como showFloatingDamage:
+  // sempre no centro da arena, cor diferente (ver .float-dmg.dps) pra não
+  // confundir com dano de clique (dourado) ou crítico (vermelho).
+  showFloatingDpsDamage(dmg){
+    const stage = document.getElementById('monsterStage');
+    const div = document.createElement('div');
+    div.className = 'float-dmg dps';
+    div.textContent = '-'+this.fmt(dmg);
+    stage.appendChild(div);
+    setTimeout(()=>div.remove(), 850);
+  },
   showFloatingGold(amount){
     const stage = document.getElementById('monsterStage');
     const div = document.createElement('div');
     div.className = 'float-dmg';
     div.style.color = '#ffd54a';
-    div.textContent = '+'+this.fmt(amount)+' ouro';
+    div.textContent = '+'+this.fmt(amount)+' moeda(s)';
     div.style.left = '50%';
     div.style.top = '50%';
     stage.appendChild(div);
@@ -806,7 +1014,7 @@ const UI = {
     const div = document.createElement('div');
     div.className = 'float-dmg';
     div.style.color = '#ffd54a';
-    div.textContent = '+'+this.fmt(amount)+' ouro';
+    div.textContent = '+'+this.fmt(amount)+' moeda(s)';
     const rect = stage.getBoundingClientRect();
     const relX = evt && evt.clientX ? (evt.clientX-rect.left) : rect.width/2;
     div.style.left = relX+'px';

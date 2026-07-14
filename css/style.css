@@ -63,9 +63,22 @@
     font-size:16px;
     margin-top:4px;
   }
+  /* ---- Shell do jogo: sidebar do Inventário (fixa/retrátil) + conteúdo
+     principal lado a lado. Só aparece durante Cidade/Dungeon (ver
+     UI.showScreen) — no menu principal/seletor de save, sidebar fica
+     display:none e o .layout sozinho ocupa o centro normalmente. ---- */
+  .game-shell{
+    display:flex;
+    align-items:flex-start;
+    gap:14px;
+    max-width:920px;
+    margin:0 auto;
+  }
   .layout{
     max-width:640px;
     margin:0 auto;
+    min-width:0; /* pra flex encolher certo com o conteúdo interno (canvas etc.) */
+    flex:1 1 auto;
   }
   .panel{
     background:linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-panel-2) 100%);
@@ -85,17 +98,99 @@
     padding-bottom:8px;
   }
 
-  /* ---- Stat bar ---- */
-  .stat-bar{
-    display:flex;
-    justify-content:space-around;
-    gap:10px;
-    background:var(--stone-dark);
+  /* ---- Sidebar do Inventário (fixa à esquerda, expande/encolhe) ----
+     Colapsada: só o botão de alternar fica visível, do tamanho do próprio
+     botão (`align-self:flex-start` — sem isso ela esticava pra acompanhar
+     a altura do painel da cidade ao lado, sobrando uma coluna vazia enorme
+     abaixo do botão). Expandida: estica de novo (`align-self:stretch`) e
+     mostra as 3 abas (Estatísticas/Mochila/Armas), reaproveitando o mesmo
+     sistema de abas dos modais (.modal-tabs/.modal-tab-btn/.modal-tab-content). */
+  .sidebar-inventory{
+    flex:0 0 auto;
+    width:48px;
+    align-self:flex-start;
+    background:linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-panel-2) 100%);
     border:2px solid var(--stone);
-    border-radius:4px;
-    padding:8px 6px;
-    margin-bottom:14px;
-    flex-wrap:wrap;
+    border-radius:6px;
+    box-shadow: inset 0 0 0 2px var(--stone-dark), 0 4px 12px rgba(0,0,0,0.4);
+    display:flex;
+    flex-direction:column;
+    transition:width .18s ease;
+    overflow:hidden;
+  }
+  .sidebar-inventory.expanded{ width:230px; align-self:stretch; }
+  .sidebar-toggle-btn{
+    flex-shrink:0;
+    width:100%;
+    padding:12px 8px;
+    background:var(--stone-dark);
+    border:none;
+    color:var(--parchment);
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+  }
+  .sidebar-inventory.expanded .sidebar-toggle-btn{ border-bottom:2px solid var(--stone); }
+  .sidebar-toggle-btn:hover{ background:var(--stone); }
+  /* Rótulo do botão-toggle — só aparece colapsada (ver
+     .sidebar-inventory:not(.expanded) abaixo): sem ele, o botão colapsado
+     ficava sem nenhuma identificação enquanto o ícone .icon-inventario não
+     tem PNG (pasta assets/icons/ ainda vazia, ver TODO.md) — texto vertical
+     não depende de nenhum asset pra deixar claro o que aquele botão é. */
+  .sidebar-toggle-label{ display:none; }
+  .sidebar-inventory:not(.expanded) .sidebar-toggle-label{
+    display:block;
+    writing-mode:vertical-rl;
+    text-orientation:mixed;
+    font-family:'Press Start 2P', monospace;
+    font-size:10px;
+    letter-spacing:2px;
+    color:var(--ember);
+  }
+  .sidebar-content{
+    padding:10px;
+    overflow-y:auto;
+    overflow-x:hidden;
+  }
+  /* as abas (Estatísticas/Mochila/Armas) não cabem numa linha só nos 230px
+     da sidebar — quebra em 2 linhas em vez de estourar (ver .modal-tabs
+     genérico, usado também nos modais largos, onde 1 linha sempre coube). */
+  .sidebar-content .modal-tabs{ flex-wrap:wrap; }
+  .sidebar-content .modal-tab-btn{ font-size:9px; padding:6px 8px; }
+  /* colapsada: some com o conteúdo interno de vez (não só encolhe, senão o
+     texto quebraria em várias linhas estreitas durante a transição) */
+  .sidebar-inventory:not(.expanded) .sidebar-content{ display:none; }
+  .sidebar-title{
+    font-family:'Press Start 2P', monospace;
+    font-size:11px;
+    color:var(--ember);
+    letter-spacing:1px;
+    margin-bottom:10px;
+    white-space:nowrap;
+  }
+  .stat-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    padding:6px 0;
+    border-bottom:1px solid var(--stone);
+  }
+  .stat-row:last-child{ border-bottom:none; }
+  .stat-row .label{
+    font-size:13px;
+    color:var(--parchment-dim);
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+  }
+  .stat-row .value{
+    font-family:'Press Start 2P', monospace;
+    font-size:12px;
+    color:var(--gold-glow);
+    white-space:nowrap;
   }
   .stat{
     text-align:center;
@@ -250,6 +345,12 @@
     color:var(--blood);
     font-size:19px;
   }
+  /* Dano das tropas (DPS automático, ver main.js/tick) — cor diferente do
+     dano de clique (dourado) e do crítico (vermelho), pra distinguir de
+     onde veio o número flutuante. */
+  .float-dmg.dps{
+    color:var(--arcane);
+  }
   @keyframes floatUp{
     0%{transform:translate(-50%,0) scale(1); opacity:1;}
     100%{transform:translate(-50%,-70px) scale(1.15); opacity:0;}
@@ -268,6 +369,7 @@
     display:flex;
     align-items:center;
     justify-content:space-between;
+    flex-wrap:wrap;
     gap:10px;
     background:var(--stone-dark);
     border:2px solid var(--stone);
@@ -279,9 +381,84 @@
   .shop-row.locked{opacity:0.5; background:repeating-linear-gradient(135deg, var(--stone-dark) 0 10px, #1a1522 10px 20px);}
   .shop-row.locked .name{color:var(--parchment-dim);}
   .shop-row.locked .desc{color:var(--arcane); font-style:italic;}
+  /* Arma ATIVA na aba Armas do Inventário (ver UI.renderWeaponsList) —
+     mesmo destaque dourado já usado em upgrade no nível máximo
+     (.tree-node.maxed), reaproveitando a cor de "conquistado". */
+  .shop-row.equipped{ border-color:var(--gold-glow); box-shadow:inset 0 0 0 1px var(--gold-glow); }
+  /* Requisitos de material na aba Forjar do Ferreiro (ver UI.renderForgeList)
+     — verde se o jogador já tem o suficiente, vermelho se falta. */
+  .recipe-materials{ margin-top:4px; }
+  .recipe-material{ font-size:13px; }
+  .recipe-material.met{ color:var(--arcane); }
+  .recipe-material.unmet{ color:var(--blood); }
+  .shop-info{flex:1 1 140px;}
   .shop-info .name{font-size:17px;color:var(--parchment);}
   .shop-info .desc{font-size:13px;color:var(--parchment-dim);}
   .shop-info .owned{font-size:13px;color:var(--arcane);}
+  /* Seletor de quantidade a vender (Loja) — botões pequenos de propósito. */
+  .qty-stepper{
+    display:flex;
+    align-items:center;
+    gap:4px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+  .qty-btn{
+    width:22px; height:22px;
+    padding:0;
+    border-radius:4px;
+    border:2px solid var(--ember-dim);
+    background:linear-gradient(180deg, var(--ember), var(--ember-dim));
+    color:#1a1208;
+    font-family:'Press Start 2P', monospace;
+    font-size:12px;
+    line-height:1;
+    cursor:pointer;
+    box-shadow:0 2px 0 rgba(0,0,0,0.4);
+  }
+  .qty-btn:active{transform:translateY(1px); box-shadow:none;}
+  .qty-btn:disabled{background:#4a4458; color:#8a839a; border-color:#3a3550; cursor:not-allowed; box-shadow:none;}
+  .qty-value{
+    min-width:24px;
+    text-align:center;
+    font-family:'Press Start 2P', monospace;
+    font-size:12px;
+    color:var(--parchment);
+  }
+  .qty-all-btn{font-size:11px; padding:4px 6px;}
+  .qty-stepper .sell-btn{padding:6px 8px; font-size:9px;}
+
+  /* ---- Banner do NPC (retrato + fala) — hoje só na Loja (Barnabé) ---- */
+  /* Retrato grande à esquerda + fala abaixo dele (não mais lado a lado) —
+     .npc-portrait usa altura automática (só largura fixa) pra nunca
+     distorcer a imagem, seja qual for a proporção do PNG de origem. */
+  .npc-banner{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:10px;
+    margin-bottom:10px;
+    padding:10px;
+    background:var(--stone-dark);
+    border:2px solid var(--stone);
+    border-radius:6px;
+  }
+  .npc-portrait{
+    width:120px; height:auto;
+    flex-shrink:0;
+    image-rendering:pixelated;
+    image-rendering:-moz-crisp-edges;
+    border-radius:6px;
+    border:2px solid var(--stone);
+  }
+  .npc-speech{
+    width:100%;
+    font-family:'VT323', monospace;
+    font-size:17px;
+    font-style:italic;
+    color:var(--parchment);
+    line-height:1.3;
+  }
   .buy-btn{
     font-family:'Press Start 2P', monospace;
     font-size:10px;
@@ -550,7 +727,7 @@
     --icon-gear:url('../assets/icons/gear.png');
     --icon-trophy:url('../assets/icons/trophy.png');
     --icon-lock:url('../assets/icons/lock.png');
-    --icon-gold:url('../assets/icons/gold.png');
+    --icon-coin:url('../assets/icons/coin.png');
     --icon-essence:url('../assets/icons/essence.png');
     --icon-boss:url('../assets/icons/boss.png');
     --icon-golden:url('../assets/icons/golden-monster.png');
@@ -573,6 +750,16 @@
     --icon-weapon-sword:url('../assets/icons/weapon-sword.png');
     --icon-weapon-bow:url('../assets/icons/weapon-bow.png');
     --icon-weapon-axe:url('../assets/icons/weapon-axe.png');
+    --icon-weapon-slimewarriorsword:url('../assets/icons/weapon-slimewarriorsword.png');
+    --icon-weapon-slimewarrioraxe:url('../assets/icons/weapon-slimewarrioraxe.png');
+    --icon-weapon-slimekinggreataxe:url('../assets/icons/weapon-slimekinggreataxe.png');
+    --icon-mineral-iron:url('../assets/icons/mineral-iron.png');
+    --icon-mineral-bronze:url('../assets/icons/mineral-bronze.png');
+    --icon-mineral-silver:url('../assets/icons/mineral-silver.png');
+    --icon-mineral-gold:url('../assets/icons/mineral-gold.png');
+    --icon-mineral-diamond:url('../assets/icons/mineral-diamond.png');
+    --icon-mineral-crystal:url('../assets/icons/mineral-crystal.png');
+    --icon-chest:url('../assets/icons/chest.png');
   }
   .icon-ferreiro{background-image:var(--icon-ferreiro);}
   .icon-guilda{background-image:var(--icon-guilda);}
@@ -584,7 +771,7 @@
   .icon-academia{background-image:var(--icon-academia);}
   .icon-gear{background-image:var(--icon-gear); width:18px; height:18px;}
   .icon-trophy{background-image:var(--icon-trophy); width:40px; height:40px;}
-  .icon-gold{background-image:var(--icon-gold); width:14px; height:14px;}
+  .icon-coin{background-image:var(--icon-coin); width:14px; height:14px;}
   .icon-essence{background-image:var(--icon-essence); width:14px; height:14px;}
   .icon-lock{background-image:var(--icon-lock); width:12px; height:12px; margin-right:4px;}
   .icon-boss{background-image:var(--icon-boss); width:16px; height:16px; margin-right:4px;}
@@ -608,6 +795,16 @@
   .icon-weapon-sword{background-image:var(--icon-weapon-sword); width:20px; height:20px;}
   .icon-weapon-bow{background-image:var(--icon-weapon-bow); width:20px; height:20px;}
   .icon-weapon-axe{background-image:var(--icon-weapon-axe); width:20px; height:20px;}
+  .icon-weapon-slimewarriorsword{background-image:var(--icon-weapon-slimewarriorsword); width:20px; height:20px;}
+  .icon-weapon-slimewarrioraxe{background-image:var(--icon-weapon-slimewarrioraxe); width:20px; height:20px;}
+  .icon-weapon-slimekinggreataxe{background-image:var(--icon-weapon-slimekinggreataxe); width:20px; height:20px;}
+  .icon-mineral-iron{background-image:var(--icon-mineral-iron); width:20px; height:20px;}
+  .icon-mineral-bronze{background-image:var(--icon-mineral-bronze); width:20px; height:20px;}
+  .icon-mineral-silver{background-image:var(--icon-mineral-silver); width:20px; height:20px;}
+  .icon-mineral-gold{background-image:var(--icon-mineral-gold); width:20px; height:20px;}
+  .icon-mineral-diamond{background-image:var(--icon-mineral-diamond); width:20px; height:20px;}
+  .icon-mineral-crystal{background-image:var(--icon-mineral-crystal); width:20px; height:20px;}
+  .icon-chest{background-image:var(--icon-chest); width:28px; height:28px;}
   /* cores só pra diferenciar cada prédio por enquanto — sprites de verdade
      entram depois */
   .building-ferreiro{ --accent:#e8974a; --accent-glow:rgba(232,151,74,0.35); }
@@ -616,7 +813,6 @@
   .building-loja{ --accent:#c9a13f; --accent-glow:rgba(201,161,63,0.35); }
   .building-igreja{ --accent:#9a7fe0; --accent-glow:rgba(154,127,224,0.35); }
   .building-dungeon{ --accent:#b0b0bc; --accent-glow:rgba(176,176,188,0.3); }
-  .building-inventario{ --accent:#c9a13f; --accent-glow:rgba(201,161,63,0.35); }
   .building-academia{ --accent:#e05d4a; --accent-glow:rgba(224,93,74,0.35); }
 
   /* modal mais largo pra Academia — a árvore radial precisa de espaço
@@ -657,6 +853,57 @@
   .modal-tab-btn.active{ color:var(--ember); border-color:var(--ember); }
   .modal-tab-content{ display:none; }
   .modal-tab-content.active{ display:block; }
+  /* Botões "Tudo Geral"/"Zero Geral" no topo de cada aba da Loja — só
+     ajustam os seletores de quantidade da categoria inteira (ver
+     UI.setAllSellQty), não vendem nada sozinhos. */
+  .shop-bulk-actions{ display:flex; gap:8px; margin-bottom:10px; }
+
+  /* ---- Raridade (minérios da Caverna) ----
+     Tag textual (nome do item, ver UI.buildItemRow) e bolinha (detalhamento
+     do baú, ver UI.renderCavernChest) — mesma cor por raridade nos dois
+     lugares, valores espelham RARITY_DEFS (config.js). */
+  .rarity-tag{
+    font-family:'VT323', monospace;
+    font-size:13px;
+    padding:1px 6px;
+    border-radius:3px;
+    margin-left:6px;
+    border:1px solid currentColor;
+    vertical-align:middle;
+  }
+  .rarity-dot{
+    display:inline-block;
+    width:9px; height:9px;
+    border-radius:50%;
+    margin-right:6px;
+    background:currentColor;
+  }
+  .rarity-comum{color:#b9b9b9;}
+  .rarity-incomum{color:#6fcf7f;}
+  .rarity-raro{color:#4fa3e3;}
+  .rarity-epico{color:#b06fe0;}
+  .rarity-lendario{color:#ffb84a;}
+
+  /* ---- Baú da Caverna (aba Minério) ---- */
+  .chest-btn{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    width:100%;
+    background:var(--stone-dark);
+    border:2px solid var(--ember-dim);
+    border-radius:6px;
+    padding:10px 12px;
+    margin-bottom:10px;
+    cursor:pointer;
+    text-align:left;
+  }
+  .chest-btn:active{transform:translateY(2px);}
+  .chest-btn:disabled{opacity:0.5; cursor:not-allowed;}
+  .chest-btn-text{ font-size:16px; color:var(--parchment); line-height:1.4; }
+  .chest-btn-hint{ font-size:12px; color:var(--parchment-dim); }
+  .chest-breakdown{ display:flex; flex-direction:column; gap:3px; margin-bottom:14px; }
+  .chest-breakdown-row{ font-size:14px; color:var(--parchment-dim); }
 
   /* ---- Introdução do Clérigo (Igreja, 1ª visita) ---- */
   .cleric-step{ display:none; }
@@ -713,6 +960,27 @@
     box-shadow:0 3px 0 #124f48;
   }
   .ascend-btn:disabled{
+    background:#4a4458; color:#8a839a; border-color:#3a3550; cursor:not-allowed; box-shadow:none;
+  }
+  /* Botões de cancelar/voltar (Cancelar, Voltar pra cidade) — mesmas
+     dimensões/peso visual do .ascend-btn que normalmente aparece ao lado
+     (mesma família de botão "de ação", só em vermelho pra sinalizar que é
+     a opção negativa/de saída), em vez do .small-btn fantasma que ficava
+     fora do padrão dos outros botões do modal. */
+  .danger-btn{
+    margin-top:8px;
+    font-family:'Press Start 2P', monospace;
+    font-size:11px;
+    padding:10px 14px;
+    background:linear-gradient(180deg, #e0574a, var(--blood));
+    color:#2a0a06;
+    border:2px solid #7a2418;
+    border-radius:4px;
+    cursor:pointer;
+    box-shadow:0 3px 0 #5c1a10;
+  }
+  .danger-btn:active{transform:translateY(2px); box-shadow:0 1px 0 #5c1a10;}
+  .danger-btn:disabled{
     background:#4a4458; color:#8a839a; border-color:#3a3550; cursor:not-allowed; box-shadow:none;
   }
 

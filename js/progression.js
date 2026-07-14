@@ -5,7 +5,7 @@
    config.js) — hoje isso forma uma "árvore em estrela" com uma raiz
    ('battleClickDmg', sem `requires`) e os demais brotando direto dela, mas
    nada impede um upgrade futuro exigir outro que não seja a raiz. Tropas
-   (Guilda) não têm mais pré-requisito, só ouro (ver TroopsModule) —
+   (Guilda) não têm mais pré-requisito, só moeda (ver TroopsModule) —
    isUnlocked('troop', ...) sempre retorna true.
 --------------------------------------------------------------------- */
 const ProgressionModule = {

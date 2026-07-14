@@ -2,11 +2,33 @@
    PLAYER MODULE (player.js)
 --------------------------------------------------------------------- */
 const PlayerModule = {
+  // Busca a def da arma ATIVA (state.equippedWeapon) em WEAPON_DEFS (armas
+  // iniciais) e depois em FORGED_WEAPON_DEFS (forjadas no Ferreiro) — as
+  // duas listas compartilham o mesmo pool de posse (state.weapons) e o
+  // mesmo slot de equipada, mas só uma fica ativa por vez.
+  equippedWeaponDef(){
+    if(!state.equippedWeapon) return null;
+    return WEAPON_DEFS.find(w=>w.key===state.equippedWeapon) || FORGED_WEAPON_DEFS.find(w=>w.key===state.equippedWeapon) || null;
+  },
+  // Troca a arma ativa — só entre as que o jogador já possui
+  // (state.weapons[key]>0). Nunca empilha: o bônus de dano/DPS da arma
+  // anterior some assim que outra é equipada (ver clickDamage/
+  // TroopsModule.totalDps, que leem a arma ativa dinamicamente).
+  equipWeapon(key){
+    if(!state.weapons[key]) return;
+    state.equippedWeapon = key;
+    SaveModule.save();
+    UI.renderAll();
+  },
   clickDamage(){
     // Sem base fixa: o personagem começa com 0 de dano por clique — só sobe
-    // com upgrades ou a arma escolhida com o Clérigo (ver OnboardingModule).
+    // com upgrades (Academia, permanente em state.clickDamageFlat) e com a
+    // arma ativa (dinâmico, ver equippedWeaponDef — NÃO fica gravado em
+    // clickDamageFlat, some se o jogador trocar de arma).
     // clickDamagePercent (Academia de Combate) multiplica em cima do flat.
-    const base = state.clickDamageFlat * (1+state.clickDamagePercent);
+    const weaponDef = this.equippedWeaponDef();
+    const weaponBonus = weaponDef ? weaponDef.clickDamageBonus : 0;
+    const base = (state.clickDamageFlat + weaponBonus) * (1+state.clickDamagePercent);
     return base * (1+state.pClickMult);
   },
   handleClick(evt){

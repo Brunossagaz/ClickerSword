@@ -3,7 +3,17 @@
     "allow": [
       "Bash(command -v node)",
       "Bash(command -v npx)",
-      "Bash(npx --version)"
+      "Bash(npx --version)",
+      "Bash(PYTHONIOENCODING=utf-8 python test_forge.py)",
+      "Bash(ls -la --time-style=full-iso)",
+      "Bash(stat -c '%Y %n' *)",
+      "Bash(find \"C:/Users/bruno.sagaz/AppData/Local/Temp\" -iname \"*.png\" -newermt \"2026-07-13 20:00:00\" 2>/dev/null | head -50)",
+      "Read(//c/Users/bruno.sagaz/AppData/Local/Temp/**)",
+      "Bash(find \"C:/Users/bruno.sagaz/AppData/Local/Temp\" -maxdepth 1 -iname \"*.png\" -newermt \"2026-07-13 00:00:00\" -printf \"%T@ %p\\\\n\" 2>/dev/null | sort -n)",
+      "Bash(python -c ' *)",
+      "Bash(PYTHONIOENCODING=utf-8 python test_portraits.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python -c ' *)",
+      "Bash(git add *)"
     ]
   }
 }

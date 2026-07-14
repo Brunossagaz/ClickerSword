@@ -23,7 +23,7 @@ const PrestigeModule = {
     const gained = this.potentialEssence();
     const keepEssence = state.essence + gained;
     const keepPrestige = state.prestige;
-    const keepMultipliers = { pClickMult:state.pClickMult, pDpsMult:state.pDpsMult, pGoldMult:state.pGoldMult, pCritChance:state.pCritChance };
+    const keepMultipliers = { pClickMult:state.pClickMult, pDpsMult:state.pDpsMult, pOreRateMult:state.pOreRateMult, pCritChance:state.pCritChance };
     const keepTotalKills = state.totalKillsAll;
     const keepAscensionCount = state.ascensionCount + 1;
 
@@ -32,7 +32,7 @@ const PrestigeModule = {
     state.prestige = keepPrestige;
     state.pClickMult = keepMultipliers.pClickMult;
     state.pDpsMult = keepMultipliers.pDpsMult;
-    state.pGoldMult = keepMultipliers.pGoldMult;
+    state.pOreRateMult = keepMultipliers.pOreRateMult;
     state.pCritChance = keepMultipliers.pCritChance;
     state.totalKillsAll = keepTotalKills;
     state.ascensionCount = keepAscensionCount;

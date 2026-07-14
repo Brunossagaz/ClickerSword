@@ -17,14 +17,14 @@ monster-attack-clicker/
 │   ├── sprites.js               → desenha no <canvas> os spritesheets PNG de assets/sprites/
 │   ├── monster.js                → spawn de monstro (escopado à Dungeon ativa), ciclos/posições
 │   │                                (incl. posições de monstro duplo), escala de HP, chefes, monstro
-│   │                                dourado, morte/drop (ouro ou item)
+│   │                                dourado, morte/drop de item
 │   ├── dungeons.js                 → escolha de Dungeon na cidade: desbloqueio, entrar, voltar
 │   ├── onboarding.js                 → 1ª conversa com o Clérigo (nome, história, escolha de arma) +
 │   │                                    desbloqueio computado dos prédios da cidade
 │   ├── quests.js                      → missões de NPC (ex.: entrega de item pro Barnabé), desbloqueiam prédios
 │   ├── player.js                       → dano por clique, crítico, disparo do ataque manual
 │   ├── troops.js                        → compra de tropas (Guilda), custo exponencial, cálculo de DPS total
-│   ├── mining.js                         → Caverna de Mineração: mineradores rendem ouro passivamente
+│   ├── cavern.js                          → Caverna: mineradores extraem minério (raridade), baú manual
 │   ├── upgrades.js                       → compra de upgrades da Academia de Combate (árvore radial)
 │   ├── prestige.js                        → lógica de Ascensão: cálculo de Essência, reset, upgrades permanentes
 │   ├── settings.js                         → preferências globais (áudio/idioma) + baixar/carregar save
@@ -142,7 +142,7 @@ padrão de monstros **repete** — o HP continua subindo normalmente, então
 nenhuma Dungeon "termina" de verdade, só fica mais difícil.
 
 Dungeons marcadas com `dropsItem` (hoje só `slimes`) dão **itens**
-(`ITEM_DEFS`) em vez de ouro — vendidos na Loja por um preço fixo. As demais
+(`ITEM_DEFS`) em vez de moeda — vendidos na Loja por um preço fixo. As demais
 abas (Ferreiro/Guilda/Caverna/Academia/Ascensão) são as mesmas mecânicas de
 sempre, só "vestidas" com nomes de locais da cidade.
 
@@ -212,36 +212,12 @@ sistema de `tools/gen_sprites.py`/`gen_portraits.py`, numa grade menor pra
 ficar nítido em tamanho de ícone). Salvar com `image-rendering: pixelated`
 já configurado — não precisa suavizar/antialiasing.
 
-### Lista de ícones pendentes
-
-| Arquivo (`assets/icons/…`) | Onde aparece | Tamanho na tela |
-|---|---|---|
-| `ferreiro.png` | Prédio Ferreiro | ~32px |
-| `guilda.png` | Prédio Guilda | ~32px |
-| `caverna.png` | Prédio Caverna | ~32px |
-| `loja.png` | Prédio Loja | ~32px |
-| `igreja.png` | Prédio Igreja | ~32px |
-| `dungeon.png` | Prédio Dungeons | ~32px |
-| `inventario.png` | Prédio Inventário | ~32px |
-| `academia.png` | Prédio Academia de Combate | ~32px |
-| `gear.png` | Botão de Configurações (engrenagem) | ~18px |
-| `trophy.png` | Modal de Conquistas | ~40px |
-| `lock.png` | Prédio/upgrade bloqueado (cadeado) | ~12-14px |
-| `gold.png` | Custo/recompensa em ouro | ~14px |
-| `essence.png` | Custo em Essência (upgrades de Ascensão) | ~14px |
-| `boss.png` | Marcador de chefe no nome do monstro | ~16px |
-| `golden-monster.png` | Marcador de monstro dourado | ~16px |
-| `item-slimegel.png` | Item Geleia de Slime (Loja/Inventário) | ~20px |
-| `weapon-sword.png` | Arma Espada Simples | ~20-28px |
-| `weapon-bow.png` | Arma Arco e Flecha | ~20-28px |
-| `weapon-axe.png` | Arma Machado | ~20-28px |
-
 ### Passo a passo pra implementar
 
 1. Desenhe/exporte cada PNG no formato acima (64×64, fundo transparente).
 2. Salve dentro de `assets/icons/`, usando **exatamente** o nome de arquivo
-   da tabela (é o nome que o CSS já espera — sem isso, renomear ou trocar
-   maiúscula/minúscula quebra o link).
+   esperado pelo CSS (lista completa de ícones pendentes em `TODO.md`) — sem
+   isso, renomear ou trocar maiúscula/minúscula quebra o link.
 3. Dê refresh no jogo (`Ctrl+F5` se estiver com cache). Não precisa editar
    `.js`, `.html` nem `.css` — a classe `.icon-<nome>` já existe e já está
    aplicada em todos os lugares certos (ver `--icon-*` no topo de
@@ -253,30 +229,7 @@ já configurado — não precisa suavizar/antialiasing.
    usar `<div class="icon icon-nome"></div>` no HTML/JS onde o ícone deve
    aparecer.
 
-## Empacotar como executável (planos futuros)
-
-Hoje o jogo é HTML/CSS/JS puro sem build (ver "Como rodar" acima). Se um dia
-quiser um `.exe`/instalador pra rodar localmente sem depender de abrir o
-navegador manualmente, as opções realistas:
-
-- **PWA** (manifest.json + service worker): esforço quase zero, dá pra
-  "instalar" pelo Chrome/Edge com ícone próprio. Não é um `.exe` de verdade —
-  ainda depende do navegador instalado, não dá pra distribuir sozinho.
-- **Tauri**: empacota usando o webview nativo do Windows (não embute um
-  Chromium inteiro) → binário bem menor (poucos MB). Exige instalar o
-  toolchain Rust uma vez pra compilar, mas depois disso o empacotamento é
-  simples. Recomendado se o objetivo é um executável leve só pra uso pessoal.
-- **Electron**: mais popular, mais tutorial disponível, empacotamento com
-  `electron-builder` é direto — mas o executável fica bem mais pesado
-  (100MB+) porque embute o Chromium inteiro. Recomendado se preferir a
-  comunidade/documentação maior e não se importar com o tamanho do arquivo.
-
-Nenhuma dessas opções foi implementada ainda — é só a decisão a tomar quando
-for a hora.
-
-## Roadmap / Ideias futuras
-
-### ✅ Já implementado (referência rápida)
+## Funcionalidades implementadas
 
 - Mapas temáticos com tiers de força (Mapa 1: Slimes — 5 ciclos, com
   posições de monstro duplo; Mapa 2: Reino Goblin; Mapa 3: Terras Selvagens)
@@ -287,7 +240,7 @@ for a hora.
   100% computado a partir do progresso, nunca uma flag solta
 - Academia de Combate: árvore radial de upgrades (4 nós, corrente de
   desbloqueio sequencial)
-- Caverna de Mineração (fonte de ouro passiva, separada do combate)
+- Caverna: mineração automática de minério por raridade, separada do combate
 - Ascensão baseada em mortes vitalícias (`totalKillsAll`), com limiar
   crescente a cada ascensão
 - Cidade Abandonada + Dungeons selecionáveis (progresso independente por
@@ -298,44 +251,5 @@ for a hora.
 - Interface 100% sem emoji — ícones pixel art via `assets/icons/` (ver seção
   acima; PNGs ainda pendentes de criar)
 
-### Novas Dungeons (seguindo o padrão: 3 ciclos, 6 variantes, 3 chefes)
-
-- **Dungeon da Necrópole**: mortos-vivos (Zumbi, Esqueleto Arqueiro, Zumbi
-  Podre, Cavaleiro da Morte *(chefe)*, Necromante *(chefe)*, Lich Supremo
-  *(chefe)*)
-- **Dungeon da Floresta Élfica**: Elfo Batedor, Dríade, Elfo Arqueiro, Guardião
-  Ancestral *(chefe)*, Rainha Dríade *(chefe)*, Ent Milenar *(chefe)*
-- **Dungeon do Abismo Demoníaco**: tier de dificuldade bem mais alta, pensado
-  pra pós-Selvagens (Imp, Súcubo, Cão do Inferno, Barão Infernal *(chefe)*,
-  Arquidemônio *(chefe)*, Senhor do Abismo *(chefe)*)
-- Dar tiers pra Dungeon das Terras Selvagens atual (orc/troll/dragão/demônio),
-  que hoje só reaproveita os monstros antigos sem variantes — mesma ideia dos
-  slimes/goblins
-- Expandir itens/loot pra outras Dungeons além da Slime (hoje só ela dropa item)
-
-### Novos monstros/mecânicas de combate
-
-- **Resistência elemental**: monstros com fraqueza/resistência a um tipo de
-  dano, incentivando variar upgrades/tropas
-- **Elite raro**: chance pequena de um monstro normal (não só o 10º da
-  fileira) spawnar como versão "elite" com HP/recompensa maior
-- **Chefe com fases**: muda de forma/ataque na metade da vida
-- **Monstro que foge**: se não for abatido rápido, foge e soma um bônus
-  acumulado pro próximo — outro uso pro timer de 15s além da penalidade
-
-### Sistemas novos
-
-- **Equipamentos/loot**: chefes derrubam itens com bônus permanentes na run
-- **Achievements**: conquistas com recompensas pequenas de essência/ouro (ex:
-  "mate 500 slimes", "ascenda 10 vezes")
-- **Expansão da mineração**: minério virar um recurso próprio (Gemas) que
-  compra upgrades exclusivos, em vez de virar ouro direto
-- **Auto-upgrade/auto-buy**: desbloqueável tarde, compra upgrades sozinho
-- **2ª camada de prestígio**: acima da Ascensão (ex: "Transcendência"), só
-  libera depois de X ascensões, com bônus mais fortes e raros
-
-### Técnico
-
-- Separar `config.js` em `config/monsters.js`, `config/troops.js`,
-  `config/upgrades.js` se a lista crescer muito
-- Adicionar `js/audio.js` para efeitos sonoros de clique/morte/ascensão
+Para o que falta implementar (novas Dungeons, sistemas novos, pendências
+técnicas, etc.), ver `TODO.md`.

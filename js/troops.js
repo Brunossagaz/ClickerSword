@@ -21,6 +21,11 @@ const TroopsModule = {
     for(const def of TROOP_DEFS){
       total += def.dps * state.troops[def.key];
     }
+    // Bônus de DPS da arma ATIVA (só armas forjadas têm dpsBonus — ver
+    // FORGED_WEAPON_DEFS/PlayerModule.equippedWeaponDef) — entra antes do
+    // multiplicador de prestígio, mesmo tratamento do DPS de tropas.
+    const weaponDef = PlayerModule.equippedWeaponDef();
+    if(weaponDef && weaponDef.dpsBonus) total += weaponDef.dpsBonus;
     total *= (1+state.pDpsMult);
     // Ressonância de Combate: soma uma fração do dano por clique como DPS
     // extra, à parte do multiplicador de tropas (que é só "+15% DPS das tropas").

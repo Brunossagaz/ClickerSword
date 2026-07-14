@@ -105,7 +105,7 @@ const MainMenuModule = {
     const off = SaveModule.computeOfflineEarnings();
     if(off && off.earned > 0){
       const mins = Math.floor(off.seconds/60);
-      UI.showToast('BEM-VINDO DE VOLTA', `Suas tropas lutaram por ${mins} min enquanto você estava fora e renderam ${UI.fmt(off.earned)} de ouro!`);
+      UI.showToast('BEM-VINDO DE VOLTA', `Suas tropas lutaram por ${mins} min enquanto você estava fora e renderam ${UI.fmt(off.earned)} de moeda!`);
     }
     UI.renderPlayerName();
     UI.renderAll();

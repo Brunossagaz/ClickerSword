@@ -42,17 +42,29 @@ function freshState(){
     // troops owned — derivado de TROOP_DEFS, então tropa nova nunca fica de
     // fora daqui (era a causa do bug de "Nível: undefined" / "NaN" na loja)
     troops: Object.fromEntries(TROOP_DEFS.map(d => [d.key, 0])),
-    // mineradores da Caverna de Mineração — mesmo motivo, derivado de MINER_DEFS
-    miners: Object.fromEntries(MINER_DEFS.map(d => [d.key, 0])),
+    // mineradores de MINÉRIO da Caverna — derivado de PROSPECTOR_DEFS (ver
+    // js/cavern.js/CavernModule)
+    prospectors: Object.fromEntries(PROSPECTOR_DEFS.map(d => [d.key, 0])),
+    // upgrades da Caverna (nível, não booleano) — derivado de CAVERN_UPGRADE_DEFS
+    cavernUpgrades: Object.fromEntries(CAVERN_UPGRADE_DEFS.map(d => [d.key, 0])),
+    // baú da Caverna: minério já minerado mas ainda não transferido pra
+    // mochila (ver CavernModule.collectChest) — derivado de MINERAL_DEFS,
+    // capacidade ilimitada de propósito
+    cavernChest: Object.fromEntries(MINERAL_DEFS.map(d => [d.key, 0])),
+    // acumulador fracionário de "pontos de minério" entre um sorteio
+    // inteiro e outro (ver CavernModule.mineOreAmount) — sem isso, taxas
+    // fracionárias (ex.: +0.1/seg) nunca renderiam nada
+    oreProgress:0,
     // itens coletados matando monstros em Dungeons (ver MONSTER_TYPES.drops)
     inventory: Object.fromEntries(ITEM_DEFS.map(d => [d.key, 0])),
-    // itens de ITEM_DEFS com `equip` já equipados (0 ou 1 por chave) — igual
-    // a `weapons`, mas pra equipamento dropado em vez de comprado no Ferreiro
-    // (ver UI.buildItemRow)
-    equipment: Object.fromEntries(ITEM_DEFS.filter(d => d.equip).map(d => [d.key, 0])),
-    // arma inicial escolhida com o Clérigo (0 ou 1 por chave) — também usada
+    // pool de posse de TODA arma (iniciais + forjadas, ver WEAPON_DEFS/
+    // FORGED_WEAPON_DEFS) — 0 ou 1 por chave, nunca duplicado. Também usado
     // pra saber se o onboarding já passou (ver OnboardingModule.hasChosenWeapon)
-    weapons: Object.fromEntries(WEAPON_DEFS.map(d => [d.key, 0])),
+    weapons: Object.fromEntries([...WEAPON_DEFS, ...FORGED_WEAPON_DEFS].map(d => [d.key, 0])),
+    // chave da arma ATIVA agora (de state.weapons) — só uma por vez, troca
+    // no Inventário (ver PlayerModule.equipWeapon). null até a 1ª escolha
+    // com o Clérigo.
+    equippedWeapon: null,
     // já mostrou o aviso do Clérigo sobre a Loja liberada, ao voltar pra
     // cidade pela 1ª vez após enfrentar a dungeon? (ver
     // OnboardingModule.announceShopUnlockIfNeeded, chamado por DungeonModule.leaveToCity)
@@ -65,8 +77,8 @@ function freshState(){
     // upgrades owned (levels) — mesmo motivo, derivado de UPGRADE_DEFS
     upgrades: Object.fromEntries(UPGRADE_DEFS.map(d => [d.key, 0])),
     // prestige permanent upgrades
-    prestige:{ pClick:0, pDps:0, pGold:0, pCrit:0 },
-    pClickMult:0, pDpsMult:0, pGoldMult:0, pCritChance:0,
+    prestige:{ pClick:0, pDps:0, pOreRate:0, pCrit:0 },
+    pClickMult:0, pDpsMult:0, pOreRateMult:0, pCritChance:0,
     // meta
     goldEarnedThisRun:0,
     lastSave:Date.now()

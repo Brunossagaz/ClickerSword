@@ -40,8 +40,9 @@ const CONFIG = {
 //
 // `drops`: lista de possíveis recompensas de item por morte desse tipo de
 // monstro (ver MonsterModule.rollDrops/onDeath) — TODO monstro do jogo dropa
-// item agora, nunca ouro direto (ouro só vem de vender item na Loja ou da
-// Caverna de Mineração). Cada entrada é `{ item, chance, qtyMin, qtyMax }`:
+// item agora, nunca moeda direto (moeda só vem de vender item na Loja,
+// incluindo os minérios coletados na Caverna). Cada entrada é
+// `{ item, chance, qtyMin, qtyMax }`:
 //   - `item`: chave em ITEM_DEFS.
 //   - `chance`: 0-1, checada de forma independente por entrada (então um
 //     monstro pode dropar vários itens diferentes na mesma morte). Omitido =
@@ -112,7 +113,7 @@ const MONSTER_TYPES = [
 //
 // `unlockRequirement` (opcional): quantas mortes a Dungeon indicada precisa
 // ter pra esta desbloquear. Sem isso, a Dungeon já começa desbloqueada.
-// Recompensa é sempre item (nunca ouro direto) — cada MONSTER_TYPES define
+// Recompensa é sempre item (nunca moeda direto) — cada MONSTER_TYPES define
 // seus próprios `drops` (ver comentário acima e MonsterModule.onDeath).
 const MAPS = {
   // Cada posição do ciclo é normalmente 1 monstro só (string = chave em
@@ -178,17 +179,18 @@ const MAPS = {
 };
 
 // Itens (todo drop de monstro vira item — ver `drops` em MONSTER_TYPES).
-// Preço fixo de venda na Loja da cidade. `equip` (opcional): item também pode
-// ser equipado na Mochila do Inventário (consome 1 unidade, soma
-// `clickDamageBonus` PERMANENTE a state.clickDamageFlat — mesmo modelo das
-// WEAPON_DEFS, só que vem de drop em vez de compra; ver UI.buildItemRow).
+// Preço fixo de venda na Loja da cidade. `type:'brokenWeapon'` (opcional):
+// arma BRUTA — não é equipável direto (não é sistema de desgaste/
+// durabilidade, é só a categoria do drop) — precisa ser forjada no
+// Ferreiro (ver FORGED_WEAPON_DEFS/ForgeModule) pra virar uma arma de
+// verdade, equipável em PlayerModule.equipWeapon.
 const ITEM_DEFS = [
   // --- Dungeon do Pântano dos Slimes ---
   { key:'slimeGel',        name:'Geleia de Slime',        icon:'item-slimegel',        sellPrice:2 },
   { key:'slimeCompound',   name:'Composto de Slime',      icon:'item-slimecompound',   sellPrice:10 },
-  { key:'slimeSword',      name:'Espada de Gosma',        icon:'item-slimesword',      sellPrice:30,  equip:{ clickDamageBonus:10 } },
-  { key:'slimeAxe',        name:'Machado de Gosma',       icon:'item-slimeaxe',        sellPrice:100, equip:{ clickDamageBonus:30 } },
-  { key:'slimeAxeGreater', name:'Machado de Gosma Maior', icon:'item-slimeaxegreater', sellPrice:300, equip:{ clickDamageBonus:90 } },
+  { key:'slimeSword',      name:'Espada de Gosma (Bruta)',        icon:'item-slimesword',      sellPrice:30,  type:'brokenWeapon' },
+  { key:'slimeAxe',        name:'Machado de Gosma (Bruto)',       icon:'item-slimeaxe',        sellPrice:100, type:'brokenWeapon' },
+  { key:'slimeAxeGreater', name:'Machado de Gosma Maior (Bruto)', icon:'item-slimeaxegreater', sellPrice:300, type:'brokenWeapon' },
   // --- Dungeon do Reino Goblin ---
   { key:'goblinEar',    name:'Orelha de Goblin',           icon:'item-goblinear',    sellPrice:3 },
   { key:'goblinFang',   name:'Presa de Goblin Vermelho',   icon:'item-goblinfang',   sellPrice:5 },
@@ -202,17 +204,138 @@ const ITEM_DEFS = [
   { key:'trollHide',   name:'Pele de Troll',      icon:'item-trollhide',   sellPrice:65 },
   { key:'dragonScale', name:'Escama de Dragão',   icon:'item-dragonscale', sellPrice:110 },
   { key:'demonHorn',   name:'Chifre de Demônio',  icon:'item-demonhorn',   sellPrice:180 },
+  // --- Caverna (minérios) --- itens com `type:'mineral'` NÃO vêm de drop de
+  // monstro: entram no inventário só pelo baú da Caverna (ver CavernModule.
+  // collectChest). `rarity`/`weight` controlam o sorteio de qual minério cai
+  // no baú a cada ponto de minério minerado (ver CavernModule.rollMineral) —
+  // `weight` é o peso relativo, somam 100 só pra ler como "% de chance base"
+  // (o upgrade Faro de Minérios reforça o peso de tudo que não é 'comum').
+  { key:'ironOre',       name:'Minério de Ferro',    icon:'mineral-iron',    sellPrice:4,   type:'mineral', rarity:'comum',     weight:42 },
+  { key:'bronzeChunk',   name:'Fragmento de Bronze', icon:'mineral-bronze',  sellPrice:7,   type:'mineral', rarity:'comum',     weight:33 },
+  { key:'silverOre',     name:'Minério de Prata',    icon:'mineral-silver',  sellPrice:18,  type:'mineral', rarity:'incomum',   weight:16 },
+  { key:'goldOre',       name:'Minério de Ouro',     icon:'mineral-gold',    sellPrice:45,  type:'mineral', rarity:'raro',      weight:7 },
+  { key:'rawDiamond',    name:'Diamante Bruto',      icon:'mineral-diamond', sellPrice:150, type:'mineral', rarity:'epico',     weight:1.8 },
+  { key:'arcaneCrystal', name:'Cristal Arcano',      icon:'mineral-crystal', sellPrice:500, type:'mineral', rarity:'lendario',  weight:0.2 },
+];
+
+// Raridade dos minérios (ver ITEM_DEFS acima) — só label + cor pra UI
+// (badge no nome do item, bolinha no detalhamento do baú). `comum` fica de
+// fora do boost do upgrade Faro de Minérios (ver CavernModule.rollMineral).
+const RARITY_DEFS = {
+  comum:    { label:'Comum',    color:'#b9b9b9' },
+  incomum:  { label:'Incomum',  color:'#6fcf7f' },
+  raro:     { label:'Raro',     color:'#4fa3e3' },
+  epico:    { label:'Épico',    color:'#b06fe0' },
+  lendario: { label:'Lendário', color:'#ffb84a' },
+};
+
+// Derivado de ITEM_DEFS (não duplicado) — todo item com type:'mineral' vira
+// automaticamente parte do sistema de mineração da Caverna (baú, sorteio,
+// listas da aba Minério). Ver js/cavern.js.
+const MINERAL_DEFS = ITEM_DEFS.filter(d => d.type === 'mineral');
+
+// Mineradores de MINÉRIO da Caverna — compra infinita/custo exponencial
+// (mesmo formato de TROOP_DEFS), mas cada um rende `orePerSec` PONTOS de
+// minério/seg (fracionário), não um minério específico. A cada ponto inteiro
+// acumulado (ver CavernModule.mineOreAmount), um minério é sorteado por
+// raridade e cai no baú — por isso não há "goldPerSec" fixo por minerador
+// aqui, e sim uma taxa compartilhada entre todos os tipos de minério.
+const PROSPECTOR_DEFS = [
+  { key:'apprentice',     name:'Aprendiz de Minerador', desc:'+0.1 minério/seg', baseCost:300,   costGrowth:1.30, orePerSec:0.1 },
+  { key:'veteranMiner',   name:'Minerador Veterano',    desc:'+0.5 minério/seg', baseCost:2200,  costGrowth:1.30, orePerSec:0.5 },
+  { key:'blaster',        name:'Explosivista',          desc:'+2 minério/seg',   baseCost:15000, costGrowth:1.32, orePerSec:2 },
+  { key:'excavatorGolem', name:'Golem Escavador',       desc:'+8 minério/seg',   baseCost:90000, costGrowth:1.35, orePerSec:8 },
+];
+
+// Upgrades da Caverna — mesmo formato de nível máximo/custo
+// exponencial de UPGRADE_DEFS, mas SEM passar pela árvore/ProgressionModule:
+// é uma lista simples, comprada direto com moeda (ver CavernModule.buyUpgrade),
+// igual à lista de upgrades permanentes do Prestígio (PRESTIGE_UPGRADE_DEFS).
+// `oreRatePct`: cada nível soma +20% multiplicativo na taxa total de
+// mineração (ver CavernModule.totalOrePerSecond). `oreLuck`: cada nível soma
+// +15% no peso relativo de toda raridade acima de 'comum' no sorteio (ver
+// CavernModule.rollMineral) — não tem `apply`, os efeitos são lidos
+// dinamicamente a partir de state.cavernUpgrades[key] onde são usados.
+const CAVERN_UPGRADE_DEFS = [
+  { key:'oreRatePct', name:'Picareta Reforçada', desc:'+20% velocidade de mineração', baseCost:600, costGrowth:1.6, maxLevel:10 },
+  { key:'oreLuck',    name:'Faro de Minérios',   desc:'+15% chance de minérios raros', baseCost:900, costGrowth:1.7, maxLevel:10 },
+];
+
+// Falas soltas do Barnabé — sorteada 1 por vez toda vez que a Loja é aberta
+// (depois da 1ª apresentação, ver QuestModule.openBarnabeIntro), só clima,
+// sem efeito em jogo. Ver UI: abertura de #lojaModal.
+const BARNABE_LINES = [
+  'Bom dia meu amigo!',
+  'Seja bem vindo!',
+  'Muitas aventuras por aí?',
+  'Obrigado por ajudar a nossa cidade.',
+  'Meu irmão consegue arrumar algumas armas para você.',
+];
+
+// Falas soltas do Creiton (irmão do Barnabé, dono do Ferreiro) — sorteada 1
+// por vez toda vez que o Ferreiro é aberto, mesmo padrão de BARNABE_LINES,
+// só clima, sem efeito em jogo. Ver UI: abertura de #ferreiroModal.
+const CREITON_LINES = [
+  'Precisa de uma arma nova?',
+  'Minha forja nunca esfria.',
+  'Traga minério bom e eu faço milagres.',
+  'Já viu o que dá pra forjar com material de verdade?',
+  'Cuidado lá fora, essas dungeons não perdoam ninguém.',
 ];
 
 // Armas — a 1ª é escolhida de graça na conversa com o Clérigo (ver
 // OnboardingModule); as outras duas ficam à venda no Ferreiro por
-// `buyCost` ouro (ver UI.renderFerreiroWeapons). Todas dão o mesmo bônus
+// `buyCost` moeda (ver UI.renderFerreiroWeapons). Todas dão o mesmo bônus
 // fixo por enquanto (puramente cosmético qual o jogador tem); no futuro
 // cada uma ganha propriedades próprias. `state.weapons[key]` é 0 ou 1.
 const WEAPON_DEFS = [
   { key:'swordSimple', name:'Espada Simples', icon:'weapon-sword', clickDamageBonus:1, buyCost:500 },
   { key:'bowArrow',    name:'Arco e Flecha',  icon:'weapon-bow', clickDamageBonus:1, buyCost:500 },
   { key:'axe',         name:'Machado',        icon:'weapon-axe', clickDamageBonus:1, buyCost:500 },
+];
+
+// Armas FORJADAS — resultado de consertar uma arma bruta (ver ITEM_DEFS
+// `type:'brokenWeapon'`) no Ferreiro (ver ForgeModule/js/forge.js).
+// Compartilham o mesmo "pool" de posse de WEAPON_DEFS (state.weapons,
+// 0/1 por chave — nunca duplicado, forjar de novo não faz nada se já
+// possui) e o mesmo sistema de arma EQUIPADA (state.equippedWeapon, ver
+// PlayerModule.equipWeapon) — só uma arma fica ativa por vez, seja ela
+// inicial ou forjada. `dpsBonus` é novo: só armas forjadas dão DPS além
+// de dano por clique (ver TroopsModule.totalDps). `recipe.materials` são
+// chaves de ITEM_DEFS consumidas de state.inventory; `recipe.coinCost` é
+// consumido de state.gold — tudo verificado em ForgeModule.canForge antes
+// de deixar forjar.
+const FORGED_WEAPON_DEFS = [
+  { key:'slimeWarriorSword', name:'Espada do Guerreiro Slime', icon:'weapon-slimewarriorsword',
+    clickDamageBonus:50, dpsBonus:20,
+    recipe:{ coinCost:300, materials:[
+      { itemKey:'slimeSword',    qty:3 },
+      { itemKey:'slimeGel',      qty:30 },
+      { itemKey:'ironOre',       qty:20 },
+      { itemKey:'bronzeChunk',   qty:20 },
+      { itemKey:'goldOre',       qty:5 },
+    ] } },
+  { key:'slimeWarriorAxe', name:'Machado do Guerreiro Slime', icon:'weapon-slimewarrioraxe',
+    clickDamageBonus:150, dpsBonus:60,
+    recipe:{ coinCost:900, materials:[
+      { itemKey:'slimeAxe',      qty:3 },
+      { itemKey:'slimeGel',      qty:90 },
+      { itemKey:'ironOre',       qty:60 },
+      { itemKey:'bronzeChunk',   qty:60 },
+      { itemKey:'goldOre',       qty:15 },
+      { itemKey:'rawDiamond',    qty:5 },
+    ] } },
+  { key:'slimeKingGreatAxe', name:'Machado Ancestral do Rei Slime', icon:'weapon-slimekinggreataxe',
+    clickDamageBonus:400, dpsBonus:150,
+    recipe:{ coinCost:2500, materials:[
+      { itemKey:'slimeAxeGreater', qty:3 },
+      { itemKey:'slimeGel',        qty:200 },
+      { itemKey:'ironOre',         qty:150 },
+      { itemKey:'bronzeChunk',     qty:150 },
+      { itemKey:'goldOre',         qty:40 },
+      { itemKey:'rawDiamond',      qty:15 },
+      { itemKey:'arcaneCrystal',   qty:3 },
+    ] } },
 ];
 
 // Missões dadas por NPCs da cidade (ver QuestModule) — entregar `itemQty`
@@ -225,7 +348,7 @@ const QUEST_DEFS = [
 
 // Tropas (DPS) crescem de custo bem mais rápido que upgrades — elas não têm
 // nível máximo (dá pra comprar infinitas), então o custo precisa subir rápido
-// pra virar um sumidouro de ouro de longo prazo. Upgrades têm nível máximo,
+// pra virar um sumidouro de moeda de longo prazo. Upgrades têm nível máximo,
 // então crescem devagar (senão ficam inatingíveis antes do maxLevel).
 const TROOP_DEFS = [
   { key:'recruit', name:'Recruta com Funda', desc:'+1 DPS', baseCost:150,   costGrowth:1.40, dps:1 },
@@ -233,16 +356,6 @@ const TROOP_DEFS = [
   { key:'mage',    name:'Mago',              desc:'+20 DPS', baseCost:5000,  costGrowth:1.40, dps:20 },
   { key:'catapult',name:'Catapulta',         desc:'+100 DPS', baseCost:30000, costGrowth:1.40, dps:100 },
   { key:'dragon',  name:'Dragão Aliado',     desc:'+1000 DPS', baseCost:150000,costGrowth:1.45, dps:1000 },
-];
-
-// Caverna de Mineração: fonte de ouro passiva, separada da corrente de
-// progressão principal — não desbloqueia por nível de upgrade/tropa, só por
-// ouro mesmo. Mineradores não lutam, só rendem ouro/seg o tempo todo.
-const MINER_DEFS = [
-  { key:'digger',       name:'Escavador',          desc:'+2 ouro/seg',   baseCost:200,   costGrowth:1.30, goldPerSec:2 },
-  { key:'pickaxeGoblin',name:'Goblin Picareta',    desc:'+10 ouro/seg',  baseCost:1500,  costGrowth:1.30, goldPerSec:10 },
-  { key:'drillCart',    name:'Vagonete Perfurador',desc:'+50 ouro/seg',  baseCost:10000, costGrowth:1.30, goldPerSec:50 },
-  { key:'crystalGolem', name:'Golem de Cristal',   desc:'+250 ouro/seg', baseCost:60000, costGrowth:1.35, goldPerSec:250 },
 ];
 
 // Árvore de habilidades de BATALHA (Academia de Combate) — 3 níveis agora:
@@ -328,6 +441,6 @@ const UPGRADE_TREE = {
 const PRESTIGE_UPGRADE_DEFS = [
   { key:'pClick', name:'Bênção do Guerreiro', desc:'+15% dano por clique (permanente)', baseCost:1, costGrowth:1.8, apply:s=>s.pClickMult+=0.15 },
   { key:'pDps',   name:'Pacto das Tropas',    desc:'+15% DPS das tropas (permanente)', baseCost:1, costGrowth:1.8, apply:s=>s.pDpsMult+=0.15 },
-  { key:'pGold',  name:'Toque de Midas',      desc:'+15% ouro da Caverna de Mineração (permanente)', baseCost:1, costGrowth:1.8, apply:s=>s.pGoldMult+=0.15 },
+  { key:'pOreRate', name:'Toque de Midas',    desc:'+15% velocidade de mineração de minério (permanente)', baseCost:1, costGrowth:1.8, apply:s=>s.pOreRateMult+=0.15 },
   { key:'pCrit',  name:'Fúria Ancestral',     desc:'+5% chance de crítico (permanente)', baseCost:2, costGrowth:2.0, apply:s=>s.pCritChance+=0.05 },
 ];

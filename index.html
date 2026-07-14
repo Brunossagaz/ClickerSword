@@ -95,7 +95,7 @@
       <div id="cycleCompleteText" style="margin-bottom:14px;"></div>
       <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
         <button class="ascend-btn" id="cycleContinueBtn">CONTINUAR</button>
-        <button class="small-btn" id="cycleLeaveBtn">Voltar pra cidade</button>
+        <button class="danger-btn" id="cycleLeaveBtn">Voltar pra cidade</button>
       </div>
     </div>
   </div>
@@ -112,7 +112,7 @@
       <div id="timeUpText" style="margin-bottom:14px;"></div>
       <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
         <button class="ascend-btn" id="timeUpRetryBtn">Tentar de novo</button>
-        <button class="small-btn" id="timeUpLeaveBtn">Voltar pra cidade</button>
+        <button class="danger-btn" id="timeUpLeaveBtn">Voltar pra cidade</button>
       </div>
     </div>
   </div>
@@ -129,7 +129,7 @@
       <div style="margin-bottom:14px;">Sair da dungeon agora? Você vai perder o progresso deste ciclo e vai recomeçar do início dele na próxima vez.</div>
       <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
         <button class="ascend-btn" id="leaveConfirmYesBtn">SIM, SAIR</button>
-        <button class="small-btn" id="leaveConfirmNoBtn">Cancelar</button>
+        <button class="danger-btn" id="leaveConfirmNoBtn">Cancelar</button>
       </div>
     </div>
   </div>
@@ -142,9 +142,24 @@
       <button class="modal-close" id="ferreiroCloseBtn">✕</button>
     </div>
     <div class="modal-body">
-      <div class="panel-title">Ferreiro — Armas</div>
-      <div class="footer-note" style="margin:0 0 10px;">Creiton forja armas novas — compre as que ainda não tem.</div>
-      <div id="ferreiroWeaponList"></div>
+      <div class="npc-banner">
+        <img class="npc-portrait" src="assets/portraits/creiton.png" alt="Creiton">
+        <div class="npc-speech" id="ferreiroCreitonLine"></div>
+      </div>
+      <div class="modal-tabs">
+        <button class="modal-tab-btn active" data-tab="ferreiroTabBuy">Comprar</button>
+        <button class="modal-tab-btn" data-tab="ferreiroTabForge">Forjar</button>
+      </div>
+      <div class="modal-tab-content active" id="ferreiroTabBuy">
+        <div class="panel-title">Ferreiro — Armas</div>
+        <div class="footer-note" style="margin:0 0 10px;">Creiton forja armas novas — compre as que ainda não tem.</div>
+        <div id="ferreiroWeaponList"></div>
+      </div>
+      <div class="modal-tab-content" id="ferreiroTabForge">
+        <div class="panel-title">Consertar Armas Brutas</div>
+        <div class="footer-note" style="margin:0 0 10px;">Junte os materiais pedidos e Creiton conserta a arma, tornando-a utilizável.</div>
+        <div id="forgeList"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -192,9 +207,17 @@
     </div>
     <div class="modal-body">
       <div class="panel-title">Caverna de Mineração</div>
-      <div class="footer-note" style="margin:0 0 10px;">Mineradores rendem ouro sozinhos, sem precisar clicar.</div>
-      <div class="stat" style="margin-bottom:12px;"><div class="label">Ouro/seg da caverna</div><div class="value" id="statMiningGps">0</div></div>
-      <div id="minerList"></div>
+      <div class="footer-note" style="margin:0 0 10px;">Mineradores extraem minério automaticamente — o que for encontrado fica guardado no baú até você clicar para transferir para a mochila. Venda o minério na Loja por moeda.</div>
+      <div class="stat" style="margin-bottom:12px;"><div class="label">Minério/seg</div><div class="value" id="statOrePerSec">0</div></div>
+      <button class="chest-btn" id="cavernChestBtn" disabled>
+        <div class="icon icon-chest"></div>
+        <div class="chest-btn-text">Baú — <span id="cavernChestCount">0</span> minério(s)<br><span class="chest-btn-hint">Clique para transferir para a mochila</span></div>
+      </button>
+      <div id="cavernChestBreakdown" class="chest-breakdown"></div>
+      <div class="panel-title" style="margin-top:16px;">Mineradores de Minério</div>
+      <div id="oreProspectorList"></div>
+      <div class="panel-title" style="margin-top:16px;">Upgrades</div>
+      <div id="cavernUpgradeList"></div>
     </div>
   </div>
 </div>
@@ -207,9 +230,38 @@
     </div>
     <div class="modal-body">
       <div class="panel-title">Loja da Cidade</div>
-      <div class="footer-note" style="margin:0 0 10px;">Venda os itens coletados nas Dungeons por ouro.</div>
+      <div class="npc-banner">
+        <img class="npc-portrait" src="assets/portraits/barnabe.png" alt="Barnabé">
+        <div class="npc-speech" id="lojaBarnabeLine"></div>
+      </div>
+      <div class="footer-note" style="margin:0 0 10px;">Venda os itens coletados nas Dungeons e na Caverna por moeda.</div>
       <div class="quest-banner" id="lojaQuestBanner"></div>
-      <div id="shopList"></div>
+      <div class="modal-tabs">
+        <button class="modal-tab-btn active" data-tab="lojaTabDrops">Drops</button>
+        <button class="modal-tab-btn" data-tab="lojaTabWeapons">Armas</button>
+        <button class="modal-tab-btn" data-tab="lojaTabMinerals">Minérios</button>
+      </div>
+      <div class="modal-tab-content active" id="lojaTabDrops">
+        <div class="shop-bulk-actions">
+          <button class="small-btn" id="lojaDropsAllBtn">Tudo Geral</button>
+          <button class="small-btn" id="lojaDropsNoneBtn">Zero Geral</button>
+        </div>
+        <div id="shopListDrops"></div>
+      </div>
+      <div class="modal-tab-content" id="lojaTabWeapons">
+        <div class="shop-bulk-actions">
+          <button class="small-btn" id="lojaWeaponsAllBtn">Tudo Geral</button>
+          <button class="small-btn" id="lojaWeaponsNoneBtn">Zero Geral</button>
+        </div>
+        <div id="shopListWeapons"></div>
+      </div>
+      <div class="modal-tab-content" id="lojaTabMinerals">
+        <div class="shop-bulk-actions">
+          <button class="small-btn" id="lojaMineralsAllBtn">Tudo Geral</button>
+          <button class="small-btn" id="lojaMineralsNoneBtn">Zero Geral</button>
+        </div>
+        <div id="shopListMinerals"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -259,32 +311,6 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="inventarioModal">
-  <div class="modal-box">
-    <div class="modal-header">
-      <span class="pixel">INVENTÁRIO</span>
-      <button class="modal-close" id="inventarioCloseBtn">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="modal-tabs">
-        <button class="modal-tab-btn active" data-tab="invTabStats">Estatísticas</button>
-        <button class="modal-tab-btn" data-tab="invTabBag">Mochila</button>
-        <button class="modal-tab-btn" data-tab="invTabWeapons">Armas</button>
-      </div>
-      <div class="modal-tab-content active" id="invTabStats">
-        <div class="stat" style="margin-bottom:10px;"><div class="label">Dano por Clique</div><div class="value" id="invStatClickDmg">1</div></div>
-        <div class="stat"><div class="label">DPS</div><div class="value" id="invStatDps">0</div></div>
-      </div>
-      <div class="modal-tab-content" id="invTabBag">
-        <div id="inventoryBagList"></div>
-      </div>
-      <div class="modal-tab-content" id="invTabWeapons">
-        <div id="weaponsList"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- Sem botão de fechar de propósito: o jogador precisa passar pelos 3 passos
      (nome, história, escolha de arma) — só aparece 1x, na 1ª conversa com o
      Clérigo (ver OnboardingModule.shouldShowClericIntro). -->
@@ -294,6 +320,9 @@
       <span class="pixel">IRMÃO ANSELMO</span>
     </div>
     <div class="modal-body" style="text-align:center;">
+      <div class="npc-banner">
+        <img class="npc-portrait" src="assets/portraits/anselmo.png" alt="Irmão Anselmo">
+      </div>
       <div class="cleric-step active" id="clericStepName">
         <div class="cleric-text">Ah, um forasteiro! Que bom em vê-lo por aqui. Sou Irmão Anselmo, o último clérigo desta cidade. Antes de mais nada... qual é o seu nome?</div>
         <input type="text" id="clericNameInput" maxlength="20" class="settings-select" style="width:100%; text-align:center; margin:14px 0;" placeholder="Seu nome">
@@ -317,6 +346,9 @@
       <span class="pixel">IRMÃO ANSELMO</span>
     </div>
     <div class="modal-body" style="text-align:center;">
+      <div class="npc-banner">
+        <img class="npc-portrait" src="assets/portraits/anselmo.png" alt="Irmão Anselmo">
+      </div>
       <div class="cleric-text">A notícia já chegou aos meus ouvidos: alguém teve coragem de enfrentar os monstros lá fora! Vá até a Loja da cidade e venda o que você encontrou por lá — ouvi dizer que o dono ainda consegue negociar alguns produtos.</div>
       <button class="ascend-btn" id="shopUnlockOkBtn" style="margin-top:14px;">Entendi</button>
     </div>
@@ -359,21 +391,45 @@
       <input type="text" id="nameEntryInput" maxlength="20" class="settings-select" style="width:100%; text-align:center; margin-bottom:14px;" placeholder="Nome do herói">
       <div style="display:flex; gap:10px; justify-content:center;">
         <button class="ascend-btn" id="nameEntryConfirmBtn">CONFIRMAR</button>
-        <button class="small-btn" id="nameEntryCancelBtn">Cancelar</button>
+        <button class="danger-btn" id="nameEntryCancelBtn">Cancelar</button>
       </div>
     </div>
   </div>
 </div>
 
-<div class="layout">
-  <div class="panel">
-    <div class="stat-bar" id="statBar">
-      <div class="stat"><div class="label">Ouro</div><div class="value" id="statGold">0</div></div>
-      <div class="stat"><div class="label">Dano/Clique</div><div class="value" id="statClickDmg">1</div></div>
-      <div class="stat"><div class="label">DPS</div><div class="value" id="statDps">0</div></div>
-      <div class="stat"><div class="label">Crítico</div><div class="value" id="statCrit">5%</div></div>
+<div class="game-shell" id="gameShell">
+  <aside class="sidebar-inventory expanded" id="sidebarInventory">
+    <button class="sidebar-toggle-btn" id="sidebarToggleBtn" title="Mostrar/esconder inventário">
+      <div class="icon icon-inventario"></div>
+      <span class="sidebar-toggle-label">Inventário</span>
+    </button>
+    <div class="sidebar-content">
+      <div class="sidebar-title">Inventário</div>
+      <div class="modal-tabs">
+        <button class="modal-tab-btn active" data-tab="invTabStats">Estatísticas</button>
+        <button class="modal-tab-btn" data-tab="invTabBag">Mochila</button>
+        <button class="modal-tab-btn" data-tab="invTabWeapons">Armas</button>
+      </div>
+      <div class="modal-tab-content active" id="invTabStats">
+        <div class="stat-row"><div class="label">Ouro</div><div class="value" id="invStatGold">0</div></div>
+        <div class="stat-row"><div class="label">Dano por Clique</div><div class="value" id="invStatClickDmg">1</div></div>
+        <div class="stat-row"><div class="label">DPS</div><div class="value" id="invStatDps">0</div></div>
+        <div class="stat-row"><div class="label">Chance de Crítico</div><div class="value" id="invStatCrit">0%</div></div>
+        <div class="stat-row"><div class="label">Minério/seg</div><div class="value" id="invStatOrePerSec">0.00</div></div>
+        <div class="stat-row"><div class="label">Essência</div><div class="value" id="invStatEssence">0</div></div>
+        <div class="stat-row"><div class="label">Mortes Totais</div><div class="value" id="invStatKills">0</div></div>
+      </div>
+      <div class="modal-tab-content" id="invTabBag">
+        <div id="inventoryBagList"></div>
+      </div>
+      <div class="modal-tab-content" id="invTabWeapons">
+        <div id="weaponsList"></div>
+      </div>
     </div>
+  </aside>
 
+  <div class="layout">
+  <div class="panel">
     <div class="view-content active" id="view-mainmenu">
       <div class="panel-title">MONSTER ATTACK CLICKER</div>
       <div class="main-menu-actions">
@@ -405,7 +461,7 @@
         <button class="building-card building-caverna" id="openCavernaBtn">
           <div class="building-icon-badge"><div class="building-icon icon icon-caverna"></div></div>
           <div class="building-name">Caverna</div>
-          <div class="building-desc">Ouro passivo</div>
+          <div class="building-desc">Minere minérios</div>
         </button>
         <button class="building-card building-loja" id="openLojaBtn">
           <div class="building-icon-badge"><div class="building-icon icon icon-loja"></div></div>
@@ -422,11 +478,6 @@
           <div class="building-name">Dungeons</div>
           <div class="building-desc">Batalhe monstros</div>
         </button>
-        <button class="building-card building-inventario" id="openInventarioBtn">
-          <div class="building-icon-badge"><div class="building-icon icon icon-inventario"></div></div>
-          <div class="building-name">Inventário</div>
-          <div class="building-desc">Itens e stats</div>
-        </button>
         <button class="building-card building-academia" id="openAcademiaBtn">
           <div class="building-icon-badge"><div class="building-icon icon icon-academia"></div></div>
           <div class="building-name">Academia</div>
@@ -436,7 +487,7 @@
     </div>
 
     <div class="view-content" id="view-dungeon">
-      <button class="small-btn" id="leaveDungeonBtn" style="margin-bottom:10px;">Voltar pra cidade</button>
+      <button class="danger-btn" id="leaveDungeonBtn" style="margin-top:0; margin-bottom:10px;">Voltar pra cidade</button>
       <div class="arena-frame">
         <div class="tier-label" id="tierLabel">CICLO I · MONSTRO 1</div>
         <div class="double-monster-badge" id="doubleMonsterBadge" style="display:none;"></div>
@@ -457,6 +508,7 @@
       <div class="footer-note">Clique no monstro para atacar manualmente.</div>
     </div>
   </div>
+  </div>
 </div>
 
 <!-- Ordem importa: cada módulo depende de globais definidos nos anteriores -->
@@ -471,7 +523,8 @@
 <script src="js/quests.js"></script>
 <script src="js/player.js"></script>
 <script src="js/troops.js"></script>
-<script src="js/mining.js"></script>
+<script src="js/cavern.js"></script>
+<script src="js/forge.js"></script>
 <script src="js/upgrades.js"></script>
 <script src="js/prestige.js"></script>
 <script src="js/settings.js"></script>

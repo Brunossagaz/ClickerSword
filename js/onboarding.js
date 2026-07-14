@@ -3,7 +3,7 @@
    Introdução do Clérigo (1ª vez que clica na Igreja): pede o nome (se ainda
    não tiver), conta a história da dungeon e deixa escolher uma arma inicial.
    Também calcula quais prédios da cidade estão liberados — Igreja/Dungeon/
-   Inventário/Academia/Loja/Guilda são computados aqui a partir de
+   Academia/Loja/Guilda são computados aqui a partir de
    state.weapons/state.totalKillsAll (nunca guardados em flag própria, mesmo
    padrão de DungeonModule/ProgressionModule); Ferreiro depende da missão do
    Barnabé (ver QuestModule/state.quests) porque entregar itens é uma ação
@@ -25,10 +25,13 @@ const OnboardingModule = {
   },
   isBuildingUnlocked(key){
     if(key === 'igreja') return true;
-    if(key === 'dungeon' || key === 'inventario' || key === 'academia') return this.hasChosenWeapon() || this.hasFacedDungeon();
-    if(key === 'loja' || key === 'guilda') return this.hasFacedDungeon();
+    if(key === 'dungeon' || key === 'academia') return this.hasChosenWeapon() || this.hasFacedDungeon();
+    // TEMPORÁRIO pra testar a mineração de minério: caverna liberada junto
+    // com loja/guilda (mesma condição), até a missão de desbloqueio dela
+    // existir de verdade — aí volta a ficar sozinha, condicionada à missão.
+    if(key === 'loja' || key === 'guilda' || key === 'caverna') return this.hasFacedDungeon();
     if(key === 'ferreiro') return !!state.quests.slimeGelDelivery; // ver QuestModule
-    return false; // caverna: sem gatilho definido ainda
+    return false;
   },
 
   openClericIntro(){
@@ -64,9 +67,11 @@ const OnboardingModule = {
     }
   },
   finishWeaponChoice(key){
-    const def = WEAPON_DEFS.find(w => w.key === key);
     state.weapons[key] = 1;
-    state.clickDamageFlat += def.clickDamageBonus;
+    // 1ª arma do personagem já nasce equipada (ver PlayerModule.equipWeapon/
+    // clickDamage) — o bônus não fica mais gravado em clickDamageFlat, é
+    // lido dinamicamente a partir da arma ativa.
+    state.equippedWeapon = key;
     SaveModule.save();
     document.getElementById('clericModal').classList.remove('open');
     UI.renderAll();
