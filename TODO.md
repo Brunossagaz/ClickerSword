@@ -7,9 +7,17 @@ detalhados no roadmap do `README.md` são referenciados, não duplicados.
 
 - [x] **Auto click** — clique automático periódico. Feito como upgrade da
       Academia de Combate (`battleAutoClick`, 1000 moeda, 1 nível só, saindo
-      direto da raiz): liga um clique automático a cada 2s enquanto houver
-      monstro ativo, reaproveitando `PlayerModule.handleClick()` sem evento
-      de mouse (ver `js/main.js`/`tick()`).
+      direto da raiz): liga um clique automático a cada 1s (padrão) enquanto
+      houver monstro ativo, reaproveitando `PlayerModule.handleClick()` sem
+      evento de mouse (ver `js/main.js`/`tick()`). Só age em ciclos já
+      concluídos antes (chefe já derrotado ao menos 1x nessa Dungeon — ver
+      `PlayerModule.isAutoClickActive`); fora disso fica pausado, com aviso
+      na tela da Dungeon e na aba Estatísticas (`UI.renderAutoClickStatus`).
+      2 upgrades de velocidade encadeados (`autoClickSpeed1`/`2`, -25 pontos
+      percentuais do intervalo cada, acumulando: 1s → 0.75s → 0.5s) —
+      exigiu trocar `ProgressionModule.isUnlocked` de um limiar fixo
+      (`UNLOCK_REQUIREMENT=5`) pro `maxLevel` de cada pré-requisito, já que
+      esses upgrades têm 1 nível só (ver `js/progression.js`).
 - [ ] **Classificação de tipo de item** — `ITEM_DEFS` já usa `type` pra
       `'mineral'` e `'brokenWeapon'` (ver Fase 4), mas os drops comuns
       (Geleia de Slime, Orelha de Goblin etc.) ainda não têm `type`
@@ -28,8 +36,9 @@ detalhados no roadmap do `README.md` são referenciados, não duplicados.
 - [ ] **Liberar Guilda por missão** — idem, aplicado à Guilda (hoje libera só
       por progresso genérico em `OnboardingModule.isBuildingUnlocked`).
 - [ ] **Mais upgrades** — estender a árvore radial da Academia de Combate
-      (`upgrades.js`/`progression.js`), hoje com 14 nós (4 ramos saindo da
-      raiz, 3 deles com Nível 2).
+      (`upgrades.js`/`progression.js`), hoje com 16 nós (4 ramos saindo da
+      raiz; 3 deles com 3 filhos irmãos de Nível 2; o de Automação com 2
+      filhos encadeados, Nível 2 e 3).
 
 ## Fase 2 — Conteúdo
 

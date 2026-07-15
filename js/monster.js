@@ -23,6 +23,16 @@ const MonsterModule = {
   killsPerCycleFor(dungeonKey){
     return this.killsPerCycle(this.scheduleFor(dungeonKey));
   },
+  // Número do ciclo atual (1-based) dentro da Dungeon indicada, a partir do
+  // killCount acumulado — mesma conta usada em UI.renderMonsterInfo, também
+  // usada por PlayerModule.isAutoClickActive pra comparar com
+  // state.dungeons[key].maxCycleCompleted (Clique Automático só age em
+  // ciclos já vencidos antes).
+  currentCycleFor(dungeonKey){
+    const d = state.dungeons[dungeonKey];
+    const kpc = this.killsPerCycleFor(dungeonKey);
+    return Math.floor(d.killCount / kpc) + 1;
+  },
   // Acha, dentro do schedule de UM ciclo, qual posição (slotIdx, 0-based) e
   // qual monstro da dupla (subKill: 0 ou 1, sempre 0 se a posição for única)
   // correspondem ao `killIdxInCycle`-ésimo monstro morto desde o início do

@@ -1006,6 +1006,9 @@
     font-size:14px;
     margin-top:14px;
   }
+  /* Aviso do Clique Automático pausado (ver UI.renderAutoClickStatus) —
+     mesma cor de alerta usada em .danger-btn, pra destacar do texto normal. */
+  .footer-note.warning{ color:var(--blood); }
   .small-btn{
     background:none;
     border:1px solid var(--stone);

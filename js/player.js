@@ -20,6 +20,29 @@ const PlayerModule = {
     SaveModule.save();
     UI.renderAll();
   },
+  // Intervalo atual do upgrade Clique Automático (ver UPGRADE_DEFS
+  // battleAutoClick), em ms — começa em `autoClickIntervalMs` (1000) e cai
+  // 25 pontos percentuais do valor BASE por upgrade de velocidade comprado
+  // (autoClickSpeed1/autoClickSpeed2), acumulando: 1000 → 750 → 500.
+  autoClickIntervalMs(){
+    const def = UPGRADE_DEFS.find(u=>u.key==='battleAutoClick');
+    let interval = def.autoClickIntervalMs;
+    if(state.upgrades.autoClickSpeed1 > 0) interval -= def.autoClickIntervalMs * 0.25;
+    if(state.upgrades.autoClickSpeed2 > 0) interval -= def.autoClickIntervalMs * 0.25;
+    return interval;
+  },
+  // O Clique Automático só age dentro de uma Dungeon, com monstro ativo, E
+  // só no ciclo atual se ele já tiver sido concluído antes (chefe já
+  // derrotado ao menos 1x — mesmo dado do seletor de ciclo,
+  // state.dungeons[key].maxCycleCompleted). Fora disso ele fica comprado
+  // mas pausado — ver UI.renderAutoClickStatus pro aviso na tela.
+  isAutoClickActive(){
+    if(state.upgrades.battleAutoClick <= 0) return false;
+    if(!MonsterModule.current || !state.currentDungeon) return false;
+    const d = state.dungeons[state.currentDungeon];
+    const cycle = MonsterModule.currentCycleFor(state.currentDungeon);
+    return cycle <= (d.maxCycleCompleted || 0);
+  },
   clickDamage(){
     // Sem base fixa: o personagem começa com 0 de dano por clique — só sobe
     // com upgrades (Academia, permanente em state.clickDamageFlat) e com a

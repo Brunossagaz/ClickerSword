@@ -358,29 +358,38 @@ const TROOP_DEFS = [
   { key:'dragon',  name:'Dragão Aliado',     desc:'+1000 DPS', baseCost:150000,costGrowth:1.45, dps:1000 },
 ];
 
-// Árvore de habilidades de BATALHA (Academia de Combate) — 3 níveis agora:
-// Nível 0 = raiz ("Fúria do Guerreiro"); Nível 1 = os 3 upgrades que brotam
-// dela (Olho Certeiro/Força Bruta/Golpe Devastador, todos com o MESMO
-// baseCost=60, só o costGrowth de cada um difere); Nível 2 = 3 upgrades por
-// ramo de Nível 1 (9 no total), custo moderado (baseCost=400). Cada upgrade
-// só libera quando o `requires` dele alcança UNLOCK_REQUIREMENT níveis (ver
+// Árvore de habilidades de BATALHA (Academia de Combate):
+// Nível 0 = raiz ("Fúria do Guerreiro"); Nível 1 = upgrades que brotam dela
+// direto (Olho Certeiro/Força Bruta/Golpe Devastador/Clique Automático);
+// Nível 2 = upgrades por ramo de Nível 1 (3 cada nos ramos de combate, custo
+// moderado baseCost=400; 2 encadeados no ramo de Automação). Cada upgrade só
+// libera quando o `requires` dele atinge o PRÓPRIO `maxLevel` (ver
 // ProgressionModule.isUnlocked) — como `requires` aponta pro PAI direto (não
 // sempre a raiz), isso empilha em cadeia por ramo sem precisar de nenhuma
-// lógica nova. Os ramos de Crítico e Dano % somam um pouco de dano por
-// clique junto da própria stat nos upgrades de Nível 2 (pra reforçar a
-// ligação com a raiz); o ramo de Dano Crítico % só reforça a própria stat.
-const UNLOCK_REQUIREMENT = 5;
+// lógica nova, e funciona igual pra ramos de 5 níveis ou de 1 nível só. Os
+// ramos de Crítico e Dano % somam um pouco de dano por clique junto da
+// própria stat nos upgrades de Nível 2 (pra reforçar a ligação com a raiz);
+// o ramo de Dano Crítico % só reforça a própria stat.
 const UPGRADE_DEFS = [
   { key:'battleClickDmg',     name:'Fúria do Guerreiro', desc:'+5 dano por clique',        baseCost:10, costGrowth:1.3,  apply:s=>s.clickDamageFlat+=5,     maxLevel:5, requires:null },
   { key:'battleCritChance',   name:'Olho Certeiro',      desc:'+3% chance de crítico',      baseCost:60, costGrowth:1.35, apply:s=>s.critChance=Math.min(0.75,s.critChance+0.03), maxLevel:5, requires:'battleClickDmg' },
   { key:'battleDmgPercent',   name:'Força Bruta',        desc:'+5% de dano por clique',     baseCost:60, costGrowth:1.4,  apply:s=>s.clickDamagePercent+=0.05, maxLevel:5, requires:'battleClickDmg' },
   { key:'battleCritDmgPercent', name:'Golpe Devastador', desc:'+10% de dano crítico',       baseCost:60, costGrowth:1.45, apply:s=>s.critDamagePercent+=0.10, maxLevel:5, requires:'battleClickDmg' },
   // Clique Automático — só 1 nível (compra única, sem escalar): liga um
-  // clique automático periódico enquanto houver monstro ativo (ver
-  // main.js/tick). `autoClickIntervalMs` é lido de lá, não é um stat de
-  // state — `apply` fica vazio de propósito, o efeito é 100% dinâmico a
-  // partir de state.upgrades.battleAutoClick > 0.
-  { key:'battleAutoClick', name:'Clique Automático', desc:'Clica sozinho a cada 2 segundos', baseCost:1000, costGrowth:1.5, apply:s=>{}, maxLevel:1, requires:'battleClickDmg', autoClickIntervalMs:2000 },
+  // clique automático periódico enquanto houver monstro ativo E o ciclo
+  // atual já tiver sido concluído antes (ver PlayerModule.isAutoClickActive
+  // /main.js/tick). `autoClickIntervalMs` é a base (1s) lida de
+  // PlayerModule.autoClickIntervalMs(), reduzida pelos 2 upgrades de
+  // velocidade abaixo — não é um stat de state, `apply` fica vazio de
+  // propósito, o efeito é 100% dinâmico a partir de
+  // state.upgrades.battleAutoClick > 0.
+  { key:'battleAutoClick', name:'Clique Automático', desc:'Clica sozinho a cada 1s (só em ciclos já vencidos antes)', baseCost:1000, costGrowth:1.5, apply:s=>{}, maxLevel:1, requires:'battleClickDmg', autoClickIntervalMs:1000 },
+  // Upgrades de velocidade do Clique Automático — encadeados (o 2º exige o
+  // 1º, não a raiz), cada um -25 pontos percentuais do intervalo BASE
+  // (1000ms), acumulando: 1000ms → 750ms → 500ms. Ver
+  // PlayerModule.autoClickIntervalMs().
+  { key:'autoClickSpeed1', name:'Reflexos de Aço', desc:'-25% no intervalo do Clique Automático (1s → 0.75s)', baseCost:3000, costGrowth:1.5, apply:s=>{}, maxLevel:1, requires:'battleAutoClick' },
+  { key:'autoClickSpeed2', name:'Reflexos Sobrenaturais', desc:'-25% no intervalo do Clique Automático, acumulado (0.75s → 0.5s)', baseCost:8000, costGrowth:1.5, apply:s=>{}, maxLevel:1, requires:'autoClickSpeed1' },
 
   // --- Nível 2 do ramo Crítico (requer Olho Certeiro nível 5) ---
   { key:'critChance2A', name:'Visão de Falcão',    desc:'+4% chance de crítico, +4 dano por clique', baseCost:400, costGrowth:1.5, maxLevel:5, requires:'battleCritChance',
@@ -441,10 +450,17 @@ const UPGRADE_TREE = {
       { key:'critDmgPercent2B', x:-6, y:104 },
       { key:'critDmgPercent2C', x:-14, y:91 },
     ]},
-    // Sem `children` — Clique Automático tem 1 nível só, não tem ramo de
-    // Nível 2 como os outros 3.
+    // Automação: diferente dos outros 3 ramos (3 filhos irmãos do mesmo
+    // pai), aqui os 2 upgrades de Nível 2 são uma CADEIA (autoClickSpeed2
+    // aninhado dentro de `children` de autoClickSpeed1, não direto de
+    // battleAutoClick) — UI.renderUpgradeTree percorre isso recursivamente,
+    // então funciona também pra profundidade 3 sem precisar de código novo.
     { label:'Automação', color:'#8fd9c4', nodes:[
       { key:'battleAutoClick', x:82, y:20 },
+    ], children:[
+      { key:'autoClickSpeed1', x:100, y:5, children:[
+        { key:'autoClickSpeed2', x:118, y:-10 },
+      ]},
     ]},
   ]
 };

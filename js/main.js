@@ -29,18 +29,23 @@ function tick(){
   // Clique Automático: PlayerModule.handleClick() sem `evt` já cai pro
   // centro da arena sozinho (ver UI.showFloatingDamage/showFloatingItemAt),
   // então dá pra reaproveitar 100% da lógica de clique manual (crítico,
-  // bônus de monstro dourado, tudo) sem duplicar nada aqui.
-  if(state.upgrades.battleAutoClick > 0 && MonsterModule.current){
+  // bônus de monstro dourado, tudo) sem duplicar nada aqui. Só age em
+  // ciclos já concluídos antes (ver PlayerModule.isAutoClickActive) — fora
+  // disso o acumulador é zerado, sem "bancar" tempo parado.
+  if(PlayerModule.isAutoClickActive()){
     autoClickElapsedMs += CONFIG.tickMs;
-    const interval = UPGRADE_DEFS.find(u=>u.key==='battleAutoClick').autoClickIntervalMs;
+    const interval = PlayerModule.autoClickIntervalMs();
     if(autoClickElapsedMs >= interval){
       autoClickElapsedMs -= interval;
       PlayerModule.handleClick();
     }
+  } else {
+    autoClickElapsedMs = 0;
   }
   CavernModule.tick(CONFIG.tickMs/1000);
   UI.renderStats();
   UI.renderTimer();
+  UI.renderAutoClickStatus();
 }
 
 function boot(){

@@ -376,9 +376,7 @@ const UI = {
   renderMonsterInfo(){
     if(!MonsterModule.current) return; // sem monstro ativo (jogador está na cidade)
     const t = MonsterModule.current.type;
-    const d = state.dungeons[state.currentDungeon];
-    const kpc = MonsterModule.killsPerCycleFor(state.currentDungeon);
-    const loop = Math.floor(d.killCount / kpc) + 1;
+    const loop = MonsterModule.currentCycleFor(state.currentDungeon);
     // posição no ciclo é por SLOT (1-10), não por monstro morto — uma posição
     // dupla (ver MAPS.slimes) vale 1 posição só, mesmo consumindo 2 mortes
     const slotPos = MonsterModule.current.slotIdx + 1;
@@ -435,6 +433,34 @@ const UI = {
     document.getElementById('statOrePerSec').textContent = orePerSec; // mesma taxa, exibida de novo dentro do modal da Caverna
     document.getElementById('invStatEssence').textContent = this.fmt(state.essence);
     document.getElementById('invStatKills').textContent = this.fmt(state.totalKillsAll);
+    document.getElementById('invStatAutoClick').textContent = this.autoClickStatusText();
+  },
+  // Texto do intervalo do Clique Automático — reaproveitado pela aba
+  // Estatísticas (sempre visível) e pelo aviso dentro da Dungeon (ver
+  // renderAutoClickStatus). "—" se nem comprado ainda.
+  autoClickStatusText(){
+    if(state.upgrades.battleAutoClick <= 0) return '—';
+    if(!PlayerModule.isAutoClickActive()) return 'Pausado';
+    return (PlayerModule.autoClickIntervalMs()/1000).toFixed(2).replace(/\.?0+$/, '')+'s';
+  },
+  // Aviso dentro da Dungeon (ver index.html #autoClickNote) — só aparece se
+  // o jogador já comprou o upgrade; explica por que ele está pausado quando
+  // o ciclo atual ainda não foi concluído antes (ver
+  // PlayerModule.isAutoClickActive).
+  renderAutoClickStatus(){
+    const el = document.getElementById('autoClickNote');
+    if(state.upgrades.battleAutoClick <= 0 || !MonsterModule.current){
+      el.style.display = 'none';
+      return;
+    }
+    el.style.display = '';
+    if(PlayerModule.isAutoClickActive()){
+      el.classList.remove('warning');
+      el.textContent = `Clique Automático ativo — 1 clique a cada ${this.autoClickStatusText()}.`;
+    } else {
+      el.classList.add('warning');
+      el.textContent = 'Clique Automático pausado: só funciona em ciclos já vencidos antes (derrote o chefe deste ciclo pela 1ª vez).';
+    }
   },
   renderDungeonList(){
     const el = document.getElementById('dungeonList');
@@ -878,6 +904,25 @@ const UI = {
       nodesEl.appendChild(el);
     };
 
+    // Desenha recursivamente os descendentes de um nó (Nível 2, 3, ...) —
+    // suporta tanto "3 filhos irmãos do mesmo pai" (Crítico/Dano%/Dano
+    // Crítico%) quanto uma CADEIA aninhada (Automação: autoClickSpeed2
+    // dentro de `children` de autoClickSpeed1). Cada filho revela seu
+    // próprio pré-requisito (`requires` em UPGRADE_DEFS) em vez de assumir
+    // que é sempre `parent` — é o que permite a cadeia funcionar igual aos
+    // ramos de irmãos, sem código separado pra cada formato. De propósito
+    // ficam fora da área 0-100 visível a zoom 1 (ver posições em
+    // UPGRADE_TREE), então só aparecem dando zoom out ou arrastando o mapa.
+    const renderDescendants = (parentNode, children, color)=>{
+      for(const child of (children || [])){
+        const childDef = UPGRADE_DEFS.find(u=>u.key===child.key);
+        if(state.upgrades[childDef.requires] <= 0) continue;
+        rootPath(parentNode.x, parentNode.y, child.x, child.y, color);
+        buildNode(child.key, child.x, child.y, color, false);
+        renderDescendants(child, child.children, color);
+      }
+    };
+
     // raiz no centro, primeiro (fica embaixo das raízes na ordem do DOM,
     // mas ambos têm z-index próprio via CSS então não faz diferença visual)
     buildNode(UPGRADE_TREE.root, hub.x, hub.y, null, true);
@@ -904,17 +949,7 @@ const UI = {
 
       rootPath(hub.x, hub.y, node.x, node.y, branch.color);
       buildNode(node.key, node.x, node.y, branch.color, false);
-
-      // Nível 2 do ramo: brota do nó de Nível 1 (não do hub) — mesma curva,
-      // só a origem muda. De propósito ficam fora da área 0-100 visível a
-      // zoom 1 (ver posições em UPGRADE_TREE), então só aparecem dando
-      // zoom out ou arrastando o mapa. Mesma regra de revelação progressiva:
-      // só aparecem depois que o nó de Nível 1 (pai) foi comprado 1x.
-      for(const child of (branch.children || [])){
-        if(state.upgrades[node.key] <= 0) continue;
-        rootPath(node.x, node.y, child.x, child.y, branch.color);
-        buildNode(child.key, child.x, child.y, branch.color, false);
-      }
+      renderDescendants(node, branch.children, branch.color);
     }
   },
   renderPrestigeTab(){
@@ -964,6 +999,7 @@ const UI = {
     this.renderMonsterInfo();
     this.renderHpBar();
     this.renderTimer();
+    this.renderAutoClickStatus();
     this.renderDungeonList();
     this.renderTroopList();
     this.renderOreProspectorList();
