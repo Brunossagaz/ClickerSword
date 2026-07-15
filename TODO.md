@@ -39,6 +39,24 @@ detalhados no roadmap do `README.md` são referenciados, não duplicados.
       (`upgrades.js`/`progression.js`), hoje com 16 nós (4 ramos saindo da
       raiz; 3 deles com 3 filhos irmãos de Nível 2; o de Automação com 2
       filhos encadeados, Nível 2 e 3).
+- [ ] **Timeout do chefe reinicia sozinho** — hoje, ao estourar o tempo
+      contra QUALQUER monstro (inclusive o chefe, posição 10 do ciclo), abre
+      o `timeUpModal` perguntando "Tentar de novo" ou "Voltar pra cidade"
+      (ver `MonsterModule.checkTimeUp`/`onTimeUp`, `UI.showTimeUpModal`).
+      Pedido: pro chefe especificamente, trocar isso por um contador de 3s
+      direto na tela da arena (sem modal, sem escolha) que reinicia o ciclo
+      sozinho ao zerar (mesmo efeito de `MonsterModule.retryCycle()`), com
+      uma mensagem avisando o jogador que o ciclo vai reiniciar. Perguntas
+      em aberto pra quando for implementar: essa mudança vale só pro chefe
+      (posição 10) ou pra qualquer monstro? Mantém alguma forma de voltar
+      pra cidade durante a contagem, ou fica 100% automático?
+- [ ] **Redesenhar cabeçalho da Dungeon** — hoje é 1 linha só (`tierLabel`,
+      `js/ui.js`/`renderMonsterInfo`, `.tier-label` em `style.css`), fonte
+      pequena e texto longo (ex.: "Dungeon do Pântano dos Slimes · CICLO 3 ·
+      MONSTRO 4/10 (ABATIDOS NO TOTAL: 128)"). Pedido: trocar por um bloco
+      no canto superior direito da arena, empilhado verticalmente — nome do
+      Mapa em cima, Ciclo embaixo dele, Monstro atual embaixo disso — mais
+      legível que a linha única atual.
 
 ## Fase 2 — Conteúdo
 
