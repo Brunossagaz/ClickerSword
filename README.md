@@ -1,11 +1,11 @@
-# Monster Attack Clicker
+# Beyond the Gate
 
 Idle clicker de combate contra monstros, inspirado em Cookie Clicker.
 
 ## Estrutura de pastas
 
 ```
-monster-attack-clicker/
+beyond-the-gate/
 ├── index.html          → shell HTML: layout da UI + carrega CSS/JS
 ├── css/
 │   └── style.css        → todo o visual (tema pixel/dungeon), animações, responsivo, ícones pixel art

@@ -1,6 +1,6 @@
 """
 gen_sprites.py
-Gerador de sprites pixel art (PNG) para os monstros do Monster Attack Clicker.
+Gerador de sprites pixel art (PNG) para os monstros do Beyond the Gate.
 
 Cada monstro vira um spritesheet horizontal com 3 frames de 128x128:
   [ idle | piscando | flash de dano (branco) ]

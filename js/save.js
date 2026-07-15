@@ -65,7 +65,7 @@ const SaveModule = {
     const blob = new Blob([raw], { type:'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `monster-attack-clicker-slot${n}-${name}.json`;
+    a.href = url; a.download = `beyond-the-gate-slot${n}-${name}.json`;
     document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
   },

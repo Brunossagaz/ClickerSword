@@ -31,7 +31,7 @@ const SettingsModule = {
     const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
     const a = document.createElement('a');
     a.href = url;
-    a.download = `monster-attack-clicker-save-${stamp}.json`;
+    a.download = `beyond-the-gate-save-${stamp}.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -49,7 +49,7 @@ const SettingsModule = {
         try{ loaded = JSON.parse(reader.result); }
         catch(e){ reject('Não foi possível ler o arquivo (JSON inválido).'); return; }
         if(typeof loaded !== 'object' || loaded === null || typeof loaded.gold !== 'number'){
-          reject('Arquivo não parece ser um save válido do Monster Attack Clicker.');
+          reject('Arquivo não parece ser um save válido do Beyond the Gate.');
           return;
         }
         SaveModule.applyLoaded(loaded);
