@@ -15,6 +15,7 @@ const MainMenuModule = {
   pendingSlot: null,
 
   init(){
+    document.getElementById('preSplashStartBtn').addEventListener('click', ()=>document.body.classList.add('game-started'));
     document.getElementById('menuNewGameBtn').addEventListener('click', ()=>UI.showSlotPicker());
     document.getElementById('menuContinueBtn').addEventListener('click', ()=>UI.showSlotPicker());
     document.getElementById('menuSettingsBtn').addEventListener('click', ()=>UI.openSettingsModal());

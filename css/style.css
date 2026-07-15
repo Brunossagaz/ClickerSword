@@ -21,8 +21,7 @@
      barra de rolagem da janela inteira. */
   body.modal-open{overflow:hidden;}
   body{
-    background:
-      radial-gradient(ellipse at 50% -10%, #2a2038 0%, var(--bg-deep) 60%);
+    background:var(--bg-deep);
     color:var(--parchment);
     font-family:'VT323', monospace;
     font-size:20px;
@@ -30,6 +29,89 @@
     padding:18px;
   }
   h1,h2,.pixel{font-family:'Press Start 2P', monospace;}
+
+  /* ===== Background Scene =====
+     Camada fixa atrás de todo o conteúdo. .bg-scene__base carrega o wallpaper
+     (assets/backgrounds/dungeon-wallpaper.png); enquanto o arquivo não existe,
+     o gradiente por baixo serve de fallback. Overlays de brilho/fumaça
+     posicionados sobre elementos específicos da arte (tochas, bandeiras)
+     entram depois, alinhados às coordenadas da imagem final. */
+  .bg-scene{
+    position:fixed;
+    inset:0;
+    z-index:-1;
+    overflow:hidden;
+    pointer-events:none;
+  }
+  .bg-scene__base{
+    position:absolute;
+    inset:0;
+    background:
+      url('../assets/backgrounds/dungeon-wallpaper.png') center/cover no-repeat,
+      radial-gradient(ellipse at 50% -10%, #2a2038 0%, var(--bg-deep) 60%);
+  }
+  .bg-scene__smoke{
+    position:absolute;
+    bottom:-10%;
+    left:50%;
+    width:220px;
+    height:220px;
+    background:radial-gradient(circle, rgba(200,190,210,0.14) 0%, transparent 70%);
+    filter:blur(10px);
+    animation:smoke-drift 8s ease-in-out infinite;
+  }
+  @keyframes smoke-drift{
+    0%{ transform:translate(-50%,0) scale(0.9); opacity:0.25; }
+    50%{ transform:translate(-45%,-40px) scale(1.15); opacity:0.5; }
+    100%{ transform:translate(-50%,0) scale(0.9); opacity:0.25; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .bg-scene__smoke{ animation:none; }
+  }
+  /* ---- Pré-tela exibida ao abrir o jogo (antes do menu Novo Jogo/
+     Continuar/Configurações). Escondida por default para reaparecer o jogo
+     é só clicar em "COMECE A JOGAR" (ver MainMenuModule.init), que adiciona
+     body.game-started — usamos :not() em vez de depender da ordem das
+     regras abaixo pra garantir a especificidade sobre .game-shell{display:flex}. ---- */
+  .pre-splash{
+    position:fixed;
+    inset:0;
+    z-index:500;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:32px;
+    text-align:center;
+    padding:16px;
+  }
+  body.game-started .pre-splash{ display:none; }
+  body:not(.game-started) .title-bar,
+  body:not(.game-started) .game-shell{ display:none; }
+  .pre-splash__title{
+    font-family:'Press Start 2P', monospace;
+    font-size:26px;
+    color:var(--ember);
+    text-shadow:2px 2px 0 #000, 0 0 18px rgba(232,151,74,0.4);
+    letter-spacing:1px;
+    margin:0;
+  }
+  .pre-splash__cta{
+    font-family:'Press Start 2P', monospace;
+    font-size:16px;
+    background:none;
+    border:none;
+    color:var(--parchment);
+    text-shadow:2px 2px 0 #000;
+    cursor:pointer;
+    padding:12px 28px;
+    transition:background .15s ease, color .15s ease;
+  }
+  .pre-splash__cta:hover{
+    background:url('../assets/icons/menu-ribbon.png') center/100% 100% no-repeat;
+    image-rendering:pixelated;
+    color:#fff;
+  }
   .title-bar{
     position:relative;
     text-align:center;
@@ -52,16 +134,22 @@
     border-color:var(--ember);
     color:var(--ember);
   }
+  /* No menu principal o botão CONFIGURAÇÕES já está na lista de opções —
+     a engrenagem some pra não duplicar (ver UI.showScreen). A caixa padrão
+     do .panel some também, deixando só texto sobre a wallpaper, igual à
+     pré-tela (ver .pre-splash__cta). */
+  body.screen-mainmenu .gear-btn{ display:none; }
+  body.screen-mainmenu .panel{
+    background:none;
+    border:none;
+    box-shadow:none;
+    padding:0;
+  }
   .title-bar h1{
     font-size:22px;
     color:var(--ember);
     text-shadow:2px 2px 0 #000, 0 0 18px rgba(232,151,74,0.4);
     letter-spacing:1px;
-  }
-  .title-bar .subtitle{
-    color:var(--parchment-dim);
-    font-size:16px;
-    margin-top:4px;
   }
   /* ---- Shell do jogo: sidebar do Inventário (fixa/retrátil) + conteúdo
      principal lado a lado. Só aparece durante Cidade/Dungeon (ver
@@ -638,11 +726,9 @@
   .view-content.active{display:block;}
 
   /* ---- Prédios da cidade ----
-     Cartão-diretório: fundo neutro (igual ao resto da UI) + acento da cor do
-     prédio só na borda de cima e no brilho por trás do ícone — em vez de
-     pintar o cartão inteiro com uma cor sólida (era isso que deixava tudo
-     parecendo "blocos de cor" sem hierarquia). Ícone maior (44px, era 32px)
-     + descrição de 1 linha embaixo do nome, pra contexto extra. */
+     Cada cartão é um botão quadrado (.building-card-image) que mostra a
+     arte final do prédio (moldura + nome já embutidos na imagem, ver
+     --card-image por prédio mais abaixo). */
   .city-buildings{
     display:grid;
     grid-template-columns:repeat(auto-fit, minmax(136px, 1fr));
@@ -660,29 +746,31 @@
     border-radius:8px;
     background:linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-panel-2) 100%);
     border:2px solid var(--stone);
-    border-top:4px solid var(--accent, var(--stone));
     color:var(--parchment);
     cursor:pointer;
     box-shadow:0 3px 0 rgba(0,0,0,0.35);
     transition:transform .1s ease, box-shadow .1s ease;
   }
   .building-card:active{transform:translateY(2px); box-shadow:none;}
-  .building-icon-badge{
-    width:58px; height:58px;
-    border-radius:50%;
-    background:radial-gradient(circle, var(--accent-glow, rgba(255,255,255,0.08)) 0%, transparent 72%);
-    display:flex;
-    align-items:center;
-    justify-content:center;
+  /* Cartão de prédio usando a arte inteira (moldura + nome já vêm na
+     imagem), em vez do ícone circular + texto. Cada .building-X define
+     --card-image apontando pro PNG final daquele prédio (ver lista logo
+     abaixo) — pra trocar a arte basta substituir o arquivo em assets/icons/
+     mantendo o mesmo nome, sem mexer em HTML/CSS. */
+  .building-card-image{
+    padding:0;
+    border:none;
+    background:none;
+    aspect-ratio:3/4;
   }
-  .building-card .building-icon{width:44px; height:44px;}
-  .building-card .building-name{font-size:11px; letter-spacing:0.5px;}
-  .building-card .building-desc{
-    font-family:'VT323', monospace;
-    font-size:13px;
-    color:var(--parchment-dim);
-    text-align:center;
-    line-height:1.2;
+  .building-card-image::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    border-radius:8px;
+    background-image:var(--card-image);
+    background-size:cover;
+    background-position:center;
   }
   /* prédio ainda trancado (ver OnboardingModule.isBuildingUnlocked) — o
      atributo `disabled` nativo do <button> já impede o clique. Opacidade
@@ -692,7 +780,6 @@
     filter:grayscale(0.9);
     cursor:not-allowed;
     box-shadow:none;
-    border-top-color:var(--stone);
   }
   .building-card:disabled::after{
     content:'';
@@ -761,14 +848,7 @@
     --icon-mineral-crystal:url('../assets/icons/mineral-crystal.png');
     --icon-chest:url('../assets/icons/chest.png');
   }
-  .icon-ferreiro{background-image:var(--icon-ferreiro);}
-  .icon-guilda{background-image:var(--icon-guilda);}
-  .icon-caverna{background-image:var(--icon-caverna);}
-  .icon-loja{background-image:var(--icon-loja);}
-  .icon-igreja{background-image:var(--icon-igreja);}
-  .icon-dungeon{background-image:var(--icon-dungeon);}
   .icon-inventario{background-image:var(--icon-inventario);}
-  .icon-academia{background-image:var(--icon-academia);}
   .icon-gear{background-image:var(--icon-gear); width:18px; height:18px;}
   .icon-trophy{background-image:var(--icon-trophy); width:40px; height:40px;}
   .icon-coin{background-image:var(--icon-coin); width:14px; height:14px;}
@@ -807,13 +887,13 @@
   .icon-chest{background-image:var(--icon-chest); width:28px; height:28px;}
   /* cores só pra diferenciar cada prédio por enquanto — sprites de verdade
      entram depois */
-  .building-ferreiro{ --accent:#e8974a; --accent-glow:rgba(232,151,74,0.35); }
-  .building-guilda{ --accent:#5c8ad1; --accent-glow:rgba(92,138,209,0.35); }
-  .building-caverna{ --accent:#8fd9c4; --accent-glow:rgba(143,217,196,0.3); }
-  .building-loja{ --accent:#c9a13f; --accent-glow:rgba(201,161,63,0.35); }
-  .building-igreja{ --accent:#9a7fe0; --accent-glow:rgba(154,127,224,0.35); }
-  .building-dungeon{ --accent:#b0b0bc; --accent-glow:rgba(176,176,188,0.3); }
-  .building-academia{ --accent:#e05d4a; --accent-glow:rgba(224,93,74,0.35); }
+  .building-ferreiro{ --card-image:var(--icon-ferreiro); }
+  .building-guilda{ --card-image:var(--icon-guilda); }
+  .building-caverna{ --card-image:var(--icon-caverna); }
+  .building-loja{ --card-image:var(--icon-loja); }
+  .building-igreja{ --card-image:var(--icon-igreja); }
+  .building-dungeon{ --card-image:var(--icon-dungeon); }
+  .building-academia{ --card-image:var(--icon-academia); }
 
   /* modal mais largo pra Academia — a árvore radial precisa de espaço
      horizontal. O .tree-wrap dentro dela tem altura fixa (520px, pensada
@@ -832,6 +912,26 @@
     cursor:pointer; box-shadow:0 3px 0 rgba(0,0,0,0.4);
   }
   .menu-btn:active{ transform:translateY(2px); box-shadow:none; }
+  /* Tela Novo Jogo/Continuar/Configurações (view-mainmenu): mesmo formato
+     de texto da pré-tela (ver .pre-splash__cta) — só texto, sem borda,
+     faixa vermelha ao passar o cursor. Escopado a .main-menu-actions pra
+     não afetar os outros usos de .menu-btn (ex.: seletor de save). Agora
+     que a caixa do .panel some nessa tela (ver body.screen-mainmenu), o
+     text-shadow garante leitura direto sobre a wallpaper. */
+  .main-menu-actions .menu-btn{
+    background:none;
+    border:none;
+    border-radius:0;
+    box-shadow:none;
+    color:var(--parchment);
+    text-shadow:2px 2px 0 #000;
+    transition:background .15s ease, color .15s ease;
+  }
+  .main-menu-actions .menu-btn:hover{
+    background:url('../assets/icons/menu-ribbon.png') center/100% 100% no-repeat;
+    image-rendering:pixelated;
+    color:#fff;
+  }
 
   .slot-grid{ display:flex; flex-direction:column; gap:12px; }
   .slot-box{ background:var(--stone-dark); border:2px solid var(--stone); border-radius:6px; padding:14px; }
@@ -1019,6 +1119,11 @@
     padding:4px 8px;
     cursor:pointer;
   }
+  .small-btn:disabled{ opacity:0.4; cursor:not-allowed; }
+  /* Vende de uma vez tudo com quantidade > 0 selecionada na aba (ver
+     UI.sellSelected) — cor de destaque pra não confundir com "Tudo Geral"/
+     "Zero Geral" (que só ajustam quantidade, não vendem nada). */
+  .sell-selected-btn{ border-color:var(--ember); color:var(--ember); }
 
   /* ---- Modal de Configurações / Conquistas ---- */
   .modal-overlay{

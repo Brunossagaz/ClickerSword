@@ -186,24 +186,24 @@ const MAPS = {
 // verdade, equipável em PlayerModule.equipWeapon.
 const ITEM_DEFS = [
   // --- Dungeon do Pântano dos Slimes ---
-  { key:'slimeGel',        name:'Geleia de Slime',        icon:'item-slimegel',        sellPrice:2 },
-  { key:'slimeCompound',   name:'Composto de Slime',      icon:'item-slimecompound',   sellPrice:10 },
+  { key:'slimeGel',        name:'Geleia de Slime',        icon:'item-slimegel',        sellPrice:2,   type:'material' },
+  { key:'slimeCompound',   name:'Composto de Slime',      icon:'item-slimecompound',   sellPrice:10,  type:'material' },
   { key:'slimeSword',      name:'Espada de Gosma (Bruta)',        icon:'item-slimesword',      sellPrice:30,  type:'brokenWeapon' },
   { key:'slimeAxe',        name:'Machado de Gosma (Bruto)',       icon:'item-slimeaxe',        sellPrice:100, type:'brokenWeapon' },
   { key:'slimeAxeGreater', name:'Machado de Gosma Maior (Bruto)', icon:'item-slimeaxegreater', sellPrice:300, type:'brokenWeapon' },
   // --- Dungeon do Reino Goblin ---
-  { key:'goblinEar',    name:'Orelha de Goblin',           icon:'item-goblinear',    sellPrice:3 },
-  { key:'goblinFang',   name:'Presa de Goblin Vermelho',   icon:'item-goblinfang',   sellPrice:5 },
-  { key:'goblinShard',  name:'Fragmento Arcano Goblin',    icon:'item-goblinshard',  sellPrice:8 },
-  { key:'goblinScale',  name:'Escama de Armadura Goblin',  icon:'item-goblinscale',  sellPrice:11 },
-  { key:'goblinAmulet', name:'Amuleto Sagrado Goblin',     icon:'item-goblinamulet', sellPrice:15 },
-  { key:'goblinSeal',   name:'Selo do Goblin Mestre',      icon:'item-goblinseal',   sellPrice:20 },
-  { key:'goblinCrown',  name:'Coroa Menor Goblin',         icon:'item-goblincrown',  sellPrice:28 },
+  { key:'goblinEar',    name:'Orelha de Goblin',           icon:'item-goblinear',    sellPrice:3,  type:'material' },
+  { key:'goblinFang',   name:'Presa de Goblin Vermelho',   icon:'item-goblinfang',   sellPrice:5,  type:'material' },
+  { key:'goblinShard',  name:'Fragmento Arcano Goblin',    icon:'item-goblinshard',  sellPrice:8,  type:'material' },
+  { key:'goblinScale',  name:'Escama de Armadura Goblin',  icon:'item-goblinscale',  sellPrice:11, type:'material' },
+  { key:'goblinAmulet', name:'Amuleto Sagrado Goblin',     icon:'item-goblinamulet', sellPrice:15, type:'material' },
+  { key:'goblinSeal',   name:'Selo do Goblin Mestre',      icon:'item-goblinseal',   sellPrice:20, type:'material' },
+  { key:'goblinCrown',  name:'Coroa Menor Goblin',         icon:'item-goblincrown',  sellPrice:28, type:'material' },
   // --- Dungeon das Terras Selvagens ---
-  { key:'orcTusk',     name:'Presa de Orc',       icon:'item-orctusk',     sellPrice:40 },
-  { key:'trollHide',   name:'Pele de Troll',      icon:'item-trollhide',   sellPrice:65 },
-  { key:'dragonScale', name:'Escama de Dragão',   icon:'item-dragonscale', sellPrice:110 },
-  { key:'demonHorn',   name:'Chifre de Demônio',  icon:'item-demonhorn',   sellPrice:180 },
+  { key:'orcTusk',     name:'Presa de Orc',       icon:'item-orctusk',     sellPrice:40,  type:'material' },
+  { key:'trollHide',   name:'Pele de Troll',      icon:'item-trollhide',   sellPrice:65,  type:'material' },
+  { key:'dragonScale', name:'Escama de Dragão',   icon:'item-dragonscale', sellPrice:110, type:'material' },
+  { key:'demonHorn',   name:'Chifre de Demônio',  icon:'item-demonhorn',   sellPrice:180, type:'material' },
   // --- Caverna (minérios) --- itens com `type:'mineral'` NÃO vêm de drop de
   // monstro: entram no inventário só pelo baú da Caverna (ver CavernModule.
   // collectChest). `rarity`/`weight` controlam o sorteio de qual minério cai

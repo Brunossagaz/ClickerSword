@@ -141,6 +141,10 @@ const UI = {
     document.getElementById('lojaWeaponsNoneBtn').addEventListener('click', ()=>this.setAllSellQty(this.shopCategoryDefs().weapons, false));
     document.getElementById('lojaMineralsAllBtn').addEventListener('click', ()=>this.setAllSellQty(this.shopCategoryDefs().minerals, true));
     document.getElementById('lojaMineralsNoneBtn').addEventListener('click', ()=>this.setAllSellQty(this.shopCategoryDefs().minerals, false));
+    // Botão "Vender Selecionados" de cada aba da Loja (ver sellSelected).
+    document.getElementById('lojaDropsSellSelectedBtn').addEventListener('click', ()=>this.sellSelected(this.shopCategoryDefs().drops));
+    document.getElementById('lojaWeaponsSellSelectedBtn').addEventListener('click', ()=>this.sellSelected(this.shopCategoryDefs().weapons));
+    document.getElementById('lojaMineralsSellSelectedBtn').addEventListener('click', ()=>this.sellSelected(this.shopCategoryDefs().minerals));
     QuestModule.init();
 
     this.initSettingsModal();
@@ -262,6 +266,10 @@ const UI = {
     // sidebar do inventário substitui o antigo statBar — mesma regra de
     // visibilidade (só durante Cidade/Dungeon, nunca no menu/seletor de save)
     document.getElementById('sidebarInventory').style.display = (id==='view-city'||id==='view-dungeon') ? '' : 'none';
+    // No menu principal a engrenagem de Configurações fica escondida (ver
+    // body.screen-mainmenu em style.css) — já existe o botão CONFIGURAÇÕES
+    // ali dentro, a engrenagem só volta a aparecer nas outras telas.
+    document.body.classList.toggle('screen-mainmenu', id==='view-mainmenu');
   },
   showMainMenu(){ this.showScreen('view-mainmenu'); },
   showSlotPicker(){ MainMenuModule.renderSlotPicker(); this.showScreen('view-slotpicker'); },
@@ -586,16 +594,15 @@ const UI = {
     }
     return row;
   },
-  // Loja separada em 3 abas por categoria — derivadas dos mesmos campos que
-  // já existem em ITEM_DEFS (sem precisar de um campo `type` formal pra
-  // cada item, ver TODO.md): `type:'mineral'` já marca os minérios da
-  // Caverna; `type:'brokenWeapon'` já marca as armas brutas dropadas
-  // (precisam ser forjadas no Ferreiro pra virar equipáveis, ver
-  // renderForgeList); o resto é drop comum de monstro. Reaproveitado pelos
-  // botões "Tudo Geral"/"Zero Geral" de cada aba (ver setAllSellQty).
+  // Loja separada em 3 abas por categoria — derivadas do campo `type` de
+  // ITEM_DEFS: `type:'material'` marca os drops comuns de monstro;
+  // `type:'mineral'` marca os minérios da Caverna; `type:'brokenWeapon'`
+  // marca as armas brutas dropadas (precisam ser forjadas no Ferreiro pra
+  // virar equipáveis, ver renderForgeList). Reaproveitado pelos botões
+  // "Tudo Geral"/"Zero Geral" de cada aba (ver setAllSellQty).
   shopCategoryDefs(){
     return {
-      drops: ITEM_DEFS.filter(d=>d.type!=='mineral' && d.type!=='brokenWeapon'),
+      drops: ITEM_DEFS.filter(d=>d.type==='material'),
       weapons: ITEM_DEFS.filter(d=>d.type==='brokenWeapon'),
       minerals: ITEM_DEFS.filter(d=>d.type==='mineral'),
     };
@@ -610,17 +617,42 @@ const UI = {
     fillList('shopListDrops', cats.drops);
     fillList('shopListWeapons', cats.weapons);
     fillList('shopListMinerals', cats.minerals);
+    // "Vender Selecionados" só fica habilitado se ALGUM item da aba tiver
+    // quantidade > 0 selecionada (ver sellSelected) — nenhuma quantidade
+    // escolhida = clicar não teria efeito nenhum.
+    const anySelected = defs => defs.some(def => (this.shopSellQty[def.key] || 0) > 0);
+    document.getElementById('lojaDropsSellSelectedBtn').disabled = !anySelected(cats.drops);
+    document.getElementById('lojaWeaponsSellSelectedBtn').disabled = !anySelected(cats.weapons);
+    document.getElementById('lojaMineralsSellSelectedBtn').disabled = !anySelected(cats.minerals);
   },
   // Botão "Tudo Geral"/"Zero Geral" de uma aba da Loja — só ajusta o
   // seletor de quantidade de TODOS os itens daquela categoria de uma vez
   // (mesmo efeito do botão "Tudo" de uma linha, só que pra lista inteira);
   // não vende nada sozinho, o jogador ainda confirma com "Vender" em cada
-  // linha.
+  // linha (ou com "Vender Selecionados", ver sellSelected).
   setAllSellQty(defs, toMax){
     for(const def of defs){
       this.shopSellQty[def.key] = toMax ? state.inventory[def.key] : 0;
     }
     this.renderShop();
+  },
+  // Botão "Vender Selecionados" de uma aba da Loja — vende de uma vez todo
+  // item da categoria com quantidade > 0 em shopSellQty, sem precisar
+  // clicar "Vender" linha por linha. Mesma lógica de venda do `.sell-btn`
+  // individual (ver buildItemRow), só que somada pra vários itens antes de
+  // re-renderizar.
+  sellSelected(defs){
+    for(const def of defs){
+      const qty = state.inventory[def.key];
+      const sellQty = Math.max(0, Math.min(this.shopSellQty[def.key] || 0, qty));
+      if(sellQty <= 0) continue;
+      const earned = sellQty * def.sellPrice;
+      state.gold += earned;
+      state.goldEarnedThisRun += earned;
+      state.inventory[def.key] -= sellQty;
+      this.shopSellQty[def.key] = 0;
+    }
+    UI.renderAll();
   },
   // Mochila do Inventário: mesma lista de itens (vender continua exclusivo
   // da Loja) — inclui armas brutas ainda não forjadas, minérios e drops

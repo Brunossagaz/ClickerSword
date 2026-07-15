@@ -18,14 +18,22 @@ detalhados no roadmap do `README.md` são referenciados, não duplicados.
       exigiu trocar `ProgressionModule.isUnlocked` de um limiar fixo
       (`UNLOCK_REQUIREMENT=5`) pro `maxLevel` de cada pré-requisito, já que
       esses upgrades têm 1 nível só (ver `js/progression.js`).
-- [ ] **Classificação de tipo de item** — `ITEM_DEFS` já usa `type` pra
-      `'mineral'` e `'brokenWeapon'` (ver Fase 4), mas os drops comuns
-      (Geleia de Slime, Orelha de Goblin etc.) ainda não têm `type`
-      formal — falta decidir um valor tipo `material` pra eles e usar isso
-      pra filtrar/organizar Inventário e Loja de forma mais rica.
-- [ ] **Vender quantidade escolhida na Loja** — hoje só existe "Vender tudo"
-      (`ui.js`, `sellBtnHtml`/`sell-btn`). Adicionar input/stepper de
-      quantidade antes de vender.
+- [x] **Classificação de tipo de item** — `ITEM_DEFS` já usa `type` pra
+      `'mineral'` e `'brokenWeapon'` (ver Fase 4); os drops comuns (Geleia de
+      Slime, Orelha de Goblin etc.) agora têm `type:'material'` também.
+      `UI.shopCategoryDefs` (`ui.js`) troca o filtro por exclusão por
+      `d.type==='material'`, igual às outras categorias.
+- [x] **Vender quantidade escolhida na Loja** — Feito: cada item tem um
+      stepper (-/+/"Tudo", `ui.js`/`buildItemRow`, `UI.shopSellQty`) que
+      define quanto vender antes de confirmar. Botões "Tudo Geral"/"Zero
+      Geral" por aba (`UI.setAllSellQty`) ajustam a quantidade de todos os
+      itens da categoria de uma vez, mas ainda não vendem sozinhos.
+- [x] **Botão "Vender Selecionados" na Loja** — Feito: botão por aba
+      (`UI.sellSelected`, `ui.js`) ao lado de "Tudo Geral"/"Zero Geral", que
+      vende de uma vez todo item da categoria com quantidade > 0 em
+      `shopSellQty`, sem precisar clicar `.sell-btn` linha por linha. Fica
+      `disabled` (`.sell-selected-btn` em `style.css`) quando nada na aba
+      tem quantidade selecionada.
 - [ ] **Novas missões** — expandir `QUEST_DEFS` (`config.js`), hoje só tem 1
       missão (entrega do Barnabé).
 - [ ] **Missão de desbloqueio da Caverna** — usar o mesmo padrão de
