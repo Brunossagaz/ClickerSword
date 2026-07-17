@@ -61,8 +61,9 @@ const MainMenuModule = {
     el.querySelectorAll('.slot-createnew').forEach(b=>b.addEventListener('click', ()=>this.startNewGame(Number(b.dataset.slot))));
   },
 
-  // Personagem novo nasce sem nome — quem pergunta é o Clérigo, na 1ª
-  // conversa na Igreja (ver OnboardingModule.openClericIntro).
+  // Personagem novo nasce sem nome — quem pergunta é o Clérigo, que aparece
+  // sozinho assim que a cidade abre pela 1ª vez (ver UI.showCityView/
+  // OnboardingModule.openClericIntro).
   startNewGame(slot){
     SaveModule.createNewSlot(slot, '');
     MonsterModule.current = null;

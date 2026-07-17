@@ -65,7 +65,8 @@
       "Bash(curl -s -L -o /tmp/fonts/vt323.woff2 \"https://fonts.gstatic.com/s/vt323/v17/pxiKyp0ihIEF2isfFJU.woff2\")",
       "Bash(file /tmp/fonts/*)",
       "Bash(base64 -w0 /tmp/fonts/press-start-2p.woff2)",
-      "Bash(base64 -w0 /tmp/fonts/vt323.woff2)"
+      "Bash(base64 -w0 /tmp/fonts/vt323.woff2)",
+      "PowerShell(Get-Command node.exe -ErrorAction SilentlyContinue)"
     ],
     "additionalDirectories": [
       "C:\\Users\\bruno.sagaz\\Downloads"

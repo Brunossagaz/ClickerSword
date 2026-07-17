@@ -14,6 +14,7 @@ function tick(){
   MonsterModule.checkGoldenExpiry();
   MonsterModule.maybeTriggerGolden();
   MonsterModule.checkTimeUp();
+  MonsterModule.checkBurnTick();
   const dps = TroopsModule.totalDps();
   if(dps > 0 && MonsterModule.current){
     const dmg = dps * (CONFIG.tickMs/1000);

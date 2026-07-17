@@ -61,11 +61,22 @@ const PlayerModule = {
     const wasGolden = state.isGolden;
     const goldenType = MonsterModule.current && MonsterModule.current.type;
 
+    // critChanceBonus/critDamageBonus são opcionais (ver WEAPON_DEFS/
+    // FORGED_WEAPON_DEFS) — armas sem esses campos simplesmente não somam nada.
+    const weaponDef = this.equippedWeaponDef();
     let dmg = this.clickDamage();
-    let isCrit = Math.random() < (state.critChance + state.pCritChance);
+    let isCrit = Math.random() < (state.critChance + state.pCritChance + (weaponDef ? (weaponDef.critChanceBonus||0) : 0));
     // critDamagePercent (Academia de Combate) multiplica em cima do critMult
-    if(isCrit) dmg *= state.critMult * (1+state.critDamagePercent);
+    if(isCrit) dmg *= state.critMult * (1+state.critDamagePercent+(weaponDef ? (weaponDef.critDamageBonus||0) : 0));
     dmg = Math.max(1, Math.round(dmg));
+    // burnChance/burnDamagePercent são opcionais (ver WEAPON_DEFS) — chance
+    // por clique de aplicar/renovar queimadura, calculada sobre o dano DESTE
+    // clique (já com crítico aplicado). Roda ANTES de applyDamage: mesmo que
+    // esse clique mate o monstro, aplicar em cima do `current` de agora é
+    // inofensivo (o objeto é descartado no spawn do próximo, ver MonsterModule.onDeath).
+    if(weaponDef && weaponDef.burnChance && Math.random() < weaponDef.burnChance){
+      MonsterModule.applyBurn(dmg * weaponDef.burnDamagePercent);
+    }
     MonsterModule.applyDamage(dmg);
     UI.showFloatingDamage(dmg, isCrit, evt);
     UI.screenShake();

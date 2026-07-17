@@ -156,7 +156,7 @@ def make_ribbon():
     # arquivo) — band_top/band_bot saem centralizados sozinhos a partir de
     # band_height, e main_start/main_end saem de left_w/right_w, então o
     # corpo central sempre encosta nas duas pontas sem buraco no meio. ----
-    band_height = 6
+    band_height = 14
     band_top = (GRID_H - band_height) // 2
     band_bot = band_top + band_height
     left_w = 8

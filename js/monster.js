@@ -85,6 +85,32 @@ const MonsterModule = {
     UI.renderAll();
     UI.showTimeUpModal();
   },
+  // Queimadura (ver WEAPON_DEFS.burnChance/burnDamagePercent, PlayerModule.
+  // handleClick) — dano total já vem calculado (% do dano do clique que
+  // aplicou), aqui só divide em ticks. Reaplicar SUBSTITUI a queimadura
+  // anterior (não empilha) — sempre o efeito do clique mais recente.
+  applyBurn(totalDamage){
+    if(!this.current) return;
+    const ticks = Math.max(1, Math.round(CONFIG.burnDurationMs / CONFIG.burnTickMs));
+    this.current.burn = {
+      dmgPerTick: totalDamage / ticks,
+      ticksLeft: ticks,
+      nextTickAt: Date.now() + CONFIG.burnTickMs
+    };
+  },
+  // Chamado a cada tick do game loop (ver main.js) — aplica 1 tick de
+  // queimadura quando o intervalo passa. Reaproveita applyDamage() (mesmo
+  // caminho de morte/drops que dano de clique ou DPS das tropas).
+  checkBurnTick(){
+    const burn = this.current && this.current.burn;
+    if(!burn || burn.ticksLeft <= 0) return;
+    if(Date.now() < burn.nextTickAt) return;
+    burn.ticksLeft -= 1;
+    burn.nextTickAt += CONFIG.burnTickMs;
+    const dmg = Math.max(1, Math.round(burn.dmgPerTick));
+    UI.showFloatingBurnDamage(dmg);
+    this.applyDamage(dmg);
+  },
   retryCycle(){
     const d = state.dungeons[state.currentDungeon];
     const kpc = this.killsPerCycleFor(state.currentDungeon);
@@ -166,12 +192,22 @@ const MonsterModule = {
   // Roda a chance de cada entrada em type.drops de forma independente — um
   // monstro pode dar 0, 1 ou vários itens diferentes na mesma morte (ver
   // MONSTER_TYPES). Retorna [{item, qty}] só com o que efetivamente dropou.
+  // extraDropChance (opcional, ver WEAPON_DEFS/FORGED_WEAPON_DEFS): chance
+  // de rolar a tabela inteira de novo, empilhando com o resultado normal.
   rollDrops(){
     const drops = (this.current && this.current.type.drops) || [];
-    const results = [];
-    for(const d of drops){
-      const chance = d.chance == null ? 1 : d.chance;
-      if(Math.random() < chance) results.push({ item:d.item, qty:this.itemQtyFor(d) });
+    const rollOnce = () => {
+      const results = [];
+      for(const d of drops){
+        const chance = d.chance == null ? 1 : d.chance;
+        if(Math.random() < chance) results.push({ item:d.item, qty:this.itemQtyFor(d) });
+      }
+      return results;
+    };
+    const results = rollOnce();
+    const weaponDef = PlayerModule.equippedWeaponDef();
+    if(weaponDef && weaponDef.extraDropChance && Math.random() < weaponDef.extraDropChance){
+      results.push(...rollOnce());
     }
     return results;
   },
@@ -187,6 +223,7 @@ const MonsterModule = {
     const wasBoss = this.current.isBoss; // captura antes do spawn() sobrescrever this.current
     const wasDouble = this.current.isDouble;
     const doubleSubKill = this.current.doubleSubKill;
+    const slotPos = this.current.slotIdx + 1; // posição no ciclo (1-based), ver UI.renderMonsterInfo
     const drops = this.rollDrops();
 
     if(wasDouble && doubleSubKill === 1){
@@ -203,6 +240,7 @@ const MonsterModule = {
       state.inventory[drop.item] += drop.qty;
       UI.showFloatingItem(drop.qty, ITEM_DEFS.find(item=>item.key===drop.item), i);
     });
+    UI.logDrops(slotPos, drops);
     if(wasDouble){
       if(doubleSubKill === 0) d.pendingSlot.firstDrops = drops;
       else d.pendingSlot = null;
@@ -212,17 +250,42 @@ const MonsterModule = {
     state.totalKillsAll += 1; // continua vitalício e global, alimenta a Ascensão
 
     if(wasBoss){
+      state.totalCyclesCompleted += 1; // vitalício, ver OnboardingModule/QuestModule
+      // captura ANTES de setar a flag — dispara o auto-retorno pra cidade no
+      // 1º chefe da vida do personagem (ver abaixo). Independente do bloqueio
+      // do botão de voltar, que é por ENTRADA na dungeon, não por ciclo
+      // completo — ver OnboardingModule.isFirstDungeonEntry.
+      const isFirstCycleEver = !state.firstCycleEverCompleted;
       // marca esse ciclo como concluído pra sempre (vitalício, não reseta ao
       // abandonar/tentar de novo) — habilita o seletor de ciclo pra voltar
       // até aqui depois (ver DungeonModule.startAtCycle/UI.openCyclePicker)
       const kpc = this.killsPerCycleFor(state.currentDungeon);
       const justFinishedCycle = Math.floor((d.killCount - 1) / kpc) + 1;
       d.maxCycleCompleted = Math.max(d.maxCycleCompleted || 0, justFinishedCycle);
-      // fim de ciclo: pausa e pergunta se o jogador quer seguir pro próximo
-      // ciclo ou voltar pra cidade, em vez de continuar sozinho
       this.current = null;
-      UI.renderAll();
-      UI.showCycleCompleteModal();
+
+      if(isFirstCycleEver){
+        // 1º chefe da vida do personagem: nada de escolha, marca concluído e
+        // volta pra cidade sozinho. Salva na hora (mesmo padrão de
+        // shopUnlockAnnounced/metBarnabe) — sem isso, um refresh antes do
+        // próximo autosave "esquece" que já rolou esse auto-retorno.
+        state.firstCycleEverCompleted = true;
+        SaveModule.save();
+        DungeonModule.leaveToCity();
+      } else if(OnboardingModule.shouldAnnounceCaverna()){
+        // "mais um ciclo" depois da missão do Creiton — em vez do modal
+        // normal de continuar/voltar, o Clérigo aparece falando da Caverna
+        state.cavernaAnnounced = true;
+        SaveModule.save();
+        UI.renderAll();
+        document.getElementById('cavernaUnlockModal').classList.add('open');
+      } else {
+        // fim de ciclo normal: avança pro próximo automaticamente, sem
+        // perguntar — pra sair, o jogador usa o botão "Voltar pra cidade" do
+        // cabeçalho (ver OnboardingModule.isFirstDungeonEntry)
+        this.spawn(false);
+        UI.renderAll();
+      }
     } else {
       this.spawn(false);
       UI.renderAll();

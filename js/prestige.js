@@ -26,6 +26,21 @@ const PrestigeModule = {
     const keepMultipliers = { pClickMult:state.pClickMult, pDpsMult:state.pDpsMult, pOreRateMult:state.pOreRateMult, pCritChance:state.pCritChance };
     const keepTotalKills = state.totalKillsAll;
     const keepAscensionCount = state.ascensionCount + 1;
+    // Cadeia de onboarding/desbloqueios (missões, avisos únicos do Clérigo,
+    // contadores de progresso pra Academia/Caverna) fica permanente entre
+    // ascensões, por pedido — diferente de dungeons/armas (que fazem parte
+    // do próprio mecanismo de regrind do prestígio e continuam resetando).
+    const keepOnboarding = {
+      quests: state.quests,
+      metBarnabe: state.metBarnabe,
+      shopUnlockAnnounced: state.shopUnlockAnnounced,
+      academiaAnnounced: state.academiaAnnounced,
+      cavernaAnnounced: state.cavernaAnnounced,
+      dungeonEntriesCount: state.dungeonEntriesCount,
+      firstCycleEverCompleted: state.firstCycleEverCompleted,
+      totalCyclesCompleted: state.totalCyclesCompleted,
+      creitonQuestCycleSnapshot: state.creitonQuestCycleSnapshot
+    };
 
     state = freshState();
     state.essence = keepEssence;
@@ -36,6 +51,7 @@ const PrestigeModule = {
     state.pCritChance = keepMultipliers.pCritChance;
     state.totalKillsAll = keepTotalKills;
     state.ascensionCount = keepAscensionCount;
+    Object.assign(state, keepOnboarding);
     // killCount de todas as Dungeons volta a 0 (freshState) — ciclo e HP dos
     // monstros reiniciam do zero, e as Dungeons desbloqueadas por progresso
     // (Goblin, Selvagens) voltam a ficar trancadas. Sem Dungeon ativa, o

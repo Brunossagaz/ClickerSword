@@ -175,6 +175,41 @@ const SaveModule = {
       state.quests.slimeGelDelivery = true;
       state.metBarnabe = true;
     }
+
+    // Save de antes do ciclo tutorial forçado: já é um jogador estabelecido
+    // (tem mortes registradas), não faz sentido forçar esse tutorial nele
+    // retroativamente — libera o botão de sair normalmente.
+    if(loaded.firstCycleEverCompleted === undefined && state.totalKillsAll >= 1){
+      state.firstCycleEverCompleted = true;
+    }
+
+    // Save de antes do contador de entradas na Dungeon: quem já tinha acesso
+    // à Academia pela regra antiga (arma escolhida OU já enfrentou a
+    // dungeon) não pode perder esse acesso por causa do novo gatilho (5ª
+    // entrada).
+    if(loaded.dungeonEntriesCount === undefined){
+      const hadOldAcademiaAccess = Object.values(state.weapons).some(v=>v>0) || state.totalKillsAll >= 1;
+      if(hadOldAcademiaAccess) state.dungeonEntriesCount = 5;
+    }
+
+    // Save de antes das missões do Creiton/Clérigo: quem já tinha acesso a
+    // Guilda/Caverna pela regra temporária antiga (só enfrentar a dungeon)
+    // não pode perder esse acesso por causa das missões novas.
+    if((!loaded.quests || loaded.quests.creitonMilitia === undefined) && state.totalKillsAll >= 1){
+      state.quests.creitonMilitia = true;
+    }
+    if((!loaded.quests || loaded.quests.caveClearance === undefined) && state.totalKillsAll >= 1){
+      state.quests.caveClearance = true;
+    }
+
+    // Contador de ciclos vitalício: backfill somando o que cada Dungeon já
+    // tinha concluído (state.dungeons já mesclado acima) — senão a
+    // comparação do gatilho da Caverna (ver
+    // OnboardingModule.shouldAnnounceCaverna) fica sem sentido pra quem já
+    // ganhou creitonMilitia=true pelo backfill logo acima.
+    if(loaded.totalCyclesCompleted === undefined){
+      state.totalCyclesCompleted = Object.values(state.dungeons).reduce((sum,d)=>sum+(d.maxCycleCompleted||0), 0);
+    }
   },
 
   // Apaga só o slot ativo e volta pro menu principal (não há mais "save

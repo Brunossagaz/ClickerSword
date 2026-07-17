@@ -36,16 +36,6 @@ const UI = {
       document.getElementById('leaveConfirmModal').classList.remove('open');
     });
 
-    document.getElementById('cycleContinueBtn').addEventListener('click', ()=>{
-      document.getElementById('cycleCompleteModal').classList.remove('open');
-      MonsterModule.spawn(false);
-      UI.renderAll();
-    });
-    document.getElementById('cycleLeaveBtn').addEventListener('click', ()=>{
-      document.getElementById('cycleCompleteModal').classList.remove('open');
-      DungeonModule.leaveToCity();
-    });
-
     document.getElementById('timeUpRetryBtn').addEventListener('click', ()=>{
       document.getElementById('timeUpModal').classList.remove('open');
       MonsterModule.retryCycle();
@@ -106,13 +96,11 @@ const UI = {
       });
     }
 
-    // Igreja é especial: na 1ª vez (personagem novo, sem arma escolhida e
-    // sem nenhuma morte) abre a introdução do Clérigo em vez da Ascensão
-    // normal — ver OnboardingModule.shouldShowClericIntro.
+    // A introdução do Clérigo agora dispara sozinha ao entrar na cidade (ver
+    // showCityView) — o clique na Igreja só abre o modal normal.
     const igrejaModal = document.getElementById('igrejaModal');
     document.getElementById('openIgrejaBtn').addEventListener('click', ()=>{
-      if(OnboardingModule.shouldShowClericIntro()) OnboardingModule.openClericIntro();
-      else igrejaModal.classList.add('open');
+      igrejaModal.classList.add('open');
     });
     document.getElementById('igrejaCloseBtn').addEventListener('click', ()=>igrejaModal.classList.remove('open'));
     igrejaModal.addEventListener('click', (e)=>{ if(e.target === igrejaModal) igrejaModal.classList.remove('open'); });
@@ -273,7 +261,14 @@ const UI = {
   },
   showMainMenu(){ this.showScreen('view-mainmenu'); },
   showSlotPicker(){ MainMenuModule.renderSlotPicker(); this.showScreen('view-slotpicker'); },
-  showCityView(){ this.showScreen('view-city'); },
+  // Único ponto de entrada na tela da cidade (novo jogo, retomar save,
+  // sair de dungeon, ascender) — cobre "personagem novo" aqui em vez de só
+  // no clique da Igreja, então a introdução do Clérigo aparece sozinha
+  // assim que a cidade abre pela 1ª vez (ver OnboardingModule.shouldShowClericIntro).
+  showCityView(){
+    this.showScreen('view-city');
+    if(OnboardingModule.shouldShowClericIntro()) OnboardingModule.openClericIntro();
+  },
   showDungeonView(){ this.showScreen('view-dungeon'); },
   renderPlayerName(){
     const el = document.getElementById('playerNameTag');
@@ -291,18 +286,16 @@ const UI = {
     for(const btnId in buildingByBtn){
       document.getElementById(btnId).disabled = !OnboardingModule.isBuildingUnlocked(buildingByBtn[btnId]);
     }
+    // Progresso de entradas na Dungeon, só enquanto a Academia estiver
+    // trancada (ver OnboardingModule.academiaProgressLabel).
+    document.getElementById('academiaProgress').textContent = OnboardingModule.academiaProgressLabel() || '';
   },
-  // Chamado pelo MonsterModule.onDeath() quando o chefe de um ciclo é
-  // derrotado — pausa o jogo (MonsterModule.current fica null) até o
-  // jogador escolher continuar pro próximo ciclo ou voltar pra cidade.
-  showCycleCompleteModal(){
-    const d = state.dungeons[state.currentDungeon];
-    const kpc = MonsterModule.killsPerCycleFor(state.currentDungeon);
-    const justFinishedCycle = Math.floor((d.killCount - 1) / kpc) + 1;
-    const nextCycle = Math.floor(d.killCount / kpc) + 1;
-    document.getElementById('cycleCompleteText').textContent =
-      `Você derrotou o chefe do Ciclo ${justFinishedCycle} de ${MAPS[state.currentDungeon].name}! Quer continuar para o Ciclo ${nextCycle}?`;
-    document.getElementById('cycleCompleteModal').classList.add('open');
+  // 1ª entrada na Dungeon da vida do personagem (ver
+  // OnboardingModule.isFirstDungeonEntry): esconde o botão "Voltar pra
+  // cidade" do cabeçalho, pra forçar pelo menos uma tentativa de verdade —
+  // já a partir da 2ª entrada (completando o ciclo ou não) volta a aparecer.
+  renderLeaveButtonVisibility(){
+    document.getElementById('leaveDungeonBtn').style.display = OnboardingModule.isFirstDungeonEntry() ? 'none' : '';
   },
   // Chamado pelo MonsterModule.onTimeUp() quando o timer do monstro atual
   // esgota — pausa o jogo até o jogador escolher tentar de novo o ciclo ou
@@ -313,6 +306,10 @@ const UI = {
     const cycleNum = Math.floor(d.killCount / kpc) + 1;
     document.getElementById('timeUpText').textContent =
       `Tempo esgotado! Você não derrotou o monstro a tempo. Quer tentar de novo o Ciclo ${cycleNum} de ${MAPS[state.currentDungeon].name} ou voltar pra cidade?`;
+    // "Voltar pra cidade" sempre disponível aqui, mesmo na 1ª entrada (ver
+    // OnboardingModule.isFirstDungeonEntry) — o bloqueio é só pra impedir
+    // abandonar uma luta em andamento à toa; se o personagem não tem dano
+    // suficiente pra vencer dentro do tempo, precisa de uma saída.
     document.getElementById('timeUpModal').classList.add('open');
   },
   // Reflete as preferências globais e mostra/esconde a seção "Personagem"
@@ -408,6 +405,35 @@ const UI = {
     const pct = Math.max(0, (state.monsterHp/state.monsterMaxHp)*100);
     document.getElementById('hpFill').style.width = pct+'%';
     document.getElementById('hpText').textContent = `${Math.max(0,Math.ceil(state.monsterHp))} / ${state.monsterMaxHp}`;
+  },
+  // Registro de drops da dungeon atual — reseta a cada entrada nova (ver
+  // DungeonModule._enterAt) e ganha uma entrada por morte que dropou algo
+  // (ver MonsterModule.onDeath). Mais recente no topo; capado pra não crescer
+  // sem limite numa sessão AFK longa.
+  _dropLog:[],
+  resetDropLog(){
+    this._dropLog = [];
+    this.renderDropLog();
+  },
+  logDrops(slotPos, drops){
+    if(!drops.length) return;
+    this._dropLog.unshift({ slotPos, drops });
+    if(this._dropLog.length > 30) this._dropLog.length = 30;
+    this.renderDropLog();
+  },
+  renderDropLog(){
+    const el = document.getElementById('dropLog');
+    if(!this._dropLog.length){
+      el.innerHTML = '<div class="footer-note" style="margin:0;">Nenhum item dropado ainda nesse ciclo.</div>';
+      return;
+    }
+    el.innerHTML = this._dropLog.map(entry => {
+      const items = entry.drops.map(d => {
+        const itemDef = ITEM_DEFS.find(i => i.key === d.item);
+        return `<div class="drop-log-item">Dropou ${d.qty}x ${itemDef.name}</div>`;
+      }).join('');
+      return `<div class="drop-log-entry"><div class="drop-log-monster">Monstro ${entry.slotPos}</div>${items}</div>`;
+    }).join('');
   },
   renderTimer(){
     if(!MonsterModule.current) return;
@@ -667,6 +693,21 @@ const UI = {
     }
     for(const def of owned) el.appendChild(this.buildItemRow(def, { showSellButton:false }));
   },
+  // Monta a lista de bônus de uma arma pra exibição (Escolha do Clérigo,
+  // Ferreiro, Forjar, aba Armas) — só mostra os campos presentes, todos
+  // opcionais (ver lista completa em WEAPON_DEFS/FORGED_WEAPON_DEFS). Novo
+  // tipo de bônus no futuro: só adicionar 1 linha aqui pra aparecer em
+  // TODA tela de uma vez, sem duplicar em cada render* separado.
+  weaponBonusText(def){
+    const parts = [];
+    if(def.clickDamageBonus) parts.push(`+${def.clickDamageBonus} dano por clique`);
+    if(def.dpsBonus) parts.push(`+${def.dpsBonus} DPS`);
+    if(def.critChanceBonus) parts.push(`+${Math.round(def.critChanceBonus*100)}% chance de crítico`);
+    if(def.critDamageBonus) parts.push(`+${Math.round(def.critDamageBonus*100)}% dano crítico`);
+    if(def.extraDropChance) parts.push(`${Math.round(def.extraDropChance*100)}% chance de drop extra`);
+    if(def.burnChance) parts.push(`${Math.round(def.burnChance*100)}% chance de queimadura`);
+    return parts.join(' · ');
+  },
   // Aba Armas do Inventário — "seleção de arma equipada": lista TODA arma
   // que o jogador já possui (iniciais de WEAPON_DEFS + forjadas de
   // FORGED_WEAPON_DEFS, mesmo pool state.weapons), cada uma com um botão
@@ -683,14 +724,12 @@ const UI = {
     }
     for(const def of owned){
       const isEquipped = state.equippedWeapon === def.key;
-      const bonusParts = [`+${def.clickDamageBonus} dano por clique`];
-      if(def.dpsBonus) bonusParts.push(`+${def.dpsBonus} DPS`);
       const row = document.createElement('div');
       row.className = 'shop-row'+(isEquipped ? ' equipped' : '');
       row.innerHTML = `
         <div class="shop-info">
           <div class="name"><div class="icon icon-${def.icon}"></div>${def.name}</div>
-          <div class="desc">${bonusParts.join(' · ')}</div>
+          <div class="desc">${this.weaponBonusText(def)}</div>
         </div>
         ${isEquipped ? '<div class="owned">Equipada</div>' : '<button class="buy-btn equip-btn">Equipar</button>'}`;
       if(!isEquipped){
@@ -715,7 +754,7 @@ const UI = {
         row.innerHTML = `
           <div class="shop-info">
             <div class="name"><div class="icon icon-${def.icon}"></div>${def.name}</div>
-            <div class="desc">+${def.clickDamageBonus} dano por clique</div>
+            <div class="desc">${this.weaponBonusText(def)}</div>
             <div class="owned">Possui</div>
           </div>`;
       } else {
@@ -723,7 +762,7 @@ const UI = {
         row.innerHTML = `
           <div class="shop-info">
             <div class="name"><div class="icon icon-${def.icon}"></div>${def.name}</div>
-            <div class="desc">+${def.clickDamageBonus} dano por clique</div>
+            <div class="desc">${this.weaponBonusText(def)}</div>
           </div>
           <button class="buy-btn" ${canAfford?'':'disabled'}><div class="icon icon-coin"></div> ${UI.fmt(def.buyCost)}</button>`;
         if(canAfford){
@@ -747,7 +786,6 @@ const UI = {
     for(const def of FORGED_WEAPON_DEFS){
       const owned = state.weapons[def.key] > 0;
       const row = document.createElement('div');
-      const bonusParts = [`+${def.clickDamageBonus} dano por clique`, `+${def.dpsBonus} DPS`];
       const materialsHtml = def.recipe.materials.map(m=>{
         const itemDef = ITEM_DEFS.find(i=>i.key===m.itemKey);
         const have = state.inventory[m.itemKey];
@@ -759,7 +797,7 @@ const UI = {
         row.innerHTML = `
           <div class="shop-info">
             <div class="name"><div class="icon icon-${def.icon}"></div>${def.name}</div>
-            <div class="desc">${bonusParts.join(' · ')}</div>
+            <div class="desc">${this.weaponBonusText(def)}</div>
             <div class="owned">Já forjada</div>
           </div>`;
       } else {
@@ -768,7 +806,7 @@ const UI = {
         row.innerHTML = `
           <div class="shop-info">
             <div class="name"><div class="icon icon-${def.icon}"></div>${def.name}</div>
-            <div class="desc">${bonusParts.join(' · ')}</div>
+            <div class="desc">${this.weaponBonusText(def)}</div>
             <div class="recipe-materials">${materialsHtml}</div>
           </div>
           <button class="buy-btn" ${canForge?'':'disabled'}><div class="icon icon-coin"></div> ${UI.fmt(def.recipe.coinCost)}</button>`;
@@ -1043,7 +1081,8 @@ const UI = {
     this.renderFerreiroWeapons();
     this.renderForgeList();
     this.renderCityBuildingLocks();
-    QuestModule.renderQuestBanner();
+    this.renderLeaveButtonVisibility();
+    QuestModule.renderAllQuestBanners();
     this.renderUpgradeTree();
     this.renderPrestigeTab();
   },
@@ -1068,6 +1107,16 @@ const UI = {
     const stage = document.getElementById('monsterStage');
     const div = document.createElement('div');
     div.className = 'float-dmg dps';
+    div.textContent = '-'+this.fmt(dmg);
+    stage.appendChild(div);
+    setTimeout(()=>div.remove(), 850);
+  },
+  // 1 tick de queimadura (ver MonsterModule.checkBurnTick) — cor própria
+  // (ver .float-dmg.burn), pra distinguir de clique/crítico/DPS das tropas.
+  showFloatingBurnDamage(dmg){
+    const stage = document.getElementById('monsterStage');
+    const div = document.createElement('div');
+    div.className = 'float-dmg burn';
     div.textContent = '-'+this.fmt(dmg);
     stage.appendChild(div);
     setTimeout(()=>div.remove(), 850);

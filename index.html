@@ -93,25 +93,8 @@
   </div>
 </div>
 
-<!-- Sem botão de fechar de propósito: o jogador precisa escolher continuar
-     ou voltar pra cidade, não só fechar e ficar sem monstro ativo. -->
-<div class="modal-overlay" id="cycleCompleteModal">
-  <div class="modal-box">
-    <div class="modal-header">
-      <span class="pixel">CICLO CONCLUÍDO</span>
-    </div>
-    <div class="modal-body" style="text-align:center;">
-      <div id="cycleCompleteText" style="margin-bottom:14px;"></div>
-      <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-        <button class="ascend-btn" id="cycleContinueBtn">CONTINUAR</button>
-        <button class="danger-btn" id="cycleLeaveBtn">Voltar pra cidade</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Sem botão de fechar de propósito: mesmo padrão do cycleCompleteModal —
-     o jogador precisa escolher tentar de novo ou voltar pra cidade. -->
+<!-- Sem botão de fechar de propósito: o jogador precisa escolher tentar de
+     novo ou voltar pra cidade, não só fechar e ficar sem monstro ativo. -->
 <div class="modal-overlay" id="timeUpModal">
   <div class="modal-box">
     <div class="modal-header">
@@ -156,6 +139,7 @@
         <button class="modal-close" id="ferreiroCloseBtn">✕</button>
       </div>
       <div class="modal-body">
+        <div class="quest-banner" id="ferreiroQuestBanner"></div>
         <div class="modal-tabs">
           <button class="modal-tab-btn active" data-tab="ferreiroTabBuy">Comprar</button>
           <button class="modal-tab-btn" data-tab="ferreiroTabForge">Forjar</button>
@@ -245,8 +229,8 @@
         <button class="modal-close" id="lojaCloseBtn">✕</button>
       </div>
       <div class="modal-body">
-        <div class="panel-title">Loja da Cidade</div>
-        <div class="footer-note" style="margin:0 0 10px;">Venda os itens coletados nas Dungeons e na Caverna por moeda.</div>
+        <!-- <div class="panel-title">Loja da Cidade</div> -->
+        <div class="footer-note" style="margin:0 0 10px;">Venda os itens coletados nas Dungeons e na Caverna por moedas.</div>
         <div class="quest-banner" id="lojaQuestBanner"></div>
         <div class="modal-tabs">
           <button class="modal-tab-btn active" data-tab="lojaTabDrops">Drops</button>
@@ -289,6 +273,7 @@
       <button class="modal-close" id="igrejaCloseBtn">✕</button>
     </div>
     <div class="modal-body">
+      <div class="quest-banner" id="clericQuestBanner"></div>
       <div class="panel-title">Ascensão (Prestígio)</div>
       <div class="prestige-box">
         <div>Essência atual: <b id="essenceCount">0</b></div>
@@ -308,7 +293,7 @@
       <button class="modal-close" id="dungeonCloseBtn">✕</button>
     </div>
     <div class="modal-body">
-      <div class="panel-title">Portal de Dungeons</div>
+      <!-- <div class="panel-title">Portal de Dungeons</div> -->
       <div id="dungeonList"></div>
     </div>
   </div>
@@ -331,42 +316,90 @@
      (nome, história, escolha de arma) — só aparece 1x, na 1ª conversa com o
      Clérigo (ver OnboardingModule.shouldShowClericIntro). -->
 <div class="modal-overlay" id="clericModal">
-  <div class="modal-box">
-    <div class="modal-header">
-      <span class="pixel">IRMÃO ANSELMO</span>
+  <div class="modal-group">
+    <div class="npc-side-panel">
+      <img class="npc-portrait" src="assets/portraits/anselmo.png" alt="Irmão Anselmo">
+      <div class="npc-speech">O Clérigo</div>
     </div>
-    <div class="modal-body" style="text-align:center;">
-      <div class="npc-banner">
-        <img class="npc-portrait" src="assets/portraits/anselmo.png" alt="Irmão Anselmo">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="pixel">IRMÃO ANSELMO</span>
       </div>
-      <div class="cleric-step active" id="clericStepName">
-        <div class="cleric-text">Ah, um forasteiro! Que bom em vê-lo por aqui. Sou Irmão Anselmo, o último clérigo desta cidade. Antes de mais nada... qual é o seu nome?</div>
-        <input type="text" id="clericNameInput" maxlength="20" class="settings-select" style="width:100%; text-align:center; margin:14px 0;" placeholder="Seu nome">
-        <button class="ascend-btn" id="clericNameConfirmBtn">CONFIRMAR</button>
-      </div>
-      <div class="cleric-step" id="clericStepStory">
-        <div class="cleric-text" id="clericStoryText"></div>
-        <button class="ascend-btn" id="clericStoryContinueBtn" style="margin-top:14px;">Continuar</button>
-      </div>
-      <div class="cleric-step" id="clericStepWeapon">
-        <div class="cleric-text">Ainda guardo três armas antigas na capela. Escolha uma para começar sua jornada:</div>
-        <div class="weapon-choice-grid" id="weaponChoiceGrid"></div>
+      <div class="modal-body" style="text-align:center;">
+        <div class="cleric-step active" id="clericStepName">
+          <div class="cleric-text">Ah, um forasteiro! Que bom em vê-lo por aqui. Sou Irmão Anselmo, o clérigo desta cidade.</div>
+          <input type="text" id="clericNameInput" maxlength="20" class="settings-select" style="width:100%; text-align:center; margin:14px 0;" placeholder="Seu nome">
+          <button class="ascend-btn" id="clericNameConfirmBtn">Olá Anselmo, me chamo ...</button>
+        </div>
+        <div class="cleric-step" id="clericStepStory">
+          <div class="cleric-text" id="clericStoryText"></div>
+          <button class="ascend-btn" id="clericStoryContinueBtn" style="margin-top:14px;">Continuar</button>
+        </div>
+        <div class="cleric-step" id="clericStepWeapon">
+          <div class="cleric-text">Ainda guardo algumas armas na igreja. Posso contar com sua ajuda, não é mesmo? Escolha uma para começar sua jornada:</div>
+          <div class="weapon-choice-grid" id="weaponChoiceGrid"></div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay" id="shopUnlockModal">
-  <div class="modal-box">
-    <div class="modal-header">
-      <span class="pixel">IRMÃO ANSELMO</span>
+  <div class="modal-group">
+    <div class="npc-side-panel">
+      <img class="npc-portrait" src="assets/portraits/anselmo.png" alt="Irmão Anselmo">
+      <div class="npc-speech">O Clérigo</div>
     </div>
-    <div class="modal-body" style="text-align:center;">
-      <div class="npc-banner">
-        <img class="npc-portrait" src="assets/portraits/anselmo.png" alt="Irmão Anselmo">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="pixel">IRMÃO ANSELMO</span>
       </div>
-      <div class="cleric-text">A notícia já chegou aos meus ouvidos: alguém teve coragem de enfrentar os monstros lá fora! Vá até a Loja da cidade e venda o que você encontrou por lá — ouvi dizer que o dono ainda consegue negociar alguns produtos.</div>
-      <button class="ascend-btn" id="shopUnlockOkBtn" style="margin-top:14px;">Entendi</button>
+      <div class="modal-body" style="text-align:center;">
+        <div class="cleric-text">A notícia já chegou aos meus ouvidos: alguém teve coragem de enfrentar os monstros lá fora! Vá até a Loja da cidade e venda o que você encontrou por lá — ouvi dizer que o dono ainda consegue negociar alguns produtos.</div>
+        <button class="ascend-btn" id="shopUnlockOkBtn" style="margin-top:14px;">Entendi</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Aparece 1x quando a Academia libera (5ª entrada na Dungeon, ver
+     OnboardingModule.announceAcademiaIfNeeded). -->
+<div class="modal-overlay" id="academiaUnlockModal">
+  <div class="modal-group">
+    <div class="npc-side-panel">
+      <img class="npc-portrait" src="assets/portraits/anselmo.png" alt="Irmão Anselmo">
+      <div class="npc-speech">O Clérigo</div>
+    </div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="pixel">IRMÃO ANSELMO</span>
+      </div>
+      <div class="modal-body" style="text-align:center;">
+        <div class="cleric-text">Vejo que você já enfrentou a dungeon várias vezes — tenho boas notícias: a antiga Academia de Combate da cidade está de portas abertas de novo. Lá você pode estudar técnicas pra lutar melhor. Vá conferir quando quiser.</div>
+        <button class="ascend-btn" id="academiaUnlockOkBtn" style="margin-top:14px;">Entendi</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Aparece 1x depois da missão do Creiton (creitonMilitia) + mais um ciclo
+     completo (ver OnboardingModule.shouldAnnounceCaverna). A missão em si
+     (entregar Geleia de Slime) é acompanhada em #clericQuestBanner, dentro
+     do igrejaModal (sempre acessível) — este modal é só o aviso narrativo. -->
+<div class="modal-overlay" id="cavernaUnlockModal">
+  <div class="modal-group">
+    <div class="npc-side-panel">
+      <img class="npc-portrait" src="assets/portraits/anselmo.png" alt="Irmão Anselmo">
+      <div class="npc-speech">O Clérigo</div>
+    </div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="pixel">IRMÃO ANSELMO</span>
+      </div>
+      <div class="modal-body" style="text-align:center;">
+        <div class="cleric-text">Com a forja e a milícia de pé, talvez seja hora de reabrir as antigas minas fora da cidade. Preciso convencer os poucos mineradores que restaram a voltar — se você me trouxer uma boa reserva de Geleia de Slime pra sustentar a expedição, eu cuido do resto. Pode me procurar aqui na Igreja quando tiver.</div>
+        <button class="ascend-btn" id="cavernaUnlockOkBtn" style="margin-top:14px;">Entendi</button>
+      </div>
     </div>
   </div>
 </div>
@@ -374,24 +407,32 @@
 <!-- Sem botão de fechar de propósito: mesmo padrão dos outros diálogos de
      NPC — só aparece 1x, no 1º clique na Loja (ver QuestModule.openBarnabeIntro). -->
 <div class="modal-overlay" id="barnabeModal">
-  <div class="modal-box">
-    <div class="modal-header">
-      <span class="pixel">BARNABÉ</span>
+  <div class="modal-group">
+    <div class="npc-side-panel">
+      <img class="npc-portrait" src="assets/portraits/barnabe.png" alt="Barnabé">
+      <div class="npc-speech">Dono da Loja da cidade.</div>
     </div>
-    <div class="modal-body" style="text-align:center;">
-      <div class="cleric-text">Ah, um forasteiro por essas bandas! Sou Barnabé, dono desta loja. Os negócios andam fracos desde que a dungeon apareceu, mas de vez em quando ainda consigo negociar alguns produtos. Aliás... meu irmão Creiton é ferreiro, mas fugiu quando os monstros surgiram. Ele quer voltar, mas precisa de material — se você me trouxer 10 Geleias de Slime, eu repasso pra ele e o convenço a reabrir a forja.</div>
-      <button class="ascend-btn" id="barnabeContinueBtn" style="margin-top:14px;">Continuar</button>
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="pixel">BARNABÉ</span>
+      </div>
+      <div class="modal-body" style="text-align:center;">
+        <div class="cleric-text">Ah, um forasteiro por essas bandas! Sou Barnabé, dono desta loja. Os negócios andam fracos desde que a dungeon apareceu, mas de vez em quando ainda consigo negociar alguns produtos. Aliás... meu irmão Creiton é ferreiro, mas fugiu quando os monstros surgiram. Ele quer voltar, mas precisa de material — se você me trouxer 10 Geleias de Slime, eu repasso pra ele e o convenço a reabrir a forja.</div>
+        <button class="ascend-btn" id="barnabeContinueBtn" style="margin-top:14px;">Continuar</button>
+      </div>
     </div>
   </div>
 </div>
 
+<!-- Genérico, reaproveitado por TODA missão (ver QuestModule.deliver) — título
+     e texto preenchidos dinamicamente a partir de QUEST_DEFS.completeTitle/completeText. -->
 <div class="modal-overlay" id="questCompleteModal">
   <div class="modal-box">
     <div class="modal-header">
-      <span class="pixel">BARNABÉ</span>
+      <span class="pixel" id="questCompleteTitle">BARNABÉ</span>
     </div>
     <div class="modal-body" style="text-align:center;">
-      <div class="cleric-text">Ótima notícia! Isso é exatamente o que o Creiton precisava — ele já está a caminho de volta. Pode ir até o Ferreiro quando quiser.</div>
+      <div class="cleric-text" id="questCompleteText"></div>
       <button class="ascend-btn" id="questCompleteOkBtn" style="margin-top:14px;">Entendi</button>
     </div>
   </div>
@@ -470,7 +511,9 @@
         <button class="building-card building-card-image building-loja" id="openLojaBtn" aria-label="Loja - Venda itens"></button>
         <button class="building-card building-card-image building-igreja" id="openIgrejaBtn" aria-label="Igreja - Ascensão"></button>
         <button class="building-card building-card-image building-dungeon" id="openDungeonBtn" aria-label="Dungeons - Batalhe monstros"></button>
-        <button class="building-card building-card-image building-academia" id="openAcademiaBtn" aria-label="Academia - Upgrades de combate"></button>
+        <button class="building-card building-card-image building-academia" id="openAcademiaBtn" aria-label="Academia - Upgrades de combate">
+          <div class="building-progress" id="academiaProgress"></div>
+        </button>
       </div>
     </div>
 
@@ -495,6 +538,8 @@
       </div>
       <div class="footer-note">Clique no monstro para atacar manualmente.</div>
       <div class="footer-note" id="autoClickNote" style="display:none;"></div>
+      <div class="panel-title" style="margin-top:14px;">Registro de Drops</div>
+      <div class="drop-log" id="dropLog"></div>
     </div>
   </div>
   </div>

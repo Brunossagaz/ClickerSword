@@ -23,7 +23,13 @@ const CONFIG = {
   // a 3ª +2x isso, e assim por diante — sem exagero.
   ascendKillThresholdBase: 100,
   ascendKillThresholdGrowth: 15,
-  monsterTimeLimitMs: 15000 // tempo pra derrotar cada monstro antes de reiniciar o ciclo
+  monsterTimeLimitMs: 15000, // tempo pra derrotar cada monstro antes de reiniciar o ciclo
+  academiaUnlockEntries: 5, // nº de entradas na Dungeon pra liberar a Academia — ver OnboardingModule
+  // Queimadura (ver WEAPON_DEFS.burnChance/burnDamagePercent, MonsterModule.
+  // applyBurn/checkBurnTick): dano total é dividido em ticks ao longo de
+  // burnDurationMs, um a cada burnTickMs.
+  burnDurationMs: 3000,
+  burnTickMs: 500
 };
 
 // Todo monstro é um spritesheet PNG (3 frames de 128x128: idle, piscando,
@@ -285,9 +291,25 @@ const CREITON_LINES = [
 
 // Armas — a 1ª é escolhida de graça na conversa com o Clérigo (ver
 // OnboardingModule); as outras duas ficam à venda no Ferreiro por
-// `buyCost` moeda (ver UI.renderFerreiroWeapons). Todas dão o mesmo bônus
-// fixo por enquanto (puramente cosmético qual o jogador tem); no futuro
-// cada uma ganha propriedades próprias. `state.weapons[key]` é 0 ou 1.
+// `buyCost` moeda (ver UI.renderFerreiroWeapons). `state.weapons[key]` é 0 ou 1.
+//
+// Bônus suportados (todos opcionais — só declare o campo na arma que tiver
+// esse bônus, o resto do código trata ausência como 0):
+//   clickDamageBonus  — flat, soma ao dano por clique (PlayerModule.clickDamage)
+//   dpsBonus          — flat, soma ao DPS automático (TroopsModule.totalDps)
+//   critChanceBonus   — soma à chance de crítico, 0-1 (PlayerModule.handleClick)
+//   critDamageBonus   — soma ao % de dano crítico extra, 0-1 (PlayerModule.handleClick)
+//   extraDropChance   — 0-1, chance de rolar os drops do monstro morto uma
+//                       vez extra (MonsterModule.rollDrops)
+//   burnChance        — 0-1, chance por CLIQUE de aplicar/renovar queimadura
+//                       no monstro atual (PlayerModule.handleClick)
+//   burnDamagePercent — % do dano daquele clique que vira dano total de
+//                       queimadura, dividido em ticks (MonsterModule.applyBurn,
+//                       ver CONFIG.burnDurationMs/burnTickMs)
+// Pra adicionar um novo tipo de bônus no futuro: crie o campo aqui (com esse
+// mesmo padrão flat/opcional) e leia ele no único lugar do código que já
+// calcula aquele stat (ex.: um bônus de ouro entraria em ShopModule/onde
+// quer que a venda calcule o preço final).
 const WEAPON_DEFS = [
   { key:'swordSimple', name:'Espada Simples', icon:'weapon-sword', clickDamageBonus:1, buyCost:500 },
   { key:'bowArrow',    name:'Arco e Flecha',  icon:'weapon-bow', clickDamageBonus:1, buyCost:500 },
@@ -300,11 +322,12 @@ const WEAPON_DEFS = [
 // 0/1 por chave — nunca duplicado, forjar de novo não faz nada se já
 // possui) e o mesmo sistema de arma EQUIPADA (state.equippedWeapon, ver
 // PlayerModule.equipWeapon) — só uma arma fica ativa por vez, seja ela
-// inicial ou forjada. `dpsBonus` é novo: só armas forjadas dão DPS além
-// de dano por clique (ver TroopsModule.totalDps). `recipe.materials` são
-// chaves de ITEM_DEFS consumidas de state.inventory; `recipe.coinCost` é
-// consumido de state.gold — tudo verificado em ForgeModule.canForge antes
-// de deixar forjar.
+// inicial ou forjada. Mesma lista de bônus opcionais de WEAPON_DEFS acima
+// (clickDamageBonus/dpsBonus/critChanceBonus/critDamageBonus/extraDropChance/
+// burnChance/burnDamagePercent).
+// `recipe.materials` são chaves de ITEM_DEFS consumidas de state.inventory;
+// `recipe.coinCost` é consumido de state.gold — tudo verificado em
+// ForgeModule.canForge antes de deixar forjar.
 const FORGED_WEAPON_DEFS = [
   { key:'slimeWarriorSword', name:'Espada do Guerreiro Slime', icon:'weapon-slimewarriorsword',
     clickDamageBonus:50, dpsBonus:20,
@@ -342,8 +365,29 @@ const FORGED_WEAPON_DEFS = [
 // unidades de `itemKey` consome os itens do inventário e marca
 // state.quests[key]=true (persistido, não computado, já que a entrega é uma
 // ação irreversível). `unlocksBuilding` é o prédio liberado ao concluir.
+// `modalElId`/`bannerElId` dizem em qual modal e em qual <div> o banner de
+// progresso da missão é renderizado (ver QuestModule.renderAllQuestBanners);
+// `bannerLabel` é o texto curto do banner; `completeTitle`/`completeText`
+// preenchem o `questCompleteModal` genérico ao entregar (ver QuestModule.deliver).
 const QUEST_DEFS = [
-  { key:'slimeGelDelivery', npc:'Barnabé', itemKey:'slimeGel', itemQty:10, unlocksBuilding:'ferreiro' },
+  {
+    key:'slimeGelDelivery', npc:'Barnabé', itemKey:'slimeGel', itemQty:10, unlocksBuilding:'ferreiro',
+    modalElId:'lojaModal', bannerElId:'lojaQuestBanner', bannerLabel:'Encomenda do Creiton',
+    completeTitle:'BARNABÉ',
+    completeText:'Ótima notícia! Isso é exatamente o que o Creiton precisava — ele já está a caminho de volta. Pode ir até o Ferreiro quando quiser.'
+  },
+  {
+    key:'creitonMilitia', npc:'Creiton', itemKey:'slimeCompound', itemQty:8, unlocksBuilding:'guilda',
+    modalElId:'ferreiroModal', bannerElId:'ferreiroQuestBanner', bannerLabel:'Material pra Milícia',
+    completeTitle:'CREITON',
+    completeText:'Perfeito, com isso dá pra temperar o metal direito! Já mandei um recado pra Guilda — pode ir até lá quando quiser armar sua tropa.'
+  },
+  {
+    key:'caveClearance', npc:'Irmão Anselmo', itemKey:'slimeGel', itemQty:20, unlocksBuilding:'caverna',
+    modalElId:'igrejaModal', bannerElId:'clericQuestBanner', bannerLabel:'Reabertura da Caverna',
+    completeTitle:'IRMÃO ANSELMO',
+    completeText:'Isso deve bastar pra convencer os poucos mineradores que restaram a voltar ao trabalho. A Caverna está pronta pra ser explorada.'
+  },
 ];
 
 // Tropas (DPS) crescem de custo bem mais rápido que upgrades — elas não têm

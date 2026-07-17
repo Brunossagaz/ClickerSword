@@ -1,14 +1,17 @@
 /* ---------------------------------------------------------------------
    ONBOARDING MODULE (onboarding.js)
-   Introdução do Clérigo (1ª vez que clica na Igreja): pede o nome (se ainda
-   não tiver), conta a história da dungeon e deixa escolher uma arma inicial.
-   Também calcula quais prédios da cidade estão liberados — Igreja/Dungeon/
-   Academia/Loja/Guilda são computados aqui a partir de
-   state.weapons/state.totalKillsAll (nunca guardados em flag própria, mesmo
-   padrão de DungeonModule/ProgressionModule); Ferreiro depende da missão do
-   Barnabé (ver QuestModule/state.quests) porque entregar itens é uma ação
-   irreversível, não dá pra computar isso de volta a partir do progresso.
-   Caverna ainda não tem gatilho de desbloqueio definido.
+   Introdução do Clérigo: aparece sozinho na 1ª vez que a cidade abre (ver
+   UI.showCityView) — pede o nome (se ainda não tiver), conta a história da
+   dungeon e deixa escolher uma arma inicial. Também calcula/controla quais
+   prédios da cidade estão liberados:
+   - Igreja: sempre.
+   - Dungeon: hasChosenWeapon() OU hasFacedDungeon() (computado, nunca
+     guardado em flag própria, mesmo padrão de DungeonModule/ProgressionModule).
+   - Academia: 5ª entrada na Dungeon (state.dungeonEntriesCount).
+   - Loja: hasFacedDungeon() (computado).
+   - Ferreiro/Guilda/Caverna: dependem de missão (ver QuestModule/
+     state.quests) porque entregar itens é uma ação irreversível, não dá pra
+     computar isso de volta a partir do progresso.
 --------------------------------------------------------------------- */
 const OnboardingModule = {
   hasChosenWeapon(){
@@ -23,15 +26,38 @@ const OnboardingModule = {
   shouldShowClericIntro(){
     return !this.hasChosenWeapon() && !this.hasFacedDungeon();
   },
+  // 1ª entrada na Dungeon da vida do personagem: o botão "Voltar pra
+  // cidade" do CABEÇALHO da dungeon some (ver ui.js), pra forçar pelo menos
+  // uma tentativa de verdade antes de poder desistir no meio da luta — não
+  // depende de completar o ciclo (ver state.dungeonEntriesCount), só de já
+  // ter entrado mais de uma vez. A opção de voltar dentro do timeUpModal
+  // continua sempre disponível (ver UI.showTimeUpModal), mesmo nessa 1ª vez.
+  isFirstDungeonEntry(){
+    return state.dungeonEntriesCount <= 1;
+  },
+  // "Mais um ciclo" depois da missão do Creiton (creitonMilitia) — dispara o
+  // aviso do Clérigo sobre a Caverna (ver MonsterModule.onDeath).
+  shouldAnnounceCaverna(){
+    return !!state.quests.creitonMilitia
+      && state.totalCyclesCompleted > state.creitonQuestCycleSnapshot
+      && !state.cavernaAnnounced;
+  },
   isBuildingUnlocked(key){
     if(key === 'igreja') return true;
-    if(key === 'dungeon' || key === 'academia') return this.hasChosenWeapon() || this.hasFacedDungeon();
-    // TEMPORÁRIO pra testar a mineração de minério: caverna liberada junto
-    // com loja/guilda (mesma condição), até a missão de desbloqueio dela
-    // existir de verdade — aí volta a ficar sozinha, condicionada à missão.
-    if(key === 'loja' || key === 'guilda' || key === 'caverna') return this.hasFacedDungeon();
+    if(key === 'dungeon') return this.hasChosenWeapon() || this.hasFacedDungeon();
+    if(key === 'academia') return state.dungeonEntriesCount >= CONFIG.academiaUnlockEntries;
+    if(key === 'loja') return this.hasFacedDungeon();
+    if(key === 'guilda') return !!state.quests.creitonMilitia;
+    if(key === 'caverna') return !!state.quests.caveClearance;
     if(key === 'ferreiro') return !!state.quests.slimeGelDelivery; // ver QuestModule
     return false;
+  },
+  // Texto de progresso mostrado no próprio prédio enquanto a Academia ainda
+  // está trancada (ver UI.renderCityBuildingLocks) — null quando já liberou,
+  // pra não mostrar nada em cima do card.
+  academiaProgressLabel(){
+    if(this.isBuildingUnlocked('academia')) return null;
+    return `Entradas na Dungeon: ${state.dungeonEntriesCount}/${CONFIG.academiaUnlockEntries}`;
   },
 
   openClericIntro(){
@@ -49,8 +75,7 @@ const OnboardingModule = {
   },
   showStoryStep(){
     document.getElementById('clericStoryText').textContent =
-      `Prazer, ${state.playerName}. Esta já foi uma cidade próspera, mas há pouco tempo uma dungeon surgiu misteriosamente logo ali fora dos portões. De lá saíram criaturas monstruosas que assustaram quase todos os moradores — os poucos que restaram se trancaram em suas casas. Preciso da sua ajuda pra enfrentar essa ameaça e trazer vida de volta à nossa cidade.`;
-    this.showStep('clericStepStory');
+      `Prazer, ${state.playerName}. Esta cidade já foi cheia de vida e prosperidade. Mas, há pouco tempo, uma dungeon surgiu misteriosamente além dos portões. Dela passaram a sair criaturas terríveis que espalharam medo por toda a região. Muitos moradores fugiram, e os que ficaram vivem trancados em suas casas. Precisamos de alguém capaz de enfrentar essa ameaça e devolver a esperança ao nosso povo.`;    this.showStep('clericStepStory');
   },
   renderWeaponChoices(){
     const el = document.getElementById('weaponChoiceGrid');
@@ -61,7 +86,7 @@ const OnboardingModule = {
       btn.innerHTML = `
         <div class="weapon-icon icon icon-${def.icon}"></div>
         <div class="weapon-name">${def.name}</div>
-        <div class="weapon-desc">+${def.clickDamageBonus} dano por clique</div>`;
+        <div class="weapon-desc">${UI.weaponBonusText(def)}</div>`;
       btn.addEventListener('click', () => this.finishWeaponChoice(def.key));
       el.appendChild(btn);
     }
@@ -79,14 +104,20 @@ const OnboardingModule = {
   // Chamado por DungeonModule.leaveToCity() — na 1ª vez que o jogador volta
   // pra cidade já tendo enfrentado a dungeon (matado ao menos 1 monstro), o
   // Clérigo avisa que a notícia chegou e recomenda vender os itens na Loja
-  // (que libera nesse momento — Ferreiro depende da missão do Barnabé, ver
-  // QuestModule; Guilda/Caverna ainda sem gatilho definido). Só mostra 1 vez
-  // (ver state.shopUnlockAnnounced).
+  // (que libera nesse momento). Só mostra 1 vez (ver state.shopUnlockAnnounced).
   announceShopUnlockIfNeeded(){
     if(!this.hasFacedDungeon() || state.shopUnlockAnnounced) return;
     state.shopUnlockAnnounced = true;
     SaveModule.save();
     document.getElementById('shopUnlockModal').classList.add('open');
+  },
+  // Chamado por DungeonModule.enter() — dispara 1x quando a Academia libera
+  // (ver CONFIG.academiaUnlockEntries).
+  announceAcademiaIfNeeded(){
+    if(state.dungeonEntriesCount < CONFIG.academiaUnlockEntries || state.academiaAnnounced) return;
+    state.academiaAnnounced = true;
+    SaveModule.save();
+    document.getElementById('academiaUnlockModal').classList.add('open');
   },
   init(){
     const nameInput = document.getElementById('clericNameInput');
@@ -106,6 +137,12 @@ const OnboardingModule = {
 
     document.getElementById('shopUnlockOkBtn').addEventListener('click', () => {
       document.getElementById('shopUnlockModal').classList.remove('open');
+    });
+    document.getElementById('academiaUnlockOkBtn').addEventListener('click', () => {
+      document.getElementById('academiaUnlockModal').classList.remove('open');
+    });
+    document.getElementById('cavernaUnlockOkBtn').addEventListener('click', () => {
+      document.getElementById('cavernaUnlockModal').classList.remove('open');
     });
   }
 };

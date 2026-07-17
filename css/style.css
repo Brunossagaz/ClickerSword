@@ -439,6 +439,11 @@
   .float-dmg.dps{
     color:var(--arcane);
   }
+  /* Dano de queimadura (ver MonsterModule.checkBurnTick) — cor de brasa,
+     distinta de clique/crítico/DPS. */
+  .float-dmg.burn{
+    color:var(--ember);
+  }
   @keyframes floatUp{
     0%{transform:translate(-50%,0) scale(1); opacity:1;}
     100%{transform:translate(-50%,-70px) scale(1.15); opacity:0;}
@@ -516,21 +521,8 @@
   .qty-all-btn{font-size:11px; padding:4px 6px;}
   .qty-stepper .sell-btn{padding:6px 8px; font-size:9px;}
 
-  /* ---- Banner do NPC (retrato + fala) — hoje só na Loja (Barnabé) ---- */
-  /* Retrato grande à esquerda + fala abaixo dele (não mais lado a lado) —
-     .npc-portrait usa altura automática (só largura fixa) pra nunca
+  /* .npc-portrait usa altura automática (só largura fixa) pra nunca
      distorcer a imagem, seja qual for a proporção do PNG de origem. */
-  .npc-banner{
-    display:flex;
-    flex-direction:column;
-    align-items:flex-start;
-    gap:10px;
-    margin-bottom:10px;
-    padding:10px;
-    background:var(--stone-dark);
-    border:2px solid var(--stone);
-    border-radius:6px;
-  }
   .npc-portrait{
     width:120px; height:auto;
     flex-shrink:0;
@@ -787,6 +779,20 @@
     width:16px; height:16px;
     position:absolute;
     top:8px; right:8px;
+  }
+  /* Progresso de desbloqueio (ex.: entradas na Dungeon pra Academia, ver
+     OnboardingModule.academiaProgressLabel) — só aparece com texto dentro
+     (JS deixa vazio/hidden depois de liberado). */
+  .building-progress{
+    position:absolute;
+    left:6px; right:6px; bottom:6px;
+    background:rgba(0,0,0,0.72);
+    color:var(--parchment);
+    font-family:'VT323', monospace;
+    font-size:13px;
+    text-align:center;
+    border-radius:4px;
+    padding:2px 4px;
   }
 
   /* ---- Ícones pixel art (ver assets/icons/) ----
@@ -1109,6 +1115,27 @@
   /* Aviso do Clique Automático pausado (ver UI.renderAutoClickStatus) —
      mesma cor de alerta usada em .danger-btn, pra destacar do texto normal. */
   .footer-note.warning{ color:var(--blood); }
+  /* Registro de drops da dungeon atual (ver UI.logDrops/resetDropLog) —
+     reseta a cada entrada nova (UI.showDungeonView), lista mais recente no
+     topo, rolagem própria pra não esticar a página. */
+  .drop-log{
+    max-height:160px;
+    overflow-y:auto;
+    background:var(--stone-dark);
+    border:2px solid var(--stone);
+    border-radius:6px;
+    padding:6px 10px;
+    font-family:'VT323', monospace;
+    font-size:15px;
+    text-align:left;
+  }
+  .drop-log-entry{
+    padding:4px 0;
+    border-bottom:1px dashed var(--stone);
+  }
+  .drop-log-entry:last-child{ border-bottom:none; }
+  .drop-log-monster{ color:var(--ember); }
+  .drop-log-item{ color:var(--parchment-dim); padding-left:10px; }
   .small-btn{
     background:none;
     border:1px solid var(--stone);

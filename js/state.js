@@ -23,6 +23,23 @@ function freshState(){
       wilds:{killCount:0, pendingSlot:null, maxCycleCompleted:0}
     },
     totalKillsAll:0,
+    // ciclos completos (chefe derrotado) no total, vitalício — usado pra
+    // exigir "mais um ciclo" depois da missão do Creiton (ver
+    // MonsterModule.onDeath / QuestModule.deliver)
+    totalCyclesCompleted:0,
+    // snapshot de totalCyclesCompleted no momento em que a missão do Creiton
+    // (creitonMilitia) foi entregue — o aviso da Caverna só dispara quando
+    // totalCyclesCompleted > este valor (ver MonsterModule.onDeath)
+    creitonQuestCycleSnapshot:0,
+    // o personagem já completou o 1º ciclo da vida dele (chefe derrotado)?
+    // vitalício, não deriva de dungeons.*.maxCycleCompleted porque esse
+    // reseta a cada ascensão — controla o bloqueio do botão "Voltar pra
+    // cidade" durante o ciclo tutorial forçado (ver MonsterModule.onDeath/
+    // UI leaveDungeonBtn/timeUpLeaveBtn)
+    firstCycleEverCompleted:false,
+    // quantas vezes o jogador já entrou numa Dungeon (ver
+    // DungeonModule.enter) — Academia libera na 5ª entrada
+    dungeonEntriesCount:0,
     monsterHp:0,
     monsterMaxHp:0,
     monsterSpawnedAt:0,
@@ -72,6 +89,12 @@ function freshState(){
     // já conheceu o Barnabé (dono da Loja)? controla se o clique na Loja
     // mostra a apresentação dele ou já abre a loja normal — ver QuestModule
     metBarnabe:false,
+    // já mostrou o aviso do Clérigo sobre a Academia liberada (5ª entrada na
+    // Dungeon)? ver OnboardingModule.announceAcademiaIfNeeded
+    academiaAnnounced:false,
+    // já mostrou o aviso do Clérigo sobre a Caverna liberada (missão do
+    // Creiton concluída + mais um ciclo completo)? ver MonsterModule.onDeath
+    cavernaAnnounced:false,
     // missões concluídas (true/false por chave) — ver QUEST_DEFS/QuestModule
     quests: Object.fromEntries(QUEST_DEFS.map(d => [d.key, false])),
     // upgrades owned (levels) — mesmo motivo, derivado de UPGRADE_DEFS

@@ -24,6 +24,11 @@ const DungeonModule = {
     // já que é um .modal-overlay solto no body — sem isso ficaria visível
     // por cima da arena depois de entrar
     document.getElementById('dungeonModal').classList.remove('open');
+    // conta como "entrada nova" só aqui (não em startAtCycle, que é retomar
+    // um ciclo já limpo pelo seletor) — ver OnboardingModule (Academia libera
+    // na 5ª entrada)
+    state.dungeonEntriesCount += 1;
+    OnboardingModule.announceAcademiaIfNeeded();
     this._enterAt(key, state.dungeons[key].killCount);
   },
   // Reinicia a Dungeon no INÍCIO de um ciclo já concluído antes (ver
@@ -46,6 +51,7 @@ const DungeonModule = {
     // reentrar no meio de uma luta de chefe não "desliga" o chefe à toa
     MonsterModule.spawn(killCount === 0);
     UI.showDungeonView();
+    UI.resetDropLog(); // registro de drops é por entrada, não sobrevive daqui pra frente
     UI.renderAll();
   },
   leaveToCity(){
