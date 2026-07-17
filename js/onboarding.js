@@ -35,13 +35,6 @@ const OnboardingModule = {
   isFirstDungeonEntry(){
     return state.dungeonEntriesCount <= 1;
   },
-  // "Mais um ciclo" depois da missão do Creiton (creitonMilitia) — dispara o
-  // aviso do Clérigo sobre a Caverna (ver MonsterModule.onDeath).
-  shouldAnnounceCaverna(){
-    return !!state.quests.creitonMilitia
-      && state.totalCyclesCompleted > state.creitonQuestCycleSnapshot
-      && !state.cavernaAnnounced;
-  },
   isBuildingUnlocked(key){
     if(key === 'igreja') return true;
     if(key === 'dungeon') return this.hasChosenWeapon() || this.hasFacedDungeon();
@@ -140,9 +133,6 @@ const OnboardingModule = {
     });
     document.getElementById('academiaUnlockOkBtn').addEventListener('click', () => {
       document.getElementById('academiaUnlockModal').classList.remove('open');
-    });
-    document.getElementById('cavernaUnlockOkBtn').addEventListener('click', () => {
-      document.getElementById('cavernaUnlockModal').classList.remove('open');
     });
   }
 };

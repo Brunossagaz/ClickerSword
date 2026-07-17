@@ -176,6 +176,13 @@ const SaveModule = {
       state.metBarnabe = true;
     }
 
+    // Save de antes da apresentação do Creiton: quem já entregou a missão
+    // dele (creitonMilitia) claramente já visitou o Ferreiro antes — não faz
+    // sentido mostrar a apresentação retroativamente.
+    if(loaded.metCreiton === undefined && state.quests.creitonMilitia){
+      state.metCreiton = true;
+    }
+
     // Save de antes do ciclo tutorial forçado: já é um jogador estabelecido
     // (tem mortes registradas), não faz sentido forçar esse tutorial nele
     // retroativamente — libera o botão de sair normalmente.
@@ -203,10 +210,7 @@ const SaveModule = {
     }
 
     // Contador de ciclos vitalício: backfill somando o que cada Dungeon já
-    // tinha concluído (state.dungeons já mesclado acima) — senão a
-    // comparação do gatilho da Caverna (ver
-    // OnboardingModule.shouldAnnounceCaverna) fica sem sentido pra quem já
-    // ganhou creitonMilitia=true pelo backfill logo acima.
+    // tinha concluído (state.dungeons já mesclado acima).
     if(loaded.totalCyclesCompleted === undefined){
       state.totalCyclesCompleted = Object.values(state.dungeons).reduce((sum,d)=>sum+(d.maxCycleCompleted||0), 0);
     }

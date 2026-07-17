@@ -51,14 +51,23 @@ const UI = {
     // dungeon nem mostra os botões que os abrem). Os que ainda estão
     // trancados (ver renderCityBuildingLocks) ficam com o atributo `disabled`,
     // que já impede o clique nativamente — sem precisar checar de novo aqui.
-    this.wireBuildingModal('openFerreiroBtn', 'ferreiroModal', 'ferreiroCloseBtn');
     this.initModalTabs('ferreiroModal');
-    // Fala solta do Creiton — mesmo padrão do Barnabé na Loja (BARNABE_LINES/
-    // lojaBarnabeLine), sorteada de novo toda vez que o Ferreiro é aberto.
+    // Ferreiro também é especial: na 1ª vez, o Creiton se apresenta antes de
+    // abrir o ferreiro normal — ver QuestModule.openCreitonIntro. Nas próximas
+    // vezes, sorteia uma fala solta dele (CREITON_LINES) só de clima, mesmo
+    // padrão do Barnabé na Loja (BARNABE_LINES/lojaBarnabeLine).
+    const ferreiroModal = document.getElementById('ferreiroModal');
     document.getElementById('openFerreiroBtn').addEventListener('click', ()=>{
-      document.getElementById('ferreiroCreitonLine').textContent =
-        '"'+CREITON_LINES[Math.floor(Math.random()*CREITON_LINES.length)]+'"';
+      if(!state.metCreiton){
+        QuestModule.openCreitonIntro();
+      } else {
+        document.getElementById('ferreiroCreitonLine').textContent =
+          '"'+CREITON_LINES[Math.floor(Math.random()*CREITON_LINES.length)]+'"';
+        ferreiroModal.classList.add('open');
+      }
     });
+    document.getElementById('ferreiroCloseBtn').addEventListener('click', ()=>ferreiroModal.classList.remove('open'));
+    ferreiroModal.addEventListener('click', (e)=>{ if(e.target === ferreiroModal) ferreiroModal.classList.remove('open'); });
     this.wireBuildingModal('openGuildaBtn', 'guildaModal', 'guildaCloseBtn');
     this.wireBuildingModal('openCavernaBtn', 'cavernaModal', 'cavernaCloseBtn');
     this.wireBuildingModal('openDungeonBtn', 'dungeonModal', 'dungeonCloseBtn');

@@ -272,13 +272,6 @@ const MonsterModule = {
         state.firstCycleEverCompleted = true;
         SaveModule.save();
         DungeonModule.leaveToCity();
-      } else if(OnboardingModule.shouldAnnounceCaverna()){
-        // "mais um ciclo" depois da missão do Creiton — em vez do modal
-        // normal de continuar/voltar, o Clérigo aparece falando da Caverna
-        state.cavernaAnnounced = true;
-        SaveModule.save();
-        UI.renderAll();
-        document.getElementById('cavernaUnlockModal').classList.add('open');
       } else {
         // fim de ciclo normal: avança pro próximo automaticamente, sem
         // perguntar — pra sair, o jogador usa o botão "Voltar pra cidade" do

@@ -3,7 +3,7 @@
 --------------------------------------------------------------------- */
 const CONFIG = {
   saveKey: 'monsterAttackClickerSave', // LEGADO (pré-slots) — só lido 1x pra migração, nunca mais escrito
-  saveKeySlot(n){ return 'monsterAttackClickerSave_slot' + n; }, // n = 1..maxSaveSlots
+  saveKeySlot(n) { return 'monsterAttackClickerSave_slot' + n; }, // n = 1..maxSaveSlots
   maxSaveSlots: 3,
   settingsKey: 'monsterAttackClickerSettings', // preferências globais (áudio/volume/idioma), fora de qualquer save
   tickMs: 200,
@@ -22,8 +22,8 @@ const CONFIG = {
   // ascensão pede ascendKillThresholdBase, a 2ª pede +ascendKillThresholdGrowth,
   // a 3ª +2x isso, e assim por diante — sem exagero.
   ascendKillThresholdBase: 100,
-  ascendKillThresholdGrowth: 15,
-  monsterTimeLimitMs: 15000, // tempo pra derrotar cada monstro antes de reiniciar o ciclo
+  ascendKillThresholdGrowth: 100,
+  monsterTimeLimitMs: 10000, // tempo pra derrotar cada monstro antes de reiniciar o ciclo
   academiaUnlockEntries: 5, // nº de entradas na Dungeon pra liberar a Academia — ver OnboardingModule
   // Queimadura (ver WEAPON_DEFS.burnChance/burnDamagePercent, MonsterModule.
   // applyBurn/checkBurnTick): dano total é dividido em ticks ao longo de
@@ -58,54 +58,97 @@ const CONFIG = {
 //     MonsterModule.itemQtyFor).
 const MONSTER_TYPES = [
   // --- Mapa 1: Pântano dos Slimes (ciclos 1-5) ---
-  { key:'slime',              name:'SLIME',               image:'assets/sprites/slime.png',              frameW:128, frameH:128, blinkCapable:true,
-    drops:[ { item:'slimeGel', qtyMin:1, qtyMax:1 } ] },
-  { key:'slimeBlue',          name:'SLIME AZUL',          image:'assets/sprites/slime_blue.png',          frameW:128, frameH:128, spriteScale:0.7, hpMult:1.5,  blinkCapable:true,
-    drops:[ { item:'slimeGel', qtyMin:3, qtyMax:3 } ] },
-  { key:'slimeGreenWarrior',  name:'SLIME VERDE GUERREIRO', image:'assets/sprites/slime_green_warrior.png', frameW:128, frameH:128, hpMult:2.25, blinkCapable:true,
-    drops:[
-      { item:'slimeGel', qtyMin:5, qtyMax:8 },
-      { item:'slimeCompound', chance:0.75, qtyMin:1, qtyMax:1 },
-      { item:'slimeSword', chance:0.30, qtyMin:1, qtyMax:1 },
-    ] },
-  { key:'slimeRed',           name:'SLIME VERMELHO',      image:'assets/sprites/slime_red.png',           frameW:128, frameH:128, hpMult:3.38, blinkCapable:true,
-    drops:[ { item:'slimeGel', qtyMin:5, qtyMax:5 } ] },
-  { key:'slimeBlueBarbarian', name:'SLIME AZUL BÁRBARO',  image:'assets/sprites/slime_blue_barbarian.png',frameW:128, frameH:128, hpMult:5.06, blinkCapable:true,
-    drops:[
-      { item:'slimeGel', qtyMin:10, qtyMax:14 },
-      { item:'slimeCompound', chance:0.75, qtyMin:4, qtyMax:6 },
-      { item:'slimeAxe', chance:0.30, qtyMin:1, qtyMax:1 },
-    ] },
-  { key:'slimeRedKing',       name:'SLIME REI VERMELHO',  image:'assets/sprites/slime_red_king.png',      frameW:128, frameH:128, hpMult:7.59, blinkCapable:true,
-    drops:[
-      { item:'slimeGel', qtyMin:8, qtyMax:8 },
-      { item:'slimeCompound', chance:0.75, qtyMin:10, qtyMax:12 },
-      { item:'slimeAxeGreater', chance:0.30, qtyMin:1, qtyMax:1 },
-    ] },
+  {
+    key: 'slime', name: 'SLIME', image: 'assets/sprites/slime.png', frameW: 128, frameH: 128, blinkCapable: true,
+    drops: [
+      { item: 'slimeGel', qtyMin: 1, qtyMax: 1 },
+      { item: 'slimeCompound', chance: 0.75, qtyMin: 1, qtyMax: 3 },
+    ]
+  },
+  {
+    key: 'slimeBlue', name: 'SLIME AZUL', image: 'assets/sprites/slime_blue.png', frameW: 128, frameH: 128, spriteScale: 0.7, hpMult: 1.5, blinkCapable: true,
+    drops: [
+      { item: 'slimeGel', qtyMin: 3, qtyMax: 3 },
+      { item: 'slimeCompound', chance: 0.75, qtyMin: 1, qtyMax: 3 }
+    ]
+  },
+  {
+    key: 'slimeGreenWarrior', name: 'SLIME VERDE GUERREIRO', image: 'assets/sprites/slime_green_warrior.png', frameW: 128, frameH: 128, hpMult: 2.25, blinkCapable: true,
+    drops: [
+      { item: 'slimeGel', qtyMin: 5, qtyMax: 8 },
+      { item: 'slimeCompound', chance: 0.75, qtyMin: 1, qtyMax: 1 },
+      { item: 'slimeSword', chance: 0.30, qtyMin: 1, qtyMax: 1 },
+    ]
+  },
+  {
+    key: 'slimeRed', name: 'SLIME VERMELHO', image: 'assets/sprites/slime_red.png', frameW: 128, frameH: 128, hpMult: 3.38, blinkCapable: true,
+    drops: [
+      { item: 'slimeGel', qtyMin: 5, qtyMax: 5 },
+      { item: 'slimeCompound', chance: 0.75, qtyMin: 1, qtyMax: 3 }
+    ]
+  },
+  {
+    key: 'slimeBlueBarbarian', name: 'SLIME AZUL BÁRBARO', image: 'assets/sprites/slime_blue_barbarian.png', frameW: 128, frameH: 128, hpMult: 5.06, blinkCapable: true,
+    drops: [
+      { item: 'slimeGel', qtyMin: 10, qtyMax: 14 },
+      { item: 'slimeCompound', chance: 0.75, qtyMin: 4, qtyMax: 6 },
+      { item: 'slimeAxe', chance: 0.30, qtyMin: 1, qtyMax: 1 },
+    ]
+  },
+  {
+    key: 'slimeRedKing', name: 'SLIME REI VERMELHO', image: 'assets/sprites/slime_red_king.png', frameW: 128, frameH: 128, hpMult: 7.59, blinkCapable: true,
+    drops: [
+      { item: 'slimeGel', qtyMin: 8, qtyMax: 8 },
+      { item: 'slimeCompound', chance: 0.75, qtyMin: 10, qtyMax: 12 },
+      { item: 'slimeAxeGreater', chance: 0.30, qtyMin: 1, qtyMax: 1 },
+    ]
+  },
   // --- Mapa 2: Reino Goblin (ciclos 4-6) ---
-  { key:'goblinGreen',   name:'GOBLIN VERDE',     image:'assets/sprites/goblin_green.png',   frameW:128, frameH:128, blinkCapable:true,
-    drops:[ { item:'goblinEar', qtyMin:1, qtyMax:1 } ] },
-  { key:'goblinRed',     name:'GOBLIN VERMELHO',  image:'assets/sprites/goblin_red.png',     frameW:128, frameH:128, hpMult:1.6, blinkCapable:true,
-    drops:[ { item:'goblinFang', qtyMin:2, qtyMax:2 } ] },
-  { key:'goblinMage',    name:'GOBLIN MAGO',      image:'assets/sprites/goblin_mage.png',    frameW:128, frameH:128, hpMult:2.2, blinkCapable:true,
-    drops:[ { item:'goblinShard', qtyMin:2, qtyMax:2 } ] },
-  { key:'goblinWarrior', name:'GOBLIN GUERREIRO', image:'assets/sprites/goblin_warrior.png', frameW:128, frameH:128, hpMult:2.8, blinkCapable:true,
-    drops:[ { item:'goblinScale', qtyMin:3, qtyMax:3 } ] },
-  { key:'goblinPriest',  name:'GOBLIN SACERDOTE', image:'assets/sprites/goblin_priest.png',  frameW:128, frameH:128, hpMult:3.6, blinkCapable:true,
-    drops:[ { item:'goblinAmulet', qtyMin:3, qtyMax:3 } ] },
-  { key:'goblinMaster',  name:'GOBLIN MESTRE',    image:'assets/sprites/goblin_master.png',  frameW:128, frameH:128, hpMult:4.8, blinkCapable:true,
-    drops:[ { item:'goblinSeal', qtyMin:4, qtyMax:4 } ] },
-  { key:'goblinGreater', name:'GOBLIN MAIOR',     image:'assets/sprites/goblin_greater.png', frameW:128, frameH:128, hpMult:6.5, blinkCapable:true,
-    drops:[ { item:'goblinCrown', qtyMin:5, qtyMax:5 } ] },
+  {
+    key: 'goblinGreen', name: 'GOBLIN VERDE', image: 'assets/sprites/goblin_green.png', frameW: 128, frameH: 128, blinkCapable: true,
+    drops: [{ item: 'goblinEar', qtyMin: 1, qtyMax: 1 }]
+  },
+  {
+    key: 'goblinRed', name: 'GOBLIN VERMELHO', image: 'assets/sprites/goblin_red.png', frameW: 128, frameH: 128, hpMult: 1.6, blinkCapable: true,
+    drops: [{ item: 'goblinFang', qtyMin: 2, qtyMax: 2 }]
+  },
+  {
+    key: 'goblinMage', name: 'GOBLIN MAGO', image: 'assets/sprites/goblin_mage.png', frameW: 128, frameH: 128, hpMult: 2.2, blinkCapable: true,
+    drops: [{ item: 'goblinShard', qtyMin: 2, qtyMax: 2 }]
+  },
+  {
+    key: 'goblinWarrior', name: 'GOBLIN GUERREIRO', image: 'assets/sprites/goblin_warrior.png', frameW: 128, frameH: 128, hpMult: 2.8, blinkCapable: true,
+    drops: [{ item: 'goblinScale', qtyMin: 3, qtyMax: 3 }]
+  },
+  {
+    key: 'goblinPriest', name: 'GOBLIN SACERDOTE', image: 'assets/sprites/goblin_priest.png', frameW: 128, frameH: 128, hpMult: 3.6, blinkCapable: true,
+    drops: [{ item: 'goblinAmulet', qtyMin: 3, qtyMax: 3 }]
+  },
+  {
+    key: 'goblinMaster', name: 'GOBLIN MESTRE', image: 'assets/sprites/goblin_master.png', frameW: 128, frameH: 128, hpMult: 4.8, blinkCapable: true,
+    drops: [{ item: 'goblinSeal', qtyMin: 4, qtyMax: 4 }]
+  },
+  {
+    key: 'goblinGreater', name: 'GOBLIN MAIOR', image: 'assets/sprites/goblin_greater.png', frameW: 128, frameH: 128, hpMult: 6.5, blinkCapable: true,
+    drops: [{ item: 'goblinCrown', qtyMin: 5, qtyMax: 5 }]
+  },
   // --- Mapa 3: Terras Selvagens (ciclo 7 em diante) ---
-  { key:'orc',       name:'ORC',        image:'assets/sprites/orc.png',        frameW:128, frameH:128, blinkCapable:true,
-    drops:[ { item:'orcTusk', qtyMin:2, qtyMax:2 } ] },
-  { key:'troll',     name:'TROLL',      image:'assets/sprites/troll.png',      frameW:128, frameH:128, blinkCapable:true,
-    drops:[ { item:'trollHide', qtyMin:2, qtyMax:2 } ] },
-  { key:'dragon',    name:'DRAGÃO',     image:'assets/sprites/dragon.png',     frameW:128, frameH:128, blinkCapable:true,
-    drops:[ { item:'dragonScale', qtyMin:3, qtyMax:3 } ] },
-  { key:'demon',     name:'DEMÔNIO',    image:'assets/sprites/demon.png',      frameW:128, frameH:128, blinkCapable:true,
-    drops:[ { item:'demonHorn', qtyMin:3, qtyMax:3 } ] },
+  {
+    key: 'orc', name: 'ORC', image: 'assets/sprites/orc.png', frameW: 128, frameH: 128, blinkCapable: true,
+    drops: [{ item: 'orcTusk', qtyMin: 2, qtyMax: 2 }]
+  },
+  {
+    key: 'troll', name: 'TROLL', image: 'assets/sprites/troll.png', frameW: 128, frameH: 128, blinkCapable: true,
+    drops: [{ item: 'trollHide', qtyMin: 2, qtyMax: 2 }]
+  },
+  {
+    key: 'dragon', name: 'DRAGÃO', image: 'assets/sprites/dragon.png', frameW: 128, frameH: 128, blinkCapable: true,
+    drops: [{ item: 'dragonScale', qtyMin: 3, qtyMax: 3 }]
+  },
+  {
+    key: 'demon', name: 'DEMÔNIO', image: 'assets/sprites/demon.png', frameW: 128, frameH: 128, blinkCapable: true,
+    drops: [{ item: 'demonHorn', qtyMin: 3, qtyMax: 3 }]
+  },
 ];
 
 // Dungeons: cada uma tem seu próprio progresso (state.dungeons[key].killCount,
@@ -133,54 +176,54 @@ const MAPS = {
     name: 'Dungeon do Pântano dos Slimes',
     cycles: {
       // Ciclo 1: só slime verde, do início ao fim.
-      1: ['slime','slime','slime','slime',
-          { pairChoices:[['slime','slime']] },
-          'slime','slime','slime',
-          { pairChoices:[['slime','slime']], strong:true },
-          'slimeGreenWarrior'],
+      1: ['slime', 'slime', 'slime', 'slime',
+        { pairChoices: [['slime', 'slime']] },
+        'slime', 'slime', 'slime',
+        { pairChoices: [['slime', 'slime']], strong: true },
+        'slimeGreenWarrior'],
       // Ciclo 2: começa verde, o azul entra na posição 4 e domina o resto.
-      2: ['slime','slime','slime',
-          'slimeBlue',
-          { pairChoices:[['slime','slime'], ['slime','slimeBlue']] },
-          'slimeBlue','slimeBlue','slimeBlue',
-          { pairChoices:[['slimeBlue','slimeBlue']], strong:true },
-          'slimeBlueBarbarian'],
+      2: ['slime', 'slime', 'slime',
+        'slimeBlue',
+        { pairChoices: [['slime', 'slime'], ['slime', 'slimeBlue']] },
+        'slimeBlue', 'slimeBlue', 'slimeBlue',
+        { pairChoices: [['slimeBlue', 'slimeBlue']], strong: true },
+        'slimeGreenWarrior'],
       // Ciclo 3: 3 cores — verde, depois azul, depois vermelho dominando o resto.
-      3: ['slime','slime',
-          'slimeBlue','slimeBlue',
-          { pairChoices:[['slime','slime'], ['slime','slimeBlue']] },
-          'slimeRed','slimeRed','slimeRed',
-          { pairChoices:[['slimeRed','slimeRed']], strong:true },
-          'slimeRedKing'],
+      3: ['slime', 'slime',
+        'slimeBlue', 'slimeBlue',
+        { pairChoices: [['slime', 'slime'], ['slime', 'slimeBlue']] },
+        'slimeRed', 'slimeRed', 'slimeRed',
+        { pairChoices: [['slimeRed', 'slimeRed']], strong: true },
+        'slimeBlueBarbarian'],
       // Ciclo 4: mesmo padrão do Ciclo 3 (a dificuldade já sobe sozinha pelo
       // HP crescente por kill — não precisa de uma composição nova).
-      4: ['slime','slime',
-          'slimeBlue','slimeBlue',
-          { pairChoices:[['slime','slime'], ['slime','slimeBlue']] },
-          'slimeRed','slimeRed','slimeRed',
-          { pairChoices:[['slimeRed','slimeRed']], strong:true },
-          'slimeRedKing'],
+      4: ['slime', 'slime',
+        'slimeBlue', 'slimeBlue',
+        { pairChoices: [['slime', 'slime'], ['slime', 'slimeBlue']] },
+        'slimeRed', 'slimeRed', 'slimeRed',
+        { pairChoices: [['slimeRed', 'slimeRed']], strong: true },
+        'slimeBlueBarbarian'],
       // Ciclo 5: só slime vermelho, do início ao fim (espelha o Ciclo 1).
-      5: ['slimeRed','slimeRed','slimeRed','slimeRed',
-          { pairChoices:[['slimeRed','slimeRed']] },
-          'slimeRed','slimeRed','slimeRed',
-          { pairChoices:[['slimeRed','slimeRed']], strong:true },
-          'slimeRedKing'],
+      5: ['slimeRed', 'slimeRed', 'slimeRed', 'slimeRed',
+        { pairChoices: [['slimeRed', 'slimeRed']] },
+        'slimeRed', 'slimeRed', 'slimeRed',
+        { pairChoices: [['slimeRed', 'slimeRed']], strong: true },
+        'slimeRedKing'],
     }
   },
   goblins: {
     name: 'Dungeon do Reino Goblin',
-    unlockRequirement: { dungeon:'slimes', kills:30 },
+    unlockRequirement: { dungeon: 'slimes', kills: 30 },
     cycles: {
-      1: ['goblinGreen','goblinGreen','goblinRed','goblinGreen','goblinRed','goblinGreen','goblinRed','goblinGreen','goblinRed','goblinPriest'],
-      2: ['goblinRed','goblinMage','goblinGreen','goblinRed','goblinWarrior','goblinRed','goblinMage','goblinWarrior','goblinRed','goblinMaster'],
-      3: ['goblinWarrior','goblinPriest','goblinMage','goblinWarrior','goblinPriest','goblinMage','goblinWarrior','goblinPriest','goblinWarrior','goblinGreater'],
+      1: ['goblinGreen', 'goblinGreen', 'goblinRed', 'goblinGreen', 'goblinRed', 'goblinGreen', 'goblinRed', 'goblinGreen', 'goblinRed', 'goblinPriest'],
+      2: ['goblinRed', 'goblinMage', 'goblinGreen', 'goblinRed', 'goblinWarrior', 'goblinRed', 'goblinMage', 'goblinWarrior', 'goblinRed', 'goblinMaster'],
+      3: ['goblinWarrior', 'goblinPriest', 'goblinMage', 'goblinWarrior', 'goblinPriest', 'goblinMage', 'goblinWarrior', 'goblinPriest', 'goblinWarrior', 'goblinGreater'],
     }
   },
   wilds: {
     name: 'Dungeon das Terras Selvagens',
-    unlockRequirement: { dungeon:'goblins', kills:30 },
-    order: ['orc','troll','dragon','orc','troll','demon','orc','troll','dragon','demon']
+    unlockRequirement: { dungeon: 'goblins', kills: 30 },
+    order: ['orc', 'troll', 'dragon', 'orc', 'troll', 'demon', 'orc', 'troll', 'dragon', 'demon']
   }
 };
 
@@ -192,47 +235,47 @@ const MAPS = {
 // verdade, equipável em PlayerModule.equipWeapon.
 const ITEM_DEFS = [
   // --- Dungeon do Pântano dos Slimes ---
-  { key:'slimeGel',        name:'Geleia de Slime',        icon:'item-slimegel',        sellPrice:2,   type:'material' },
-  { key:'slimeCompound',   name:'Composto de Slime',      icon:'item-slimecompound',   sellPrice:10,  type:'material' },
-  { key:'slimeSword',      name:'Espada de Gosma (Bruta)',        icon:'item-slimesword',      sellPrice:30,  type:'brokenWeapon' },
-  { key:'slimeAxe',        name:'Machado de Gosma (Bruto)',       icon:'item-slimeaxe',        sellPrice:100, type:'brokenWeapon' },
-  { key:'slimeAxeGreater', name:'Machado de Gosma Maior (Bruto)', icon:'item-slimeaxegreater', sellPrice:300, type:'brokenWeapon' },
+  { key: 'slimeGel', name: 'Geleia de Slime', icon: 'item-slimegel', sellPrice: 2, type: 'material' },
+  { key: 'slimeCompound', name: 'Composto de Slime', icon: 'item-slimecompound', sellPrice: 10, type: 'material' },
+  { key: 'slimeSword', name: 'Espada de Gosma (Bruta)', icon: 'item-slimesword', sellPrice: 30, type: 'brokenWeapon' },
+  { key: 'slimeAxe', name: 'Machado de Gosma (Bruto)', icon: 'item-slimeaxe', sellPrice: 100, type: 'brokenWeapon' },
+  { key: 'slimeAxeGreater', name: 'Machado de Gosma Maior (Bruto)', icon: 'item-slimeaxegreater', sellPrice: 300, type: 'brokenWeapon' },
   // --- Dungeon do Reino Goblin ---
-  { key:'goblinEar',    name:'Orelha de Goblin',           icon:'item-goblinear',    sellPrice:3,  type:'material' },
-  { key:'goblinFang',   name:'Presa de Goblin Vermelho',   icon:'item-goblinfang',   sellPrice:5,  type:'material' },
-  { key:'goblinShard',  name:'Fragmento Arcano Goblin',    icon:'item-goblinshard',  sellPrice:8,  type:'material' },
-  { key:'goblinScale',  name:'Escama de Armadura Goblin',  icon:'item-goblinscale',  sellPrice:11, type:'material' },
-  { key:'goblinAmulet', name:'Amuleto Sagrado Goblin',     icon:'item-goblinamulet', sellPrice:15, type:'material' },
-  { key:'goblinSeal',   name:'Selo do Goblin Mestre',      icon:'item-goblinseal',   sellPrice:20, type:'material' },
-  { key:'goblinCrown',  name:'Coroa Menor Goblin',         icon:'item-goblincrown',  sellPrice:28, type:'material' },
+  { key: 'goblinEar', name: 'Orelha de Goblin', icon: 'item-goblinear', sellPrice: 3, type: 'material' },
+  { key: 'goblinFang', name: 'Presa de Goblin Vermelho', icon: 'item-goblinfang', sellPrice: 5, type: 'material' },
+  { key: 'goblinShard', name: 'Fragmento Arcano Goblin', icon: 'item-goblinshard', sellPrice: 8, type: 'material' },
+  { key: 'goblinScale', name: 'Escama de Armadura Goblin', icon: 'item-goblinscale', sellPrice: 11, type: 'material' },
+  { key: 'goblinAmulet', name: 'Amuleto Sagrado Goblin', icon: 'item-goblinamulet', sellPrice: 15, type: 'material' },
+  { key: 'goblinSeal', name: 'Selo do Goblin Mestre', icon: 'item-goblinseal', sellPrice: 20, type: 'material' },
+  { key: 'goblinCrown', name: 'Coroa Menor Goblin', icon: 'item-goblincrown', sellPrice: 28, type: 'material' },
   // --- Dungeon das Terras Selvagens ---
-  { key:'orcTusk',     name:'Presa de Orc',       icon:'item-orctusk',     sellPrice:40,  type:'material' },
-  { key:'trollHide',   name:'Pele de Troll',      icon:'item-trollhide',   sellPrice:65,  type:'material' },
-  { key:'dragonScale', name:'Escama de Dragão',   icon:'item-dragonscale', sellPrice:110, type:'material' },
-  { key:'demonHorn',   name:'Chifre de Demônio',  icon:'item-demonhorn',   sellPrice:180, type:'material' },
+  { key: 'orcTusk', name: 'Presa de Orc', icon: 'item-orctusk', sellPrice: 40, type: 'material' },
+  { key: 'trollHide', name: 'Pele de Troll', icon: 'item-trollhide', sellPrice: 65, type: 'material' },
+  { key: 'dragonScale', name: 'Escama de Dragão', icon: 'item-dragonscale', sellPrice: 110, type: 'material' },
+  { key: 'demonHorn', name: 'Chifre de Demônio', icon: 'item-demonhorn', sellPrice: 180, type: 'material' },
   // --- Caverna (minérios) --- itens com `type:'mineral'` NÃO vêm de drop de
   // monstro: entram no inventário só pelo baú da Caverna (ver CavernModule.
   // collectChest). `rarity`/`weight` controlam o sorteio de qual minério cai
   // no baú a cada ponto de minério minerado (ver CavernModule.rollMineral) —
   // `weight` é o peso relativo, somam 100 só pra ler como "% de chance base"
   // (o upgrade Faro de Minérios reforça o peso de tudo que não é 'comum').
-  { key:'ironOre',       name:'Minério de Ferro',    icon:'mineral-iron',    sellPrice:4,   type:'mineral', rarity:'comum',     weight:42 },
-  { key:'bronzeChunk',   name:'Fragmento de Bronze', icon:'mineral-bronze',  sellPrice:7,   type:'mineral', rarity:'comum',     weight:33 },
-  { key:'silverOre',     name:'Minério de Prata',    icon:'mineral-silver',  sellPrice:18,  type:'mineral', rarity:'incomum',   weight:16 },
-  { key:'goldOre',       name:'Minério de Ouro',     icon:'mineral-gold',    sellPrice:45,  type:'mineral', rarity:'raro',      weight:7 },
-  { key:'rawDiamond',    name:'Diamante Bruto',      icon:'mineral-diamond', sellPrice:150, type:'mineral', rarity:'epico',     weight:1.8 },
-  { key:'arcaneCrystal', name:'Cristal Arcano',      icon:'mineral-crystal', sellPrice:500, type:'mineral', rarity:'lendario',  weight:0.2 },
+  { key: 'ironOre', name: 'Minério de Ferro', icon: 'mineral-iron', sellPrice: 4, type: 'mineral', rarity: 'comum', weight: 42 },
+  { key: 'bronzeChunk', name: 'Fragmento de Bronze', icon: 'mineral-bronze', sellPrice: 7, type: 'mineral', rarity: 'comum', weight: 33 },
+  { key: 'silverOre', name: 'Minério de Prata', icon: 'mineral-silver', sellPrice: 18, type: 'mineral', rarity: 'incomum', weight: 16 },
+  { key: 'goldOre', name: 'Minério de Ouro', icon: 'mineral-gold', sellPrice: 45, type: 'mineral', rarity: 'raro', weight: 7 },
+  { key: 'rawDiamond', name: 'Diamante Bruto', icon: 'mineral-diamond', sellPrice: 150, type: 'mineral', rarity: 'epico', weight: 1.8 },
+  { key: 'arcaneCrystal', name: 'Cristal Arcano', icon: 'mineral-crystal', sellPrice: 500, type: 'mineral', rarity: 'lendario', weight: 0.2 },
 ];
 
 // Raridade dos minérios (ver ITEM_DEFS acima) — só label + cor pra UI
 // (badge no nome do item, bolinha no detalhamento do baú). `comum` fica de
 // fora do boost do upgrade Faro de Minérios (ver CavernModule.rollMineral).
 const RARITY_DEFS = {
-  comum:    { label:'Comum',    color:'#b9b9b9' },
-  incomum:  { label:'Incomum',  color:'#6fcf7f' },
-  raro:     { label:'Raro',     color:'#4fa3e3' },
-  epico:    { label:'Épico',    color:'#b06fe0' },
-  lendario: { label:'Lendário', color:'#ffb84a' },
+  comum: { label: 'Comum', color: '#b9b9b9' },
+  incomum: { label: 'Incomum', color: '#6fcf7f' },
+  raro: { label: 'Raro', color: '#4fa3e3' },
+  epico: { label: 'Épico', color: '#b06fe0' },
+  lendario: { label: 'Lendário', color: '#ffb84a' },
 };
 
 // Derivado de ITEM_DEFS (não duplicado) — todo item com type:'mineral' vira
@@ -247,10 +290,10 @@ const MINERAL_DEFS = ITEM_DEFS.filter(d => d.type === 'mineral');
 // raridade e cai no baú — por isso não há "goldPerSec" fixo por minerador
 // aqui, e sim uma taxa compartilhada entre todos os tipos de minério.
 const PROSPECTOR_DEFS = [
-  { key:'apprentice',     name:'Aprendiz de Minerador', desc:'+0.1 minério/seg', baseCost:300,   costGrowth:1.30, orePerSec:0.1 },
-  { key:'veteranMiner',   name:'Minerador Veterano',    desc:'+0.5 minério/seg', baseCost:2200,  costGrowth:1.30, orePerSec:0.5 },
-  { key:'blaster',        name:'Explosivista',          desc:'+2 minério/seg',   baseCost:15000, costGrowth:1.32, orePerSec:2 },
-  { key:'excavatorGolem', name:'Golem Escavador',       desc:'+8 minério/seg',   baseCost:90000, costGrowth:1.35, orePerSec:8 },
+  { key: 'apprentice', name: 'Aprendiz de Minerador', desc: '+0.1 minério/seg', baseCost: 300, costGrowth: 1.30, orePerSec: 0.1 },
+  { key: 'veteranMiner', name: 'Minerador Veterano', desc: '+0.5 minério/seg', baseCost: 2200, costGrowth: 1.30, orePerSec: 0.5 },
+  { key: 'blaster', name: 'Explosivista', desc: '+2 minério/seg', baseCost: 15000, costGrowth: 1.32, orePerSec: 2 },
+  { key: 'excavatorGolem', name: 'Golem Escavador', desc: '+8 minério/seg', baseCost: 90000, costGrowth: 1.35, orePerSec: 8 },
 ];
 
 // Upgrades da Caverna — mesmo formato de nível máximo/custo
@@ -263,8 +306,8 @@ const PROSPECTOR_DEFS = [
 // CavernModule.rollMineral) — não tem `apply`, os efeitos são lidos
 // dinamicamente a partir de state.cavernUpgrades[key] onde são usados.
 const CAVERN_UPGRADE_DEFS = [
-  { key:'oreRatePct', name:'Picareta Reforçada', desc:'+20% velocidade de mineração', baseCost:600, costGrowth:1.6, maxLevel:10 },
-  { key:'oreLuck',    name:'Faro de Minérios',   desc:'+15% chance de minérios raros', baseCost:900, costGrowth:1.7, maxLevel:10 },
+  { key: 'oreRatePct', name: 'Picareta Reforçada', desc: '+20% velocidade de mineração', baseCost: 600, costGrowth: 1.6, maxLevel: 10 },
+  { key: 'oreLuck', name: 'Faro de Minérios', desc: '+15% chance de minérios raros', baseCost: 900, costGrowth: 1.7, maxLevel: 10 },
 ];
 
 // Falas soltas do Barnabé — sorteada 1 por vez toda vez que a Loja é aberta
@@ -289,6 +332,12 @@ const CREITON_LINES = [
   'Cuidado lá fora, essas dungeons não perdoam ninguém.',
 ];
 
+const ANSELMO_LINES = [
+  'Estou orando por você',
+  'Que essas pragas do Dungeon desapareçam',
+  'Obrigado pela ajuda',
+];
+
 // Armas — a 1ª é escolhida de graça na conversa com o Clérigo (ver
 // OnboardingModule); as outras duas ficam à venda no Ferreiro por
 // `buyCost` moeda (ver UI.renderFerreiroWeapons). `state.weapons[key]` é 0 ou 1.
@@ -311,9 +360,9 @@ const CREITON_LINES = [
 // calcula aquele stat (ex.: um bônus de ouro entraria em ShopModule/onde
 // quer que a venda calcule o preço final).
 const WEAPON_DEFS = [
-  { key:'swordSimple', name:'Espada Simples', icon:'weapon-sword', clickDamageBonus:1, buyCost:500 },
-  { key:'bowArrow',    name:'Arco e Flecha',  icon:'weapon-bow', clickDamageBonus:1, buyCost:500 },
-  { key:'axe',         name:'Machado',        icon:'weapon-axe', clickDamageBonus:1, buyCost:500 },
+  { key: 'swordSimple', name: 'Espada Simples', icon: 'weapon-sword', clickDamageBonus: 1, buyCost: 500 },
+  { key: 'bowArrow', name: 'Arco e Flecha', icon: 'weapon-bow', clickDamageBonus: 1, buyCost: 500 },
+  { key: 'axe', name: 'Machado', icon: 'weapon-axe', clickDamageBonus: 1, buyCost: 500 },
 ];
 
 // Armas FORJADAS — resultado de consertar uma arma bruta (ver ITEM_DEFS
@@ -329,36 +378,48 @@ const WEAPON_DEFS = [
 // `recipe.coinCost` é consumido de state.gold — tudo verificado em
 // ForgeModule.canForge antes de deixar forjar.
 const FORGED_WEAPON_DEFS = [
-  { key:'slimeWarriorSword', name:'Espada do Guerreiro Slime', icon:'weapon-slimewarriorsword',
-    clickDamageBonus:50, dpsBonus:20,
-    recipe:{ coinCost:300, materials:[
-      { itemKey:'slimeSword',    qty:3 },
-      { itemKey:'slimeGel',      qty:30 },
-      { itemKey:'ironOre',       qty:20 },
-      { itemKey:'bronzeChunk',   qty:20 },
-      { itemKey:'goldOre',       qty:5 },
-    ] } },
-  { key:'slimeWarriorAxe', name:'Machado do Guerreiro Slime', icon:'weapon-slimewarrioraxe',
-    clickDamageBonus:150, dpsBonus:60,
-    recipe:{ coinCost:900, materials:[
-      { itemKey:'slimeAxe',      qty:3 },
-      { itemKey:'slimeGel',      qty:90 },
-      { itemKey:'ironOre',       qty:60 },
-      { itemKey:'bronzeChunk',   qty:60 },
-      { itemKey:'goldOre',       qty:15 },
-      { itemKey:'rawDiamond',    qty:5 },
-    ] } },
-  { key:'slimeKingGreatAxe', name:'Machado Ancestral do Rei Slime', icon:'weapon-slimekinggreataxe',
-    clickDamageBonus:400, dpsBonus:150,
-    recipe:{ coinCost:2500, materials:[
-      { itemKey:'slimeAxeGreater', qty:3 },
-      { itemKey:'slimeGel',        qty:200 },
-      { itemKey:'ironOre',         qty:150 },
-      { itemKey:'bronzeChunk',     qty:150 },
-      { itemKey:'goldOre',         qty:40 },
-      { itemKey:'rawDiamond',      qty:15 },
-      { itemKey:'arcaneCrystal',   qty:3 },
-    ] } },
+  {
+    key: 'slimeWarriorSword', name: 'Espada do Guerreiro Slime', icon: 'weapon-slimewarriorsword',
+    clickDamageBonus: 50, dpsBonus: 20,
+    recipe: {
+      coinCost: 700, materials: [
+        { itemKey: 'slimeSword', qty: 3 },
+        { itemKey: 'slimeGel', qty: 300 },
+        { itemKey: 'ironOre', qty: 50 },
+        { itemKey: 'bronzeChunk', qty: 50 },
+        { itemKey: 'goldOre', qty: 5 },
+      ]
+    }
+  },
+  {
+    key: 'slimeWarriorAxe', name: 'Machado do Guerreiro Slime', icon: 'weapon-slimewarrioraxe',
+    clickDamageBonus: 150, dpsBonus: 60,
+    recipe: {
+      coinCost: 2000, materials: [
+        { itemKey: 'slimeAxe', qty: 3 },
+        { itemKey: 'slimeGel', qty: 900 },
+        { itemKey: 'ironOre', qty: 100 },
+        { itemKey: 'bronzeChunk', qty: 100 },
+        { itemKey: 'goldOre', qty: 15 },
+        { itemKey: 'rawDiamond', qty: 5 },
+      ]
+    }
+  },
+  {
+    key: 'slimeKingGreatAxe', name: 'Machado Ancestral do Rei Slime', icon: 'weapon-slimekinggreataxe',
+    clickDamageBonus: 400, dpsBonus: 150,
+    recipe: {
+      coinCost: 5000, materials: [
+        { itemKey: 'slimeAxeGreater', qty: 3 },
+        { itemKey: 'slimeGel', qty: 2000 },
+        { itemKey: 'ironOre', qty: 300 },
+        { itemKey: 'bronzeChunk', qty: 250 },
+        { itemKey: 'goldOre', qty: 40 },
+        { itemKey: 'rawDiamond', qty: 15 },
+        { itemKey: 'arcaneCrystal', qty: 3 },
+      ]
+    }
+  },
 ];
 
 // Missões dadas por NPCs da cidade (ver QuestModule) — entregar `itemQty`
@@ -371,22 +432,22 @@ const FORGED_WEAPON_DEFS = [
 // preenchem o `questCompleteModal` genérico ao entregar (ver QuestModule.deliver).
 const QUEST_DEFS = [
   {
-    key:'slimeGelDelivery', npc:'Barnabé', itemKey:'slimeGel', itemQty:10, unlocksBuilding:'ferreiro',
-    modalElId:'lojaModal', bannerElId:'lojaQuestBanner', bannerLabel:'Encomenda do Creiton',
-    completeTitle:'BARNABÉ',
-    completeText:'Ótima notícia! Isso é exatamente o que o Creiton precisava — ele já está a caminho de volta. Pode ir até o Ferreiro quando quiser.'
+    key: 'slimeGelDelivery', npc: 'Barnabé', itemKey: 'slimeGel', itemQty: 10, unlocksBuilding: 'ferreiro',
+    modalElId: 'lojaModal', bannerElId: 'lojaQuestBanner', bannerLabel: 'Encomenda do Creiton',
+    completeTitle: 'BARNABÉ',
+    completeText: 'Ótima notícia! Isso é exatamente o que o Creiton precisava — ele já está a caminho de volta. Pode ir até o Ferreiro quando quiser.'
   },
   {
-    key:'creitonMilitia', npc:'Creiton', itemKey:'slimeCompound', itemQty:8, unlocksBuilding:'guilda',
-    modalElId:'ferreiroModal', bannerElId:'ferreiroQuestBanner', bannerLabel:'Material pra Milícia',
-    completeTitle:'CREITON',
-    completeText:'Perfeito, com isso dá pra temperar o metal direito! Já mandei um recado pra Guilda — pode ir até lá quando quiser armar sua tropa.'
+    key: 'creitonMilitia', npc: 'Creiton', itemKey: 'slimeCompound', itemQty: 8, unlocksBuilding: 'guilda',
+    modalElId: 'ferreiroModal', bannerElId: 'ferreiroQuestBanner', bannerLabel: 'Material pra Milícia',
+    completeTitle: 'CREITON',
+    completeText: 'Perfeito, com isso dá pra temperar o metal direito! Já mandei um recado pra Guilda — pode ir até lá quando quiser armar sua tropa.'
   },
   {
-    key:'caveClearance', npc:'Irmão Anselmo', itemKey:'slimeGel', itemQty:20, unlocksBuilding:'caverna',
-    modalElId:'igrejaModal', bannerElId:'clericQuestBanner', bannerLabel:'Reabertura da Caverna',
-    completeTitle:'IRMÃO ANSELMO',
-    completeText:'Isso deve bastar pra convencer os poucos mineradores que restaram a voltar ao trabalho. A Caverna está pronta pra ser explorada.'
+    key: 'caveClearance', npc: 'Irmão Anselmo', itemKey: 'slimeGel', itemQty: 20, unlocksBuilding: 'caverna',
+    modalElId: 'igrejaModal', bannerElId: 'clericQuestBanner', bannerLabel: 'Reabertura da Caverna',
+    completeTitle: 'IRMÃO ANSELMO',
+    completeText: 'Isso deve bastar pra convencer os poucos mineradores que restaram a voltar ao trabalho. A Caverna está pronta pra ser explorada.'
   },
 ];
 
@@ -395,11 +456,11 @@ const QUEST_DEFS = [
 // pra virar um sumidouro de moeda de longo prazo. Upgrades têm nível máximo,
 // então crescem devagar (senão ficam inatingíveis antes do maxLevel).
 const TROOP_DEFS = [
-  { key:'recruit', name:'Recruta com Funda', desc:'+1 DPS', baseCost:150,   costGrowth:1.40, dps:1 },
-  { key:'archer',  name:'Arqueiro',          desc:'+5 DPS', baseCost:800,   costGrowth:1.40, dps:5 },
-  { key:'mage',    name:'Mago',              desc:'+20 DPS', baseCost:5000,  costGrowth:1.40, dps:20 },
-  { key:'catapult',name:'Catapulta',         desc:'+100 DPS', baseCost:30000, costGrowth:1.40, dps:100 },
-  { key:'dragon',  name:'Dragão Aliado',     desc:'+1000 DPS', baseCost:150000,costGrowth:1.45, dps:1000 },
+  { key: 'recruit', name: 'Recruta', desc: '+1 DPS', baseCost: 150, costGrowth: 1.40, dps: 1 },
+  { key: 'archer', name: 'Arqueiro', desc: '+5 DPS', baseCost: 800, costGrowth: 1.40, dps: 5 },
+  { key: 'mage', name: 'Mago', desc: '+20 DPS', baseCost: 5000, costGrowth: 1.40, dps: 20 },
+  { key: 'catapult', name: 'Catapulta', desc: '+100 DPS', baseCost: 30000, costGrowth: 1.40, dps: 100 },
+  { key: 'dragon', name: 'Dragão Aliado', desc: '+1000 DPS', baseCost: 150000, costGrowth: 1.45, dps: 1000 },
 ];
 
 // Árvore de habilidades de BATALHA (Academia de Combate):
@@ -415,10 +476,10 @@ const TROOP_DEFS = [
 // própria stat nos upgrades de Nível 2 (pra reforçar a ligação com a raiz);
 // o ramo de Dano Crítico % só reforça a própria stat.
 const UPGRADE_DEFS = [
-  { key:'battleClickDmg',     name:'Fúria do Guerreiro', desc:'+5 dano por clique',        baseCost:10, costGrowth:1.3,  apply:s=>s.clickDamageFlat+=5,     maxLevel:5, requires:null },
-  { key:'battleCritChance',   name:'Olho Certeiro',      desc:'+3% chance de crítico',      baseCost:60, costGrowth:1.35, apply:s=>s.critChance=Math.min(0.75,s.critChance+0.03), maxLevel:5, requires:'battleClickDmg' },
-  { key:'battleDmgPercent',   name:'Força Bruta',        desc:'+5% de dano por clique',     baseCost:60, costGrowth:1.4,  apply:s=>s.clickDamagePercent+=0.05, maxLevel:5, requires:'battleClickDmg' },
-  { key:'battleCritDmgPercent', name:'Golpe Devastador', desc:'+10% de dano crítico',       baseCost:60, costGrowth:1.45, apply:s=>s.critDamagePercent+=0.10, maxLevel:5, requires:'battleClickDmg' },
+  { key: 'battleClickDmg', name: 'Fúria do Guerreiro', desc: '+5 dano por clique', baseCost: 10, costGrowth: 1.3, apply: s => s.clickDamageFlat += 5, maxLevel: 5, requires: null },
+  { key: 'battleCritChance', name: 'Olho Certeiro', desc: '+3% chance de crítico', baseCost: 60, costGrowth: 1.35, apply: s => s.critChance = Math.min(0.75, s.critChance + 0.03), maxLevel: 5, requires: 'battleClickDmg' },
+  { key: 'battleDmgPercent', name: 'Força Bruta', desc: '+5% de dano por clique', baseCost: 60, costGrowth: 1.4, apply: s => s.clickDamagePercent += 0.05, maxLevel: 5, requires: 'battleClickDmg' },
+  { key: 'battleCritDmgPercent', name: 'Golpe Devastador', desc: '+10% de dano crítico', baseCost: 60, costGrowth: 1.45, apply: s => s.critDamagePercent += 0.10, maxLevel: 5, requires: 'battleClickDmg' },
   // Clique Automático — só 1 nível (compra única, sem escalar): liga um
   // clique automático periódico enquanto houver monstro ativo E o ciclo
   // atual já tiver sido concluído antes (ver PlayerModule.isAutoClickActive
@@ -427,38 +488,56 @@ const UPGRADE_DEFS = [
   // velocidade abaixo — não é um stat de state, `apply` fica vazio de
   // propósito, o efeito é 100% dinâmico a partir de
   // state.upgrades.battleAutoClick > 0.
-  { key:'battleAutoClick', name:'Clique Automático', desc:'Clica sozinho a cada 1s (só em ciclos já vencidos antes)', baseCost:1000, costGrowth:1.5, apply:s=>{}, maxLevel:1, requires:'battleClickDmg', autoClickIntervalMs:1000 },
+  { key: 'battleAutoClick', name: 'Clique Automático', desc: 'Clica sozinho a cada 1s (só em ciclos já vencidos antes)', baseCost: 1000, costGrowth: 1.5, apply: s => { }, maxLevel: 1, requires: 'battleClickDmg', autoClickIntervalMs: 1000 },
   // Upgrades de velocidade do Clique Automático — encadeados (o 2º exige o
   // 1º, não a raiz), cada um -25 pontos percentuais do intervalo BASE
   // (1000ms), acumulando: 1000ms → 750ms → 500ms. Ver
   // PlayerModule.autoClickIntervalMs().
-  { key:'autoClickSpeed1', name:'Reflexos de Aço', desc:'-25% no intervalo do Clique Automático (1s → 0.75s)', baseCost:3000, costGrowth:1.5, apply:s=>{}, maxLevel:1, requires:'battleAutoClick' },
-  { key:'autoClickSpeed2', name:'Reflexos Sobrenaturais', desc:'-25% no intervalo do Clique Automático, acumulado (0.75s → 0.5s)', baseCost:8000, costGrowth:1.5, apply:s=>{}, maxLevel:1, requires:'autoClickSpeed1' },
+  { key: 'autoClickSpeed1', name: 'Reflexos de Aço', desc: '-25% no intervalo do Clique Automático (1s → 0.75s)', baseCost: 3000, costGrowth: 1.5, apply: s => { }, maxLevel: 1, requires: 'battleAutoClick' },
+  { key: 'autoClickSpeed2', name: 'Reflexos Sobrenaturais', desc: '-25% no intervalo do Clique Automático, acumulado (0.75s → 0.5s)', baseCost: 8000, costGrowth: 1.5, apply: s => { }, maxLevel: 1, requires: 'autoClickSpeed1' },
 
   // --- Nível 2 do ramo Crítico (requer Olho Certeiro nível 5) ---
-  { key:'critChance2A', name:'Visão de Falcão',    desc:'+4% chance de crítico, +4 dano por clique', baseCost:400, costGrowth:1.5, maxLevel:5, requires:'battleCritChance',
-    apply:s=>{ s.critChance=Math.min(0.75,s.critChance+0.04); s.clickDamageFlat+=4; } },
-  { key:'critChance2B', name:'Reflexos Rápidos',   desc:'+6% chance de crítico, +2 dano por clique', baseCost:400, costGrowth:1.5, maxLevel:5, requires:'battleCritChance',
-    apply:s=>{ s.critChance=Math.min(0.75,s.critChance+0.06); s.clickDamageFlat+=2; } },
-  { key:'critChance2C', name:'Instinto Selvagem',  desc:'+2% chance de crítico, +7 dano por clique', baseCost:400, costGrowth:1.5, maxLevel:5, requires:'battleCritChance',
-    apply:s=>{ s.critChance=Math.min(0.75,s.critChance+0.02); s.clickDamageFlat+=7; } },
+  {
+    key: 'critChance2A', name: 'Visão de Falcão', desc: '+4% chance de crítico, +4 dano por clique', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritChance',
+    apply: s => { s.critChance = Math.min(0.75, s.critChance + 0.04); s.clickDamageFlat += 4; }
+  },
+  {
+    key: 'critChance2B', name: 'Reflexos Rápidos', desc: '+6% chance de crítico, +2 dano por clique', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritChance',
+    apply: s => { s.critChance = Math.min(0.75, s.critChance + 0.06); s.clickDamageFlat += 2; }
+  },
+  {
+    key: 'critChance2C', name: 'Instinto Selvagem', desc: '+2% chance de crítico, +7 dano por clique', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritChance',
+    apply: s => { s.critChance = Math.min(0.75, s.critChance + 0.02); s.clickDamageFlat += 7; }
+  },
 
   // --- Nível 2 do ramo Dano % (requer Força Bruta nível 5) ---
-  { key:'dmgPercent2A', name:'Impacto Brutal',     desc:'+7% de dano por clique, +3 dano por clique', baseCost:400, costGrowth:1.5, maxLevel:5, requires:'battleDmgPercent',
-    apply:s=>{ s.clickDamagePercent+=0.07; s.clickDamageFlat+=3; } },
-  { key:'dmgPercent2B', name:'Força Titânica',     desc:'+10% de dano por clique, +1 dano por clique', baseCost:400, costGrowth:1.5, maxLevel:5, requires:'battleDmgPercent',
-    apply:s=>{ s.clickDamagePercent+=0.10; s.clickDamageFlat+=1; } },
-  { key:'dmgPercent2C', name:'Golpe Pesado',       desc:'+4% de dano por clique, +6 dano por clique', baseCost:400, costGrowth:1.5, maxLevel:5, requires:'battleDmgPercent',
-    apply:s=>{ s.clickDamagePercent+=0.04; s.clickDamageFlat+=6; } },
+  {
+    key: 'dmgPercent2A', name: 'Impacto Brutal', desc: '+7% de dano por clique, +3 dano por clique', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleDmgPercent',
+    apply: s => { s.clickDamagePercent += 0.07; s.clickDamageFlat += 3; }
+  },
+  {
+    key: 'dmgPercent2B', name: 'Força Titânica', desc: '+10% de dano por clique, +1 dano por clique', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleDmgPercent',
+    apply: s => { s.clickDamagePercent += 0.10; s.clickDamageFlat += 1; }
+  },
+  {
+    key: 'dmgPercent2C', name: 'Golpe Pesado', desc: '+4% de dano por clique, +6 dano por clique', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleDmgPercent',
+    apply: s => { s.clickDamagePercent += 0.04; s.clickDamageFlat += 6; }
+  },
 
   // --- Nível 2 do ramo Dano Crítico % (requer Golpe Devastador nível 5) —
   // só reforça a própria stat, sem somar dano por clique. ---
-  { key:'critDmgPercent2A', name:'Fragmentação',    desc:'+12% de dano crítico', baseCost:400, costGrowth:1.5, maxLevel:5, requires:'battleCritDmgPercent',
-    apply:s=>s.critDamagePercent+=0.12 },
-  { key:'critDmgPercent2B', name:'Execução Brutal', desc:'+15% de dano crítico', baseCost:400, costGrowth:1.5, maxLevel:5, requires:'battleCritDmgPercent',
-    apply:s=>s.critDamagePercent+=0.15 },
-  { key:'critDmgPercent2C', name:'Golpe Fatal',     desc:'+18% de dano crítico', baseCost:400, costGrowth:1.5, maxLevel:5, requires:'battleCritDmgPercent',
-    apply:s=>s.critDamagePercent+=0.18 },
+  {
+    key: 'critDmgPercent2A', name: 'Fragmentação', desc: '+12% de dano crítico', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritDmgPercent',
+    apply: s => s.critDamagePercent += 0.12
+  },
+  {
+    key: 'critDmgPercent2B', name: 'Execução Brutal', desc: '+15% de dano crítico', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritDmgPercent',
+    apply: s => s.critDamagePercent += 0.15
+  },
+  {
+    key: 'critDmgPercent2C', name: 'Golpe Fatal', desc: '+18% de dano crítico', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritDmgPercent',
+    apply: s => s.critDamagePercent += 0.18
+  },
 ];
 
 // Layout visual da árvore de Upgrades (Academia de Combate): `root` fica no
@@ -471,47 +550,57 @@ const UPGRADE_DEFS = [
 // vem de `requires` em UPGRADE_DEFS, não daqui — isto é só o layout.
 const UPGRADE_TREE = {
   root: 'battleClickDmg',
-  hub: { x:50, y:50 },
+  hub: { x: 50, y: 50 },
   branches: [
-    { label:'Crítico', color:'#4fd1c5', nodes:[
-      { key:'battleCritChance', x:50, y:15 },
-    ], children:[
-      { key:'critChance2A', x:35, y:-17 },
-      { key:'critChance2B', x:50, y:-20 },
-      { key:'critChance2C', x:65, y:-17 },
-    ]},
-    { label:'Dano %', color:'#c9432f', nodes:[
-      { key:'battleDmgPercent', x:81, y:80 },
-    ], children:[
-      { key:'dmgPercent2A', x:114, y:91 },
-      { key:'dmgPercent2B', x:106, y:104 },
-      { key:'dmgPercent2C', x:94, y:113 },
-    ]},
-    { label:'Dano Crítico %', color:'#ffd54a', nodes:[
-      { key:'battleCritDmgPercent', x:19, y:80 },
-    ], children:[
-      { key:'critDmgPercent2A', x:6, y:113 },
-      { key:'critDmgPercent2B', x:-6, y:104 },
-      { key:'critDmgPercent2C', x:-14, y:91 },
-    ]},
+    {
+      label: 'Crítico', color: '#4fd1c5', nodes: [
+        { key: 'battleCritChance', x: 50, y: 15 },
+      ], children: [
+        { key: 'critChance2A', x: 35, y: -17 },
+        { key: 'critChance2B', x: 50, y: -20 },
+        { key: 'critChance2C', x: 65, y: -17 },
+      ]
+    },
+    {
+      label: 'Dano %', color: '#c9432f', nodes: [
+        { key: 'battleDmgPercent', x: 81, y: 80 },
+      ], children: [
+        { key: 'dmgPercent2A', x: 114, y: 91 },
+        { key: 'dmgPercent2B', x: 106, y: 104 },
+        { key: 'dmgPercent2C', x: 94, y: 113 },
+      ]
+    },
+    {
+      label: 'Dano Crítico %', color: '#ffd54a', nodes: [
+        { key: 'battleCritDmgPercent', x: 19, y: 80 },
+      ], children: [
+        { key: 'critDmgPercent2A', x: 6, y: 113 },
+        { key: 'critDmgPercent2B', x: -6, y: 104 },
+        { key: 'critDmgPercent2C', x: -14, y: 91 },
+      ]
+    },
     // Automação: diferente dos outros 3 ramos (3 filhos irmãos do mesmo
     // pai), aqui os 2 upgrades de Nível 2 são uma CADEIA (autoClickSpeed2
     // aninhado dentro de `children` de autoClickSpeed1, não direto de
     // battleAutoClick) — UI.renderUpgradeTree percorre isso recursivamente,
     // então funciona também pra profundidade 3 sem precisar de código novo.
-    { label:'Automação', color:'#8fd9c4', nodes:[
-      { key:'battleAutoClick', x:82, y:20 },
-    ], children:[
-      { key:'autoClickSpeed1', x:100, y:5, children:[
-        { key:'autoClickSpeed2', x:118, y:-10 },
-      ]},
-    ]},
+    {
+      label: 'Automação', color: '#8fd9c4', nodes: [
+        { key: 'battleAutoClick', x: 82, y: 20 },
+      ], children: [
+        {
+          key: 'autoClickSpeed1', x: 100, y: 5, children: [
+            { key: 'autoClickSpeed2', x: 118, y: -10 },
+          ]
+        },
+      ]
+    },
   ]
 };
 
 const PRESTIGE_UPGRADE_DEFS = [
-  { key:'pClick', name:'Bênção do Guerreiro', desc:'+15% dano por clique (permanente)', baseCost:1, costGrowth:1.8, apply:s=>s.pClickMult+=0.15 },
-  { key:'pDps',   name:'Pacto das Tropas',    desc:'+15% DPS das tropas (permanente)', baseCost:1, costGrowth:1.8, apply:s=>s.pDpsMult+=0.15 },
-  { key:'pOreRate', name:'Toque de Midas',    desc:'+15% velocidade de mineração de minério (permanente)', baseCost:1, costGrowth:1.8, apply:s=>s.pOreRateMult+=0.15 },
-  { key:'pCrit',  name:'Fúria Ancestral',     desc:'+5% chance de crítico (permanente)', baseCost:2, costGrowth:2.0, apply:s=>s.pCritChance+=0.05 },
+  { key: 'pClick', name: 'Bênção do Guerreiro', desc: '+15% dano por clique (permanente)', baseCost: 1, costGrowth: 1.8, apply: s => s.pClickMult += 0.15 },
+  { key: 'pDps', name: 'Pacto das Tropas', desc: '+15% DPS das tropas (permanente)', baseCost: 1, costGrowth: 1.8, apply: s => s.pDpsMult += 0.15 },
+  { key: 'pOreRate', name: 'Toque de Midas', desc: '+15% velocidade de mineração de minério (permanente)', baseCost: 1, costGrowth: 1.8, apply: s => s.pOreRateMult += 0.15 },
+  { key: 'pCrit', name: 'Fúria Ancestral', desc: '+5% chance de crítico (permanente)', baseCost: 2, costGrowth: 2.0, apply: s => s.pCritChance += 0.05 },
 ];

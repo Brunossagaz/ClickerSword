@@ -382,28 +382,6 @@
   </div>
 </div>
 
-<!-- Aparece 1x depois da missão do Creiton (creitonMilitia) + mais um ciclo
-     completo (ver OnboardingModule.shouldAnnounceCaverna). A missão em si
-     (entregar Geleia de Slime) é acompanhada em #clericQuestBanner, dentro
-     do igrejaModal (sempre acessível) — este modal é só o aviso narrativo. -->
-<div class="modal-overlay" id="cavernaUnlockModal">
-  <div class="modal-group">
-    <div class="npc-side-panel">
-      <img class="npc-portrait" src="assets/portraits/anselmo.png" alt="Irmão Anselmo">
-      <div class="npc-speech">O Clérigo</div>
-    </div>
-    <div class="modal-box">
-      <div class="modal-header">
-        <span class="pixel">IRMÃO ANSELMO</span>
-      </div>
-      <div class="modal-body" style="text-align:center;">
-        <div class="cleric-text">Com a forja e a milícia de pé, talvez seja hora de reabrir as antigas minas fora da cidade. Preciso convencer os poucos mineradores que restaram a voltar — se você me trouxer uma boa reserva de Geleia de Slime pra sustentar a expedição, eu cuido do resto. Pode me procurar aqui na Igreja quando tiver.</div>
-        <button class="ascend-btn" id="cavernaUnlockOkBtn" style="margin-top:14px;">Entendi</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- Sem botão de fechar de propósito: mesmo padrão dos outros diálogos de
      NPC — só aparece 1x, no 1º clique na Loja (ver QuestModule.openBarnabeIntro). -->
 <div class="modal-overlay" id="barnabeModal">
@@ -419,6 +397,26 @@
       <div class="modal-body" style="text-align:center;">
         <div class="cleric-text">Ah, um forasteiro por essas bandas! Sou Barnabé, dono desta loja. Os negócios andam fracos desde que a dungeon apareceu, mas de vez em quando ainda consigo negociar alguns produtos. Aliás... meu irmão Creiton é ferreiro, mas fugiu quando os monstros surgiram. Ele quer voltar, mas precisa de material — se você me trouxer 10 Geleias de Slime, eu repasso pra ele e o convenço a reabrir a forja.</div>
         <button class="ascend-btn" id="barnabeContinueBtn" style="margin-top:14px;">Continuar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Sem botão de fechar de propósito: mesmo padrão do barnabeModal — só
+     aparece 1x, no 1º clique no Ferreiro (ver metCreiton em UI.init). -->
+<div class="modal-overlay" id="creitonModal">
+  <div class="modal-group">
+    <div class="npc-side-panel">
+      <img class="npc-portrait" src="assets/portraits/creiton.png" alt="Creiton">
+      <div class="npc-speech">Dono do Ferreiro da cidade.</div>
+    </div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="pixel">CREITON</span>
+      </div>
+      <div class="modal-body" style="text-align:center;">
+        <div class="cleric-text">Então é você quem convenceu meu irmão a me mandar aquele material... Sou Creiton, o ferreiro desta cidade. Aqui eu forjo armas novas do zero e conserto as armas brutas que você trouxer da dungeon, deixando-as prontas pro combate. Já que está aqui, tenho um pedido: estou tentando temperar um metal mais resistente pra equipar uma milícia de defesa da cidade, mas preciso de 8 Compostos de Slime pra isso. Me traga esse material e eu preparo tudo — aí a Guilda pode finalmente armar uma tropa de verdade.</div>
+        <button class="ascend-btn" id="creitonContinueBtn" style="margin-top:14px;">Continuar</button>
       </div>
     </div>
   </div>

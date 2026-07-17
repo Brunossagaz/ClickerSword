@@ -33,13 +33,12 @@ const PrestigeModule = {
     const keepOnboarding = {
       quests: state.quests,
       metBarnabe: state.metBarnabe,
+      metCreiton: state.metCreiton,
       shopUnlockAnnounced: state.shopUnlockAnnounced,
       academiaAnnounced: state.academiaAnnounced,
-      cavernaAnnounced: state.cavernaAnnounced,
       dungeonEntriesCount: state.dungeonEntriesCount,
       firstCycleEverCompleted: state.firstCycleEverCompleted,
-      totalCyclesCompleted: state.totalCyclesCompleted,
-      creitonQuestCycleSnapshot: state.creitonQuestCycleSnapshot
+      totalCyclesCompleted: state.totalCyclesCompleted
     };
 
     state = freshState();

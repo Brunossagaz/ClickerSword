@@ -23,11 +23,6 @@ const QuestModule = {
     const def = this.questDef(key);
     state.inventory[def.itemKey] -= def.itemQty;
     state.quests[key] = true;
-    if(key === 'creitonMilitia'){
-      // "mais um ciclo" depois desta missão dispara o aviso da Caverna (ver
-      // OnboardingModule.shouldAnnounceCaverna/MonsterModule.onDeath)
-      state.creitonQuestCycleSnapshot = state.totalCyclesCompleted;
-    }
     SaveModule.save();
     document.getElementById(def.modalElId).classList.remove('open');
     UI.renderAll();
@@ -41,6 +36,13 @@ const QuestModule = {
     state.metBarnabe = true;
     SaveModule.save();
     document.getElementById('barnabeModal').classList.add('open');
+  },
+  // Chamado pelo clique no prédio Ferreiro (ver ui.js) — só na 1ª vez, antes
+  // de abrir o ferreiro normal. Mesmo padrão de openBarnabeIntro.
+  openCreitonIntro(){
+    state.metCreiton = true;
+    SaveModule.save();
+    document.getElementById('creitonModal').classList.add('open');
   },
   // Renderiza o banner de progresso de TODA missão ainda não concluída, cada
   // uma no seu próprio bannerElId (ver QUEST_DEFS) — chamado a cada
@@ -71,6 +73,11 @@ const QuestModule = {
     document.getElementById('barnabeContinueBtn').addEventListener('click', () => {
       document.getElementById('barnabeModal').classList.remove('open');
       document.getElementById('lojaModal').classList.add('open');
+      UI.renderAll();
+    });
+    document.getElementById('creitonContinueBtn').addEventListener('click', () => {
+      document.getElementById('creitonModal').classList.remove('open');
+      document.getElementById('ferreiroModal').classList.add('open');
       UI.renderAll();
     });
     document.getElementById('questCompleteOkBtn').addEventListener('click', () => {
