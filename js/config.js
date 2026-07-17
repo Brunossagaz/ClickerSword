@@ -29,7 +29,12 @@ const CONFIG = {
   // applyBurn/checkBurnTick): dano total é dividido em ticks ao longo de
   // burnDurationMs, um a cada burnTickMs.
   burnDurationMs: 3000,
-  burnTickMs: 500
+  burnTickMs: 500,
+  // Expedições da Guilda (ver GUILD_EXPEDITION_DEFS/GuildModule): itens/hora
+  // rendidos por ponto de "poder de tropa" (soma de dps*quantidade das
+  // TROOP_DEFS já compradas). Valor pequeno de propósito — é o 1º número a
+  // ajustar se o ritmo de itens ficar rápido/lento demais.
+  guildItemsPerHourPerPower: 0.05
 };
 
 // Todo monstro é um spritesheet PNG (3 frames de 128x128: idle, piscando,
@@ -233,26 +238,32 @@ const MAPS = {
 // durabilidade, é só a categoria do drop) — precisa ser forjada no
 // Ferreiro (ver FORGED_WEAPON_DEFS/ForgeModule) pra virar uma arma de
 // verdade, equipável em PlayerModule.equipWeapon.
+// `dungeon`/`weight` (só em itens `type:'material'`): usados pelas
+// Expedições da Guilda (ver GuildModule.availableMaterials/rollMaterial) —
+// `dungeon` filtra pra só sortear material de Dungeon já desbloqueada (ver
+// DungeonModule.isUnlocked), `weight` pondera o sorteio dentro dessa Dungeon
+// (mesmo padrão de MINERAL_DEFS.weight/CavernModule.rollMineral: maior peso
+// = mais comum, não precisa somar 100).
 const ITEM_DEFS = [
   // --- Dungeon do Pântano dos Slimes ---
-  { key: 'slimeGel', name: 'Geleia de Slime', icon: 'item-slimegel', sellPrice: 2, type: 'material' },
-  { key: 'slimeCompound', name: 'Composto de Slime', icon: 'item-slimecompound', sellPrice: 10, type: 'material' },
+  { key: 'slimeGel', name: 'Geleia de Slime', icon: 'item-slimegel', sellPrice: 2, type: 'material', dungeon: 'slimes', weight: 40 },
+  { key: 'slimeCompound', name: 'Composto de Slime', icon: 'item-slimecompound', sellPrice: 10, type: 'material', dungeon: 'slimes', weight: 15 },
   { key: 'slimeSword', name: 'Espada de Gosma (Bruta)', icon: 'item-slimesword', sellPrice: 30, type: 'brokenWeapon' },
   { key: 'slimeAxe', name: 'Machado de Gosma (Bruto)', icon: 'item-slimeaxe', sellPrice: 100, type: 'brokenWeapon' },
   { key: 'slimeAxeGreater', name: 'Machado de Gosma Maior (Bruto)', icon: 'item-slimeaxegreater', sellPrice: 300, type: 'brokenWeapon' },
   // --- Dungeon do Reino Goblin ---
-  { key: 'goblinEar', name: 'Orelha de Goblin', icon: 'item-goblinear', sellPrice: 3, type: 'material' },
-  { key: 'goblinFang', name: 'Presa de Goblin Vermelho', icon: 'item-goblinfang', sellPrice: 5, type: 'material' },
-  { key: 'goblinShard', name: 'Fragmento Arcano Goblin', icon: 'item-goblinshard', sellPrice: 8, type: 'material' },
-  { key: 'goblinScale', name: 'Escama de Armadura Goblin', icon: 'item-goblinscale', sellPrice: 11, type: 'material' },
-  { key: 'goblinAmulet', name: 'Amuleto Sagrado Goblin', icon: 'item-goblinamulet', sellPrice: 15, type: 'material' },
-  { key: 'goblinSeal', name: 'Selo do Goblin Mestre', icon: 'item-goblinseal', sellPrice: 20, type: 'material' },
-  { key: 'goblinCrown', name: 'Coroa Menor Goblin', icon: 'item-goblincrown', sellPrice: 28, type: 'material' },
+  { key: 'goblinEar', name: 'Orelha de Goblin', icon: 'item-goblinear', sellPrice: 3, type: 'material', dungeon: 'goblins', weight: 35 },
+  { key: 'goblinFang', name: 'Presa de Goblin Vermelho', icon: 'item-goblinfang', sellPrice: 5, type: 'material', dungeon: 'goblins', weight: 28 },
+  { key: 'goblinShard', name: 'Fragmento Arcano Goblin', icon: 'item-goblinshard', sellPrice: 8, type: 'material', dungeon: 'goblins', weight: 20 },
+  { key: 'goblinScale', name: 'Escama de Armadura Goblin', icon: 'item-goblinscale', sellPrice: 11, type: 'material', dungeon: 'goblins', weight: 14 },
+  { key: 'goblinAmulet', name: 'Amuleto Sagrado Goblin', icon: 'item-goblinamulet', sellPrice: 15, type: 'material', dungeon: 'goblins', weight: 9 },
+  { key: 'goblinSeal', name: 'Selo do Goblin Mestre', icon: 'item-goblinseal', sellPrice: 20, type: 'material', dungeon: 'goblins', weight: 5 },
+  { key: 'goblinCrown', name: 'Coroa Menor Goblin', icon: 'item-goblincrown', sellPrice: 28, type: 'material', dungeon: 'goblins', weight: 2 },
   // --- Dungeon das Terras Selvagens ---
-  { key: 'orcTusk', name: 'Presa de Orc', icon: 'item-orctusk', sellPrice: 40, type: 'material' },
-  { key: 'trollHide', name: 'Pele de Troll', icon: 'item-trollhide', sellPrice: 65, type: 'material' },
-  { key: 'dragonScale', name: 'Escama de Dragão', icon: 'item-dragonscale', sellPrice: 110, type: 'material' },
-  { key: 'demonHorn', name: 'Chifre de Demônio', icon: 'item-demonhorn', sellPrice: 180, type: 'material' },
+  { key: 'orcTusk', name: 'Presa de Orc', icon: 'item-orctusk', sellPrice: 40, type: 'material', dungeon: 'wilds', weight: 40 },
+  { key: 'trollHide', name: 'Pele de Troll', icon: 'item-trollhide', sellPrice: 65, type: 'material', dungeon: 'wilds', weight: 25 },
+  { key: 'dragonScale', name: 'Escama de Dragão', icon: 'item-dragonscale', sellPrice: 110, type: 'material', dungeon: 'wilds', weight: 12 },
+  { key: 'demonHorn', name: 'Chifre de Demônio', icon: 'item-demonhorn', sellPrice: 180, type: 'material', dungeon: 'wilds', weight: 5 },
   // --- Caverna (minérios) --- itens com `type:'mineral'` NÃO vêm de drop de
   // monstro: entram no inventário só pelo baú da Caverna (ver CavernModule.
   // collectChest). `rarity`/`weight` controlam o sorteio de qual minério cai
@@ -422,30 +433,51 @@ const FORGED_WEAPON_DEFS = [
   },
 ];
 
-// Missões dadas por NPCs da cidade (ver QuestModule) — entregar `itemQty`
-// unidades de `itemKey` consome os itens do inventário e marca
-// state.quests[key]=true (persistido, não computado, já que a entrega é uma
-// ação irreversível). `unlocksBuilding` é o prédio liberado ao concluir.
+// Missões dadas por NPCs da cidade (ver QuestModule). Cada missão tem um
+// array `objectives` (ver tipos suportados em QuestModule.objectiveDone) —
+// completar TODOS os objetivos habilita o botão de conclusão. Objetivos
+// `deliverItem` consomem o item do inventário ao concluir (ação irreversível,
+// por isso `state.quests[key]=true` fica persistido, nunca recomputado — ver
+// js/onboarding.js). `unlocksBuilding` é o prédio liberado ao concluir.
 // `modalElId`/`bannerElId` dizem em qual modal e em qual <div> o banner de
 // progresso da missão é renderizado (ver QuestModule.renderAllQuestBanners);
 // `bannerLabel` é o texto curto do banner; `completeTitle`/`completeText`
-// preenchem o `questCompleteModal` genérico ao entregar (ver QuestModule.deliver).
+// preenchem o `questCompleteModal` genérico ao concluir (ver QuestModule.deliver).
 const QUEST_DEFS = [
   {
-    key: 'slimeGelDelivery', npc: 'Barnabé', itemKey: 'slimeGel', itemQty: 10, unlocksBuilding: 'ferreiro',
+    key: 'slimeGelDelivery', npc: 'Barnabé', unlocksBuilding: 'ferreiro',
     modalElId: 'lojaModal', bannerElId: 'lojaQuestBanner', bannerLabel: 'Encomenda do Creiton',
+    objectives: [
+      { type: 'deliverItem', itemKey: 'slimeGel', itemQty: 10 },
+    ],
     completeTitle: 'BARNABÉ',
     completeText: 'Ótima notícia! Isso é exatamente o que o Creiton precisava — ele já está a caminho de volta. Pode ir até o Ferreiro quando quiser.'
   },
   {
-    key: 'creitonMilitia', npc: 'Creiton', itemKey: 'slimeCompound', itemQty: 8, unlocksBuilding: 'guilda',
+    // Missão com objetivos variados de propósito (não só entrega de item) —
+    // prova que o jogador já enfrenta a dungeon de verdade e já investiu num
+    // 2º armamento antes de "armar uma milícia" de verdade. O objetivo
+    // `ownWeapons` exige só armas INICIAIS compráveis no próprio Ferreiro
+    // (não uma arma forjada) de propósito: forjar exige minério, que só vem
+    // da Caverna — e a Caverna é liberada por uma missão totalmente separada
+    // (caveClearance), então exigir arma forjada aqui criaria uma dependência
+    // escondida entre 2 missões que hoje podem ser feitas em qualquer ordem.
+    key: 'creitonMilitia', npc: 'Creiton', unlocksBuilding: 'guilda',
     modalElId: 'ferreiroModal', bannerElId: 'ferreiroQuestBanner', bannerLabel: 'Material pra Milícia',
+    objectives: [
+      { type: 'deliverItem', itemKey: 'slimeCompound', itemQty: 8 },
+      { type: 'defeatCycle', count: 1, label: 'Derrotar o chefe de um ciclo em qualquer Dungeon' },
+      { type: 'ownWeapons', count: 2, label: 'Possuir 2 armas iniciais diferentes (compre a 2ª no Ferreiro)' },
+    ],
     completeTitle: 'CREITON',
-    completeText: 'Perfeito, com isso dá pra temperar o metal direito! Já mandei um recado pra Guilda — pode ir até lá quando quiser armar sua tropa.'
+    completeText: 'Perfeito — material temperado, você já provou que aguenta a dungeon e ainda chegou armado até os dentes. Já mandei um recado pra Guilda — pode ir até lá quando quiser armar sua tropa.'
   },
   {
-    key: 'caveClearance', npc: 'Irmão Anselmo', itemKey: 'slimeGel', itemQty: 20, unlocksBuilding: 'caverna',
+    key: 'caveClearance', npc: 'Irmão Anselmo', unlocksBuilding: 'caverna',
     modalElId: 'igrejaModal', bannerElId: 'clericQuestBanner', bannerLabel: 'Reabertura da Caverna',
+    objectives: [
+      { type: 'deliverItem', itemKey: 'slimeGel', itemQty: 20 },
+    ],
     completeTitle: 'IRMÃO ANSELMO',
     completeText: 'Isso deve bastar pra convencer os poucos mineradores que restaram a voltar ao trabalho. A Caverna está pronta pra ser explorada.'
   },
@@ -461,6 +493,20 @@ const TROOP_DEFS = [
   { key: 'mage', name: 'Mago', desc: '+20 DPS', baseCost: 5000, costGrowth: 1.40, dps: 20 },
   { key: 'catapult', name: 'Catapulta', desc: '+100 DPS', baseCost: 30000, costGrowth: 1.40, dps: 100 },
   { key: 'dragon', name: 'Dragão Aliado', desc: '+1000 DPS', baseCost: 150000, costGrowth: 1.45, dps: 1000 },
+];
+
+// Expedições da Guilda (ver GuildModule): manda as tropas coletarem material
+// de dungeon sozinhas por uma duração fixa, online ou offline — resolve
+// automaticamente assim que o tempo passa (ver GuildModule.resolveIfDone,
+// chamado no tick do jogo e ao carregar um save). `rateMult` cresce com a
+// duração de propósito, pra recompensar esperar mais em vez de mandar várias
+// expedições curtas seguidas.
+const GUILD_EXPEDITION_DEFS = [
+  { key: 'curta', name: 'Curta', hours: 1, rateMult: 1.0 },
+  { key: 'media', name: 'Média', hours: 4, rateMult: 1.15 },
+  { key: 'longa', name: 'Longa', hours: 8, rateMult: 1.30 },
+  { key: 'extensa', name: 'Extensa', hours: 12, rateMult: 1.45 },
+  { key: 'expedicao', name: 'Expedição', hours: 24, rateMult: 1.60 },
 ];
 
 // Árvore de habilidades de BATALHA (Academia de Combate):

@@ -44,6 +44,7 @@ function tick(){
     autoClickElapsedMs = 0;
   }
   CavernModule.tick(CONFIG.tickMs/1000);
+  GuildModule.resolveIfDone();
   UI.renderStats();
   UI.renderTimer();
   UI.renderAutoClickStatus();

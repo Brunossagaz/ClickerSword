@@ -913,6 +913,39 @@ const UI = {
       el.appendChild(row);
     }
   },
+  // Painel de Expedições da Guilda (ver GuildModule) — 3 estados possíveis:
+  // sem tropa nenhuma comprada (nada pra mandar), expedição em andamento
+  // (progresso) ou livre pra escolher um dos presets de duração.
+  renderGuildExpedition(){
+    const el = document.getElementById('guildExpeditionPanel');
+    if(!el) return;
+    if(GuildModule.troopPower() <= 0 && !state.guild.active){
+      el.innerHTML = `<div class="footer-note" style="margin:0;">Compre ao menos 1 tropa abaixo pra habilitar expedições.</div>`;
+      return;
+    }
+    if(state.guild.active){
+      const def = GuildModule.expeditionDef(state.guild.cycleKey);
+      el.innerHTML = `
+        <div class="stat" style="margin-bottom:10px;">
+          <div class="label">Expedição em andamento (${def.name})</div>
+          <div class="value">${GuildModule.remainingLabel()}</div>
+        </div>`;
+      return;
+    }
+    el.innerHTML = '';
+    for(const def of GUILD_EXPEDITION_DEFS){
+      const row = document.createElement('div');
+      row.className = 'shop-row';
+      row.innerHTML = `
+        <div class="shop-info">
+          <div class="name">${def.name}</div>
+          <div class="desc">${def.hours}h — rendimento estimado: ~${GuildModule.totalItemsFor(def.key)} item(ns)</div>
+        </div>
+        <button class="buy-btn">Enviar</button>`;
+      row.querySelector('button').addEventListener('click', ()=>GuildModule.start(def.key));
+      el.appendChild(row);
+    }
+  },
   // Desenha a árvore de upgrades (aba UPGRADES) a partir dos dados puramente
   // visuais em UPGRADE_TREE (config.js): a raiz (`UPGRADE_TREE.root`) fica
   // no centro (`hub`) e é um nó de verdade (clicável, com nível/custo), não
@@ -1081,6 +1114,7 @@ const UI = {
     this.renderAutoClickStatus();
     this.renderDungeonList();
     this.renderTroopList();
+    this.renderGuildExpedition();
     this.renderOreProspectorList();
     this.renderCavernUpgradeList();
     this.renderCavernChest();

@@ -111,6 +111,7 @@ const SaveModule = {
       : (Object.keys(state.weapons).find(k => state.weapons[k] > 0) || null);
     state.quests = Object.assign(Object.fromEntries(QUEST_DEFS.map(d => [d.key, false])), loaded.quests||{});
     state.prestige = Object.assign({pClick:0,pDps:0,pOreRate:0,pCrit:0}, loaded.prestige||{});
+    state.guild = Object.assign({active:false,cycleKey:null,startedAt:0,durationMs:0}, loaded.guild||{});
 
     // Merge por-Dungeon (não substitui o objeto inteiro): saves antigos podem
     // não ter `pendingSlot`/`maxCycleCompleted` (adicionados depois), então

@@ -188,7 +188,10 @@
       <button class="modal-close" id="guildaCloseBtn">✕</button>
     </div>
     <div class="modal-body">
-      <div class="panel-title">Guilda — Tropas Automáticas</div>
+      <div class="panel-title">Expedições</div>
+      <div class="footer-note" style="margin:0 0 10px;">Mande suas tropas coletarem material de dungeon sozinhas por um tempo fixo — funciona online ou offline, quanto mais/melhores tropas, mais elas trazem.</div>
+      <div id="guildExpeditionPanel"></div>
+      <div class="panel-title" style="margin-top:16px;">Guilda — Tropas Automáticas</div>
       <div id="troopList"></div>
     </div>
   </div>
@@ -415,7 +418,7 @@
         <span class="pixel">CREITON</span>
       </div>
       <div class="modal-body" style="text-align:center;">
-        <div class="cleric-text">Então é você quem convenceu meu irmão a me mandar aquele material... Sou Creiton, o ferreiro desta cidade. Aqui eu forjo armas novas do zero e conserto as armas brutas que você trouxer da dungeon, deixando-as prontas pro combate. Já que está aqui, tenho um pedido: estou tentando temperar um metal mais resistente pra equipar uma milícia de defesa da cidade, mas preciso de 8 Compostos de Slime pra isso. Me traga esse material e eu preparo tudo — aí a Guilda pode finalmente armar uma tropa de verdade.</div>
+        <div class="cleric-text">Então é você quem convenceu meu irmão a me mandar aquele material... Sou Creiton, o ferreiro desta cidade. Aqui eu forjo armas novas do zero e conserto as armas brutas que você trouxer da dungeon, deixando-as prontas pro combate. Já que está aqui, tenho um pedido: pra equipar uma milícia de defesa de verdade, preciso de 3 coisas de você — 8 Compostos de Slime pra temperar o metal, prova de que já derrotou o chefe de algum ciclo lá na dungeon, e que já tem pelo menos 2 armas iniciais diferentes (compre a 2ª aqui na forja). Traga tudo isso e a Guilda pode finalmente armar uma tropa de verdade.</div>
         <button class="ascend-btn" id="creitonContinueBtn" style="margin-top:14px;">Continuar</button>
       </div>
     </div>
@@ -555,6 +558,7 @@
 <script src="js/quests.js"></script>
 <script src="js/player.js"></script>
 <script src="js/troops.js"></script>
+<script src="js/guild.js"></script>
 <script src="js/cavern.js"></script>
 <script src="js/forge.js"></script>
 <script src="js/upgrades.js"></script>

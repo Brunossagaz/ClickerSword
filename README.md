@@ -24,6 +24,8 @@ beyond-the-gate/
 │   ├── quests.js                      → missões de NPC (ex.: entrega de item pro Barnabé), desbloqueiam prédios
 │   ├── player.js                       → dano por clique, crítico, disparo do ataque manual
 │   ├── troops.js                        → compra de tropas (Guilda), custo exponencial, cálculo de DPS total
+│   ├── guild.js                          → Expedições da Guilda: coleta de material offline em ciclos de
+│   │                                        duração fixa, escalada pelas tropas compradas
 │   ├── cavern.js                          → Caverna: mineradores extraem minério (raridade), baú manual
 │   ├── upgrades.js                       → compra de upgrades da Academia de Combate (árvore radial)
 │   ├── prestige.js                        → lógica de Ascensão: cálculo de Essência, reset, upgrades permanentes
@@ -51,7 +53,7 @@ Segue a mesma separação de responsabilidades sugerida no GDD (seção 8), só 
 100% vanilla JS sem bundler — os arquivos são carregados via `<script src="...">`
 em `index.html`, na ordem de dependência (`config` → `progression` → `state`
 → `save` → `sprites` → `monster` → `dungeons` → `onboarding` → `quests` →
-`player` → `troops` → `mining` → `upgrades` → `prestige` → `settings` →
+`player` → `troops` → `guild` → `mining` → `upgrades` → `prestige` → `settings` →
 `ui` → `mainmenu` → `main`). Cada módulo expõe um único objeto global
 (`MonsterModule`, `TroopsModule`, `UI`, etc.), então dá pra abrir qualquer
 arquivo isolado e entender uma responsabilidade só, sem precisar ler o jogo

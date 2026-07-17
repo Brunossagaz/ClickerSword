@@ -1,11 +1,14 @@
 /* ---------------------------------------------------------------------
    QUEST MODULE (quests.js)
-   Missões de entrega dos NPCs da cidade (Barnabé/Creiton/Clérigo) — ver
-   QUEST_DEFS em config.js pra cada uma (item pedido, prédio liberado, modal/
-   banner onde ela é acompanhada, texto de conclusão). Concluir consome os
-   itens do inventário e libera o prédio correspondente; `questCompleteModal`
-   é genérico e reaproveitado por todas, preenchido dinamicamente com o
-   título/texto da missão entregue.
+   Missões dos NPCs da cidade (Barnabé/Creiton/Clérigo) — ver QUEST_DEFS em
+   config.js pra cada uma (lista de `objectives`, prédio liberado, modal/
+   banner onde ela é acompanhada, texto de conclusão). Cada missão só pode
+   ser concluída quando TODOS os objetivos estiverem feitos (ver
+   objectiveDone/canComplete); objetivos `deliverItem` consomem o item do
+   inventário ao concluir, os outros tipos só checam progresso já existente
+   em `state` (nada pra consumir). `questCompleteModal` é genérico e
+   reaproveitado por todas, preenchido dinamicamente com o título/texto da
+   missão concluída.
 --------------------------------------------------------------------- */
 const QuestModule = {
   questDef(key){
@@ -14,14 +17,35 @@ const QuestModule = {
   isComplete(key){
     return !!state.quests[key];
   },
-  canDeliver(key){
-    const def = this.questDef(key);
-    return state.inventory[def.itemKey] >= def.itemQty;
+  // Cada tipo de objetivo sabe checar seu próprio progresso a partir de
+  // `state` — adicionar um tipo novo é só somar um `case` aqui.
+  objectiveDone(obj){
+    switch(obj.type){
+      case 'deliverItem': return state.inventory[obj.itemKey] >= obj.itemQty;
+      case 'defeatCycle': return state.totalCyclesCompleted >= obj.count;
+      case 'ownWeapons': return WEAPON_DEFS.filter(d => state.weapons[d.key] > 0).length >= obj.count;
+      default: return false;
+    }
+  },
+  // Texto curto de progresso pro banner — "x/y" pra entrega de item,
+  // check/pendente pros demais tipos (não têm uma contagem natural).
+  objectiveProgressText(obj){
+    if(obj.type === 'deliverItem'){
+      const itemDef = ITEM_DEFS.find(i => i.key === obj.itemKey);
+      const have = Math.min(state.inventory[obj.itemKey], obj.itemQty);
+      return `${itemDef.name}: ${have}/${obj.itemQty}`;
+    }
+    return obj.label;
+  },
+  canComplete(key){
+    return this.questDef(key).objectives.every(obj => this.objectiveDone(obj));
   },
   deliver(key){
-    if(!this.canDeliver(key)) return;
+    if(!this.canComplete(key)) return;
     const def = this.questDef(key);
-    state.inventory[def.itemKey] -= def.itemQty;
+    for(const obj of def.objectives){
+      if(obj.type === 'deliverItem') state.inventory[obj.itemKey] -= obj.itemQty;
+    }
     state.quests[key] = true;
     SaveModule.save();
     document.getElementById(def.modalElId).classList.remove('open');
@@ -58,13 +82,16 @@ const QuestModule = {
         continue;
       }
       el.style.display = '';
-      const itemDef = ITEM_DEFS.find(i => i.key === def.itemKey);
-      const have = Math.min(state.inventory[def.itemKey], def.itemQty);
-      const canDeliver = this.canDeliver(def.key);
+      const canComplete = this.canComplete(def.key);
+      const objectivesHtml = def.objectives.map(obj => {
+        const done = this.objectiveDone(obj);
+        return `<div class="quest-objective${done ? ' done' : ''}">${done ? '✓' : '○'} ${this.objectiveProgressText(obj)}</div>`;
+      }).join('');
       el.innerHTML = `
-        <div class="quest-banner-text">${def.bannerLabel} — <div class="icon icon-${itemDef.icon}"></div> ${itemDef.name}: ${have}/${def.itemQty}</div>
-        <button class="buy-btn" id="questDeliverBtn-${def.key}" ${canDeliver ? '' : 'disabled'}>Entregar</button>`;
-      if(canDeliver){
+        <div class="quest-banner-text">${def.bannerLabel}</div>
+        ${objectivesHtml}
+        <button class="buy-btn" id="questDeliverBtn-${def.key}" ${canComplete ? '' : 'disabled'}>Concluir Missão</button>`;
+      if(canComplete){
         document.getElementById(`questDeliverBtn-${def.key}`).addEventListener('click', () => this.deliver(def.key));
       }
     }

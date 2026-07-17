@@ -109,6 +109,7 @@ const MainMenuModule = {
       const mins = Math.floor(off.seconds/60);
       UI.showToast('BEM-VINDO DE VOLTA', `Suas tropas lutaram por ${mins} min enquanto você estava fora e renderam ${UI.fmt(off.earned)} de moeda!`);
     }
+    GuildModule.resolveIfDone(); // expedição pode ter terminado enquanto o jogador estava fora
     UI.renderPlayerName();
     UI.renderAll();
   },

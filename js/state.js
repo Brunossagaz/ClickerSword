@@ -94,6 +94,11 @@ function freshState(){
     academiaAnnounced:false,
     // missões concluídas (true/false por chave) — ver QUEST_DEFS/QuestModule
     quests: Object.fromEntries(QUEST_DEFS.map(d => [d.key, false])),
+    // Expedição da Guilda em andamento (ver GuildModule) — só 1 por vez.
+    // `startedAt`/`durationMs` (ambos em ms, Date.now()) definem quando ela
+    // termina; resolve sozinha (itens direto na mochila) tanto no tick do
+    // jogo quanto ao carregar um save, então funciona igual online e offline.
+    guild: { active:false, cycleKey:null, startedAt:0, durationMs:0 },
     // upgrades owned (levels) — mesmo motivo, derivado de UPGRADE_DEFS
     upgrades: Object.fromEntries(UPGRADE_DEFS.map(d => [d.key, 0])),
     // prestige permanent upgrades
