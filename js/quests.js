@@ -68,6 +68,15 @@ const QuestModule = {
     SaveModule.save();
     document.getElementById('creitonModal').classList.add('open');
   },
+  // Chamado pelo clique no prédio Igreja (ver ui.js) — só na 1ª vez, antes de
+  // abrir a igreja normal. Mesmo padrão de openBarnabeIntro/openCreitonIntro,
+  // só que apresenta a missão da Caverna (caveClearance) em vez de só deixar
+  // o banner de progresso aparecer sozinho dentro do igrejaModal.
+  openAnselmoCaveIntro(){
+    state.caveQuestAnnounced = true;
+    SaveModule.save();
+    document.getElementById('anselmoCaveModal').classList.add('open');
+  },
   // Renderiza o banner de progresso de TODA missão ainda não concluída, cada
   // uma no seu próprio bannerElId (ver QUEST_DEFS) — chamado a cada
   // UI.renderAll(). Missões cujo banner ainda nem existe no DOM (prédio/modal
@@ -105,6 +114,11 @@ const QuestModule = {
     document.getElementById('creitonContinueBtn').addEventListener('click', () => {
       document.getElementById('creitonModal').classList.remove('open');
       document.getElementById('ferreiroModal').classList.add('open');
+      UI.renderAll();
+    });
+    document.getElementById('anselmoCaveContinueBtn').addEventListener('click', () => {
+      document.getElementById('anselmoCaveModal').classList.remove('open');
+      document.getElementById('igrejaModal').classList.add('open');
       UI.renderAll();
     });
     document.getElementById('questCompleteOkBtn').addEventListener('click', () => {

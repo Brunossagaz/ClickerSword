@@ -105,9 +105,13 @@ const MainMenuModule = {
       UI.showCityView();
     }
     const off = SaveModule.computeOfflineEarnings();
-    if(off && off.earned > 0){
+    if(off && off.totalItems > 0){
       const mins = Math.floor(off.seconds/60);
-      UI.showToast('BEM-VINDO DE VOLTA', `Suas tropas lutaram por ${mins} min enquanto você estava fora e renderam ${UI.fmt(off.earned)} de moeda!`);
+      const summary = Object.entries(off.gains).map(([key,qty]) => {
+        const def = ITEM_DEFS.find(i=>i.key===key);
+        return `${qty}x ${def.name}`;
+      }).join(', ');
+      UI.showToast('BEM-VINDO DE VOLTA', `Suas tropas trabalharam por ${mins} min enquanto você estava fora e renderam: ${summary}.`);
     }
     GuildModule.resolveIfDone(); // expedição pode ter terminado enquanto o jogador estava fora
     UI.renderPlayerName();

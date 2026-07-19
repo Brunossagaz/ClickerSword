@@ -184,6 +184,14 @@ const SaveModule = {
       state.metCreiton = true;
     }
 
+    // Save de antes da apresentação do Anselmo sobre a Caverna: quem já tem
+    // qualquer progresso (já matou algo) certamente já abriu a Igreja antes
+    // — não faz sentido mostrar a apresentação retroativamente (mesmo
+    // limiar de shopUnlockAnnounced/firstCycleEverCompleted acima).
+    if(loaded.caveQuestAnnounced === undefined && state.totalKillsAll >= 1){
+      state.caveQuestAnnounced = true;
+    }
+
     // Save de antes do ciclo tutorial forçado: já é um jogador estabelecido
     // (tem mortes registradas), não faz sentido forçar esse tutorial nele
     // retroativamente — libera o botão de sair normalmente.
@@ -239,23 +247,35 @@ const SaveModule = {
     UI.renderPlayerName();
   },
 
+  // Tropas trabalhando offline rendem ITEM, nunca moeda direto (mesma regra
+  // de MONSTER_TYPES.drops — moeda só vem de vender na Loja): reaproveita o
+  // mesmo cálculo/sorteio de material da Expedição da Guilda
+  // (CONFIG.guildItemsPerHourPerPower, GuildModule.troopPower/rollMaterial),
+  // só que automático (sem o jogador escolher duração) e sem o `rateMult`
+  // (não é uma expedição de verdade). Isso é independente de uma expedição
+  // da Guilda estar rolando ou não.
   computeOfflineEarnings(){
     const elapsedMs = Date.now() - (state.lastSave || Date.now());
     const cappedMs = Math.min(elapsedMs, CONFIG.offlineCapHours*3600*1000);
     const seconds = Math.max(0, cappedMs/1000);
     if(seconds < 5) return 0;
-    const dps = TroopsModule.totalDps();
-    const earned = Math.floor(dps * seconds * CONFIG.offlineEfficiency);
-    if(earned > 0){
-      state.gold += earned;
-      state.goldEarnedThisRun += earned;
+    const gains = {};
+    let totalItems = 0;
+    const power = GuildModule.troopPower();
+    if(power > 0){
+      const hours = seconds/3600;
+      totalItems = Math.round(CONFIG.guildItemsPerHourPerPower * power * hours * CONFIG.offlineEfficiency);
+      for(let i=0; i<totalItems; i++){
+        const key = GuildModule.rollMaterial();
+        state.inventory[key] += 1;
+        gains[key] = (gains[key]||0) + 1;
+      }
     }
-    // Minério minerado offline vai direto pro baú (mesmo cap/eficiência do
-    // dps acima) — fica lá esperando o jogador coletar, não aparece no
-    // toast de boas-vindas (ver mainmenu.js), só na próxima vez que abrir a
-    // Caverna.
+    // Minério minerado offline vai direto pro baú (mesmo cap/eficiência
+    // acima) — fica lá esperando o jogador coletar, não aparece no toast de
+    // boas-vindas (ver mainmenu.js), só na próxima vez que abrir a Caverna.
     const ops = CavernModule.totalOrePerSecond();
     if(ops > 0) CavernModule.mineOreAmount(ops * seconds * CONFIG.offlineEfficiency);
-    return {earned, seconds};
+    return {gains, totalItems, seconds};
   }
 };

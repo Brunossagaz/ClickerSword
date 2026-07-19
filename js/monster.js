@@ -13,12 +13,23 @@ const MonsterModule = {
     const map = MAPS[dungeonKey];
     return map.cycles ? map.cycles[1] : map.order;
   },
+  // Quantidade de monstros que UMA posição do schedule consome: 1 pra
+  // posição normal, ou o tamanho da dupla/tripla (`pairChoices`) — o nome
+  // do campo ficou "pairChoices" por história, mas hoje aceita opções de
+  // qualquer tamanho (todas as opções da MESMA posição precisam ter o mesmo
+  // tamanho entre si, ver MAPS). `slot.pairChoices[0].length` bastaria pra
+  // ler o tamanho, mas usar Math.max cobre o caso incomum de alguém digitar
+  // opções de tamanhos diferentes na mesma posição sem quebrar o resto.
+  groupSize(slot){
+    if(!slot || !slot.pairChoices) return 1;
+    return Math.max(...slot.pairChoices.map(opt => opt.length));
+  },
   // Quantidade de MONSTROS (não de "posições") que um ciclo inteiro dessa
-  // Dungeon consome — cada posição normal vale 1, cada posição de dupla
-  // (`pairChoices`) vale 2. Usado no lugar de CONFIG.cycleLength, que só
-  // servia quando toda posição era sempre 1 monstro.
+  // Dungeon consome — cada posição normal vale 1, cada posição de dupla/
+  // tripla (`pairChoices`) vale o tamanho do grupo. Usado no lugar de
+  // CONFIG.cycleLength, que só servia quando toda posição era sempre 1 monstro.
   killsPerCycle(schedule){
-    return schedule.reduce((sum, slot) => sum + ((slot && slot.pairChoices) ? 2 : 1), 0);
+    return schedule.reduce((sum, slot) => sum + this.groupSize(slot), 0);
   },
   killsPerCycleFor(dungeonKey){
     return this.killsPerCycle(this.scheduleFor(dungeonKey));
@@ -34,14 +45,14 @@ const MonsterModule = {
     return Math.floor(d.killCount / kpc) + 1;
   },
   // Acha, dentro do schedule de UM ciclo, qual posição (slotIdx, 0-based) e
-  // qual monstro da dupla (subKill: 0 ou 1, sempre 0 se a posição for única)
-  // correspondem ao `killIdxInCycle`-ésimo monstro morto desde o início do
-  // ciclo atual.
+  // qual monstro do grupo (subKill: 0-based, sempre 0 se a posição for
+  // única — pode ir até 2 numa posição tripla) correspondem ao
+  // `killIdxInCycle`-ésimo monstro morto desde o início do ciclo atual.
   resolveSlot(schedule, killIdxInCycle){
     let consumed = 0;
     for(let slotIdx=0; slotIdx<schedule.length; slotIdx++){
       const slot = schedule[slotIdx];
-      const size = (slot && slot.pairChoices) ? 2 : 1;
+      const size = this.groupSize(slot);
       if(killIdxInCycle < consumed + size){
         return { slotIdx, subKill: killIdxInCycle - consumed, slot, isLastSlot: slotIdx === schedule.length-1 };
       }
@@ -145,30 +156,57 @@ const MonsterModule = {
     const { slotIdx, subKill, slot, isLastSlot } = this.resolveSlot(schedule, killIdxInCycle);
 
     const isDouble = !!(slot && slot.pairChoices);
-    let monsterKey, isBoss = false, extraHpMult = 1;
+    let monsterKey, isBoss = false, extraHpMult = 1, groupSize = 1;
 
     if(isDouble){
-      // sorteia a dupla dessa posição só na 1ª metade — a 2ª reaproveita o
-      // mesmo sorteio (ver state.dungeons[key].pendingSlot)
+      // sorteia o grupo (dupla ou tripla) dessa posição só na 1ª parte — as
+      // seguintes reaproveitam o mesmo sorteio (ver state.dungeons[key].pendingSlot)
       if(subKill === 0 || !d.pendingSlot){
         const options = slot.pairChoices;
         const chosen = options[Math.floor(Math.random()*options.length)];
-        d.pendingSlot = { keys: chosen, firstQty: null };
+        d.pendingSlot = { keys: chosen, phaseDrops: [] };
       }
       monsterKey = d.pendingSlot.keys[subKill] || d.pendingSlot.keys[0];
+      groupSize = d.pendingSlot.keys.length;
       if(slot.strong) extraHpMult = 1.5; // posição "mais forte" (ver MAPS.slimes)
+      // Posição de grupo na ÚLTIMA vaga do ciclo (ver MAPS.dragons): só a
+      // ÚLTIMA fase do grupo conta como chefe de verdade (bônus de
+      // CONFIG.bossHpMult + fecha o ciclo) — as fases anteriores são parte
+      // da "luta do chefe" visualmente (ver isDouble em UI.renderMonsterInfo)
+      // mas não disparam o fim de ciclo sozinhas.
+      isBoss = (!isFirst) && isLastSlot && (subKill === groupSize - 1);
     } else {
       monsterKey = slot;
       isBoss = (!isFirst) && isLastSlot; // último monstro do ciclo = chefe
     }
 
     const type = MONSTER_TYPES.find(t=>t.key===monsterKey);
-    this.current = { type, isBoss, isDouble, doubleSubKill: subKill, slotIdx, totalSlots: schedule.length };
+    this.current = { type, isBoss, isDouble, doubleSubKill: subKill, groupSize, slotIdx, totalSlots: schedule.length };
 
     // killIdx (killCount da Dungeon ativa) reseta a cada ascensão, então a
     // dificuldade dos monstros também reseta — sem isso o HP nunca voltaria
     // ao nível 1.
-    const hp = this.hpFor(killIdx, isBoss, (type.hpMult||1) * extraHpMult);
+    //
+    // Ciclo 1 usa killIdx puro (sem ajuste). A partir do Ciclo 2, o 1º
+    // monstro do ciclo precisa ter a mesma vida do ÚLTIMO monstro ANTES do
+    // chefe do ciclo anterior (não continua subindo em cima do próprio
+    // chefe, que já tem CONFIG.bossHpMult à parte) — isso evita a sensação
+    // de "reset" de dificuldade ao virar de ciclo. Cada ciclo cheio soma
+    // `kpc` ao índice corrido, mas o monstro pré-chefe fica só `kpc-2`
+    // posições à frente do início do ciclo anterior — descontar 2 por ciclo
+    // já concluído reproduz exatamente esse alvo, pra qualquer `kpc`
+    // (cancela algebricamente, ver histórico do commit).
+    //
+    // Só esse "reaproveitamento" do índice deixaria o Ciclo 2+ um pouco MAIS
+    // FRACO do que a curva contínua de antes desta mudança (o índice para
+    // de crescer no fim do ciclo anterior em vez de continuar subindo em
+    // cima do chefe) — por pedido, todo Ciclo 2 em diante recebe +100% de
+    // vida (fator fixo, não acumula ciclo após ciclo) em cima disso, pra
+    // garantir que fique sempre mais difícil do que estava antes, sem
+    // explodir em runs longas dentro do mesmo Andar.
+    const hpKillIndex = killIdx - 2*(cycleNum-1);
+    const cycleDifficultyMult = cycleNum > 1 ? 2 : 1;
+    const hp = this.hpFor(hpKillIndex, isBoss, (type.hpMult||1) * extraHpMult) * cycleDifficultyMult;
     state.monsterHp = hp;
     state.monsterMaxHp = hp;
     state.isBoss = isBoss;
@@ -223,17 +261,20 @@ const MonsterModule = {
     const wasBoss = this.current.isBoss; // captura antes do spawn() sobrescrever this.current
     const wasDouble = this.current.isDouble;
     const doubleSubKill = this.current.doubleSubKill;
+    const groupSize = this.current.groupSize || 1;
     const slotPos = this.current.slotIdx + 1; // posição no ciclo (1-based), ver UI.renderMonsterInfo
     const drops = this.rollDrops();
 
-    if(wasDouble && doubleSubKill === 1){
-      // bônus de 10% pra cada item que TAMBÉM caiu no 1º da dupla (recompensa
-      // a posição "dupla", mais difícil — soma os dois antes de aplicar,
-      // ver MAPS.slimes). Itens que só um dos dois dropou não ganham bônus.
-      const firstDrops = (d.pendingSlot && d.pendingSlot.firstDrops) || [];
+    if(wasDouble && doubleSubKill > 0){
+      // bônus de 10% pra cada item que TAMBÉM caiu em alguma fase ANTERIOR
+      // do mesmo grupo (dupla ou tripla, recompensa a posição de grupo, mais
+      // difícil — soma todas as fases já mortas antes de aplicar, ver
+      // MAPS.slimes/MAPS.dragons). Itens que só uma fase dropou não ganham bônus.
+      const priorPhases = (d.pendingSlot && d.pendingSlot.phaseDrops) || [];
+      const priorTotals = {};
+      for(const phase of priorPhases) for(const pd of phase) priorTotals[pd.item] = (priorTotals[pd.item]||0) + pd.qty;
       for(const drop of drops){
-        const firstMatch = firstDrops.find(f=>f.item===drop.item);
-        if(firstMatch) drop.qty += Math.ceil((firstMatch.qty + drop.qty) * 0.10);
+        if(priorTotals[drop.item]) drop.qty += Math.ceil((priorTotals[drop.item] + drop.qty) * 0.10);
       }
     }
     drops.forEach((drop, i)=>{
@@ -242,8 +283,9 @@ const MonsterModule = {
     });
     UI.logDrops(slotPos, drops);
     if(wasDouble){
-      if(doubleSubKill === 0) d.pendingSlot.firstDrops = drops;
-      else d.pendingSlot = null;
+      if(!d.pendingSlot.phaseDrops) d.pendingSlot.phaseDrops = []; // save antigo/estado defensivo
+      d.pendingSlot.phaseDrops.push(drops);
+      if(doubleSubKill >= groupSize - 1) d.pendingSlot = null; // última fase do grupo — encerra
     }
 
     d.killCount += 1;

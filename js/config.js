@@ -154,6 +154,24 @@ const MONSTER_TYPES = [
     key: 'demon', name: 'DEMÔNIO', image: 'assets/sprites/demon.png', frameW: 128, frameH: 128, blinkCapable: true,
     drops: [{ item: 'demonHorn', qtyMin: 3, qtyMax: 3 }]
   },
+  // --- Mapa 4: Andar do Dragão --- 1 espécie nova (Lagarto de Fogo) +
+  // 'dragon' (já existia, agora exclusivo deste andar em vez de dividir
+  // com Selvagens — ver MAPS.dragons/ITEM_DEFS.dragonScale).
+  {
+    key: 'fireLizard', name: 'LAGARTO DE FOGO', image: 'assets/sprites/fire_lizard.png', frameW: 128, frameH: 128, blinkCapable: true,
+    drops: [{ item: 'fireLizardScale', qtyMin: 2, qtyMax: 2 }]
+  },
+  // --- Mapa 5: Andar do Demônio --- 2 espécies novas (Sombra, Mini Servo)
+  // + 'demon' (já existia, agora exclusivo deste andar — ver MAPS.demons/
+  // ITEM_DEFS.demonHorn).
+  {
+    key: 'shadow', name: 'SOMBRA', image: 'assets/sprites/shadow.png', frameW: 128, frameH: 128, blinkCapable: true,
+    drops: [{ item: 'shadowEssence', qtyMin: 3, qtyMax: 3 }]
+  },
+  {
+    key: 'miniServo', name: 'MINI SERVO', image: 'assets/sprites/mini_servo.png', frameW: 128, frameH: 128, blinkCapable: true,
+    drops: [{ item: 'miniServoClaw', qtyMin: 2, qtyMax: 2 }]
+  },
 ];
 
 // Dungeons: cada uma tem seu próprio progresso (state.dungeons[key].killCount,
@@ -165,20 +183,31 @@ const MONSTER_TYPES = [
 // contando como 1 posição só (ver MonsterModule.killsPerCycle/resolveSlot).
 // Dungeons sem `cycles` definidos (ex: wilds) usam `order` e repetem pra sempre.
 //
-// `unlockRequirement` (opcional): quantas mortes a Dungeon indicada precisa
-// ter pra esta desbloquear. Sem isso, a Dungeon já começa desbloqueada.
+// `unlockRequirement` (opcional): o Andar indicado (`dungeon`) precisa ter o
+// CHEFE do ciclo `cycle` já derrotado ao menos 1x (ver
+// state.dungeons[key].maxCycleCompleted/DungeonModule.isUnlocked) — não é
+// baseado em quantidade de mortes. Sem isso, o Andar já começa desbloqueado.
 // Recompensa é sempre item (nunca moeda direto) — cada MONSTER_TYPES define
 // seus próprios `drops` (ver comentário acima e MonsterModule.onDeath).
 const MAPS = {
   // Cada posição do ciclo é normalmente 1 monstro só (string = chave em
-  // MONSTER_TYPES). Posições de monstro DUPLO usam
+  // MONSTER_TYPES). Posições de GRUPO usam
   // `{ pairChoices:[[a,b], [c,d], ...] }`: ao chegar nessa posição, sorteia
-  // UMA dessas duplas (ver MonsterModule.resolveSlot/pendingSlot) e os 2
-  // monstros aparecem em sequência — matou o 1º, o 2º já spawna. `strong:true`
-  // marca a dupla "mais forte" (posição 9 de cada ciclo, ganha hpMult extra —
-  // ver MonsterModule.hpFor). A posição 10 é sempre o chefe (1 monstro só).
+  // UMA dessas opções (ver MonsterModule.resolveSlot/pendingSlot/groupSize)
+  // e os monstros aparecem em sequência — matou o 1º, o 2º já spawna, e
+  // assim por diante. Apesar do nome, `pairChoices` aceita opções de
+  // QUALQUER tamanho (2 = dupla, 3 = tripla — ver MAPS.goblins/wilds/dragons),
+  // desde que todas as opções da MESMA posição tenham o mesmo tamanho entre
+  // si. `strong:true` marca o grupo "mais forte" do ciclo, ganha hpMult
+  // extra (ver MonsterModule.hpFor). Um grupo pode até SER o chefe do ciclo
+  // se for a ÚLTIMA posição (ver MAPS.dragons) — só a ÚLTIMA fase do grupo
+  // conta como chefe de verdade (ver MonsterModule.spawn). `killsPerCycle`
+  // (não o Nº de posições) é o que precisa bater entre os ciclos de uma
+  // MESMA Dungeon — o formato/Nº de posições pode variar de ciclo pra ciclo,
+  // só o total de mortes precisa ser sempre igual (ver MonsterModule.
+  // killsPerCycleFor, que lê só o Ciclo 1 pra saber esse total).
   slimes: {
-    name: 'Dungeon do Pântano dos Slimes',
+    name: 'Andar do Pântano dos Slimes',
     cycles: {
       // Ciclo 1: só slime verde, do início ao fim.
       1: ['slime', 'slime', 'slime', 'slime',
@@ -216,20 +245,130 @@ const MAPS = {
         'slimeRedKing'],
     }
   },
+  // Mesmo padrão estrutural do Slime acima (posição 5 = dupla, posição 9 =
+  // dupla "forte", posição 10 = chefe) em todos os ciclos exceto o 5, que
+  // troca a dupla forte por uma TRIPLA — todo ciclo aqui soma exatamente 12
+  // mortes (killsPerCycle), igual ao Ciclo 1 (ver comentário no topo de MAPS).
   goblins: {
-    name: 'Dungeon do Reino Goblin',
-    unlockRequirement: { dungeon: 'slimes', kills: 30 },
+    name: 'Andar do Reino Goblin',
+    unlockRequirement: { dungeon: 'slimes', cycle: 5 },
     cycles: {
-      1: ['goblinGreen', 'goblinGreen', 'goblinRed', 'goblinGreen', 'goblinRed', 'goblinGreen', 'goblinRed', 'goblinGreen', 'goblinRed', 'goblinPriest'],
-      2: ['goblinRed', 'goblinMage', 'goblinGreen', 'goblinRed', 'goblinWarrior', 'goblinRed', 'goblinMage', 'goblinWarrior', 'goblinRed', 'goblinMaster'],
-      3: ['goblinWarrior', 'goblinPriest', 'goblinMage', 'goblinWarrior', 'goblinPriest', 'goblinMage', 'goblinWarrior', 'goblinPriest', 'goblinWarrior', 'goblinGreater'],
+      // Ciclo 1: verde dominante, vermelho estreando.
+      1: ['goblinGreen', 'goblinGreen', 'goblinGreen', 'goblinRed',
+        { pairChoices: [['goblinGreen', 'goblinGreen']] },
+        'goblinRed', 'goblinRed', 'goblinGreen',
+        { pairChoices: [['goblinRed', 'goblinRed']], strong: true },
+        'goblinPriest'],
+      // Ciclo 2: vermelho dominante, mago/guerreiro estreando.
+      2: ['goblinRed', 'goblinRed', 'goblinMage', 'goblinRed',
+        { pairChoices: [['goblinRed', 'goblinRed'], ['goblinRed', 'goblinMage']] },
+        'goblinWarrior', 'goblinRed', 'goblinMage',
+        { pairChoices: [['goblinWarrior', 'goblinWarrior']], strong: true },
+        'goblinMaster'],
+      // Ciclo 3: mago/guerreiro dominante, sacerdote estreando.
+      3: ['goblinMage', 'goblinWarrior', 'goblinMage', 'goblinWarrior',
+        { pairChoices: [['goblinMage', 'goblinMage'], ['goblinMage', 'goblinWarrior']] },
+        'goblinPriest', 'goblinWarrior', 'goblinPriest',
+        { pairChoices: [['goblinPriest', 'goblinPriest']], strong: true },
+        'goblinGreater'],
+      // Ciclo 4: mesmo padrão do Ciclo 3 (a dificuldade já sobe sozinha pelo
+      // HP crescente por kill — não precisa de uma composição nova).
+      4: ['goblinMage', 'goblinWarrior', 'goblinMage', 'goblinWarrior',
+        { pairChoices: [['goblinMage', 'goblinMage'], ['goblinMage', 'goblinWarrior']] },
+        'goblinPriest', 'goblinWarrior', 'goblinPriest',
+        { pairChoices: [['goblinPriest', 'goblinPriest']], strong: true },
+        'goblinGreater'],
+      // Ciclo 5: só goblin mestre, do início ao fim — a posição "forte" vira
+      // uma TRIPLA (2 mestres + 1 maior) em vez de dupla, por isso só tem 7
+      // posições únicas antes dela em vez de 8 (mantém as 12 mortes do ciclo).
+      5: ['goblinMaster', 'goblinMaster', 'goblinMaster', 'goblinMaster',
+        { pairChoices: [['goblinMaster', 'goblinMaster']] },
+        'goblinMaster', 'goblinMaster',
+        { pairChoices: [['goblinMaster', 'goblinMaster', 'goblinGreater']], strong: true },
+        'goblinGreater'],
     }
   },
+  // Só Orc e Troll (Dragão e Demônio agora têm andar próprio — ver
+  // MAPS.dragons/MAPS.demons). Todo ciclo soma 12 mortes, igual ao Ciclo 1.
   wilds: {
-    name: 'Dungeon das Terras Selvagens',
-    unlockRequirement: { dungeon: 'goblins', kills: 30 },
-    order: ['orc', 'troll', 'dragon', 'orc', 'troll', 'demon', 'orc', 'troll', 'dragon', 'demon']
-  }
+    name: 'Andar das Terras Selvagens',
+    unlockRequirement: { dungeon: 'goblins', cycle: 5 },
+    cycles: {
+      // Ciclo 1: padrão básico, 2 duplas (posições 5 e 9).
+      1: ['orc', 'orc', 'orc', 'troll',
+        { pairChoices: [['orc', 'orc']] },
+        'troll', 'orc', 'troll',
+        { pairChoices: [['troll', 'troll']], strong: true },
+        'troll'],
+      // Ciclo 2: estreia a TRIPLA na posição 4 (no lugar de uma dupla) —
+      // 7 posições únicas em vez de 8 pra manter as 12 mortes do ciclo.
+      2: ['troll', 'orc', 'troll',
+        { pairChoices: [['orc', 'troll', 'orc']] },
+        'troll', 'troll', 'orc',
+        { pairChoices: [['troll', 'troll']], strong: true },
+        'orc'],
+      // Ciclo 3: dupla variada na posição 5, tripla forte na posição 9.
+      3: ['orc', 'troll', 'orc', 'troll',
+        { pairChoices: [['orc', 'orc'], ['troll', 'troll']] },
+        'orc', 'troll',
+        { pairChoices: [['orc', 'troll', 'troll'], ['troll', 'orc', 'orc']], strong: true },
+        'troll'],
+      // Ciclo 4: mesmo padrão do Ciclo 3.
+      4: ['orc', 'troll', 'orc', 'troll',
+        { pairChoices: [['orc', 'orc'], ['troll', 'troll']] },
+        'orc', 'troll',
+        { pairChoices: [['orc', 'troll', 'troll'], ['troll', 'orc', 'orc']], strong: true },
+        'troll'],
+      // Ciclo 5: o mais difícil — dupla + tripla forte, os dois tipos
+      // intercalados o tempo todo.
+      5: ['troll', 'troll', 'orc', 'troll',
+        { pairChoices: [['troll', 'troll']] },
+        'orc', 'troll',
+        { pairChoices: [['orc', 'troll', 'orc'], ['troll', 'orc', 'troll']], strong: true },
+        'troll'],
+    }
+  },
+  // Andar novo — 1 espécie nova (Lagarto de Fogo) + Dragão (promovido de
+  // Selvagens pra virar o destaque deste andar, ver ITEM_DEFS.dragonScale).
+  // Só 3 ciclos: killsPerCycle = 5 (3 avulsos + 1 dupla), fixo nos 3.
+  dragons: {
+    name: 'Andar do Dragão',
+    unlockRequirement: { dungeon: 'wilds', cycle: 5 },
+    cycles: {
+      // Ciclo 1: 3 Lagartos de Fogo avulsos + 1 DUPLA de Lagartos de Fogo
+      // na última posição — a dupla inteira É o chefe (só a 2ª fase conta
+      // pra fechar o ciclo/dar o bônus de CONFIG.bossHpMult, ver
+      // MonsterModule.spawn), em vez do chefe de sempre ser 1 monstro só.
+      1: ['fireLizard', 'fireLizard', 'fireLizard',
+        { pairChoices: [['fireLizard', 'fireLizard']] }],
+      // Ciclo 2: igual ao Ciclo 1 (a dificuldade já sobe sozinha pelo HP
+      // crescente por kill).
+      2: ['fireLizard', 'fireLizard', 'fireLizard',
+        { pairChoices: [['fireLizard', 'fireLizard']] }],
+      // Ciclo 3: só Dragão, do início ao fim (mesmas 5 mortes dos ciclos
+      // anteriores, só que todas avulsas — a última é o chefe, como de costume).
+      3: ['dragon', 'dragon', 'dragon', 'dragon', 'dragon'],
+    }
+  },
+  // Andar novo — 2 espécies novas (Sombra, Mini Servo) + Demônio (promovido
+  // de Selvagens, ver ITEM_DEFS.demonHorn). Sem duplas/triplas aqui, de
+  // propósito — todo ciclo tem 10 posições únicas, igual ao Goblin/Slime
+  // originais. É o andar mais avançado do jogo hoje.
+  demons: {
+    name: 'Andar do Demônio',
+    unlockRequirement: { dungeon: 'dragons', cycle: 5 },
+    cycles: {
+      // Ciclo 1: só Mini Servo, do início ao fim.
+      1: ['miniServo', 'miniServo', 'miniServo', 'miniServo', 'miniServo',
+        'miniServo', 'miniServo', 'miniServo', 'miniServo', 'miniServo'],
+      // Ciclo 2: Mini Servo intercalado com Sombra — a Sombra fecha o ciclo.
+      2: ['miniServo', 'shadow', 'miniServo', 'shadow', 'miniServo',
+        'shadow', 'miniServo', 'shadow', 'miniServo', 'shadow'],
+      // Ciclo 3: só Demônio, do início ao fim — o chefe final do jogo hoje.
+      3: ['demon', 'demon', 'demon', 'demon', 'demon',
+        'demon', 'demon', 'demon', 'demon', 'demon'],
+    }
+  },
 };
 
 // Itens (todo drop de monstro vira item — ver `drops` em MONSTER_TYPES).
@@ -245,13 +384,13 @@ const MAPS = {
 // (mesmo padrão de MINERAL_DEFS.weight/CavernModule.rollMineral: maior peso
 // = mais comum, não precisa somar 100).
 const ITEM_DEFS = [
-  // --- Dungeon do Pântano dos Slimes ---
+  // --- Andar do Pântano dos Slimes ---
   { key: 'slimeGel', name: 'Geleia de Slime', icon: 'item-slimegel', sellPrice: 2, type: 'material', dungeon: 'slimes', weight: 40 },
   { key: 'slimeCompound', name: 'Composto de Slime', icon: 'item-slimecompound', sellPrice: 10, type: 'material', dungeon: 'slimes', weight: 15 },
   { key: 'slimeSword', name: 'Espada de Gosma (Bruta)', icon: 'item-slimesword', sellPrice: 30, type: 'brokenWeapon' },
   { key: 'slimeAxe', name: 'Machado de Gosma (Bruto)', icon: 'item-slimeaxe', sellPrice: 100, type: 'brokenWeapon' },
   { key: 'slimeAxeGreater', name: 'Machado de Gosma Maior (Bruto)', icon: 'item-slimeaxegreater', sellPrice: 300, type: 'brokenWeapon' },
-  // --- Dungeon do Reino Goblin ---
+  // --- Andar do Reino Goblin ---
   { key: 'goblinEar', name: 'Orelha de Goblin', icon: 'item-goblinear', sellPrice: 3, type: 'material', dungeon: 'goblins', weight: 35 },
   { key: 'goblinFang', name: 'Presa de Goblin Vermelho', icon: 'item-goblinfang', sellPrice: 5, type: 'material', dungeon: 'goblins', weight: 28 },
   { key: 'goblinShard', name: 'Fragmento Arcano Goblin', icon: 'item-goblinshard', sellPrice: 8, type: 'material', dungeon: 'goblins', weight: 20 },
@@ -259,11 +398,19 @@ const ITEM_DEFS = [
   { key: 'goblinAmulet', name: 'Amuleto Sagrado Goblin', icon: 'item-goblinamulet', sellPrice: 15, type: 'material', dungeon: 'goblins', weight: 9 },
   { key: 'goblinSeal', name: 'Selo do Goblin Mestre', icon: 'item-goblinseal', sellPrice: 20, type: 'material', dungeon: 'goblins', weight: 5 },
   { key: 'goblinCrown', name: 'Coroa Menor Goblin', icon: 'item-goblincrown', sellPrice: 28, type: 'material', dungeon: 'goblins', weight: 2 },
-  // --- Dungeon das Terras Selvagens ---
+  // --- Andar das Terras Selvagens --- (Dragão/Demônio saíram daqui, agora
+  // têm andar próprio — ver blocos abaixo)
   { key: 'orcTusk', name: 'Presa de Orc', icon: 'item-orctusk', sellPrice: 40, type: 'material', dungeon: 'wilds', weight: 40 },
   { key: 'trollHide', name: 'Pele de Troll', icon: 'item-trollhide', sellPrice: 65, type: 'material', dungeon: 'wilds', weight: 25 },
-  { key: 'dragonScale', name: 'Escama de Dragão', icon: 'item-dragonscale', sellPrice: 110, type: 'material', dungeon: 'wilds', weight: 12 },
-  { key: 'demonHorn', name: 'Chifre de Demônio', icon: 'item-demonhorn', sellPrice: 180, type: 'material', dungeon: 'wilds', weight: 5 },
+  // --- Andar do Dragão --- preço subiu (era 110 quando dividia com
+  // Selvagens) pra refletir ser o material mais raro de um andar mais avançado.
+  { key: 'fireLizardScale', name: 'Escama de Lagarto de Fogo', icon: 'item-firelizardscale', sellPrice: 220, type: 'material', dungeon: 'dragons', weight: 40 },
+  { key: 'dragonScale', name: 'Escama de Dragão', icon: 'item-dragonscale', sellPrice: 350, type: 'material', dungeon: 'dragons', weight: 15 },
+  // --- Andar do Demônio --- preço do Chifre subiu (era 180) pra ser o item
+  // mais valioso do jogo — capstone do andar mais avançado hoje.
+  { key: 'miniServoClaw', name: 'Garra de Mini Servo', icon: 'item-miniservoclaw', sellPrice: 260, type: 'material', dungeon: 'demons', weight: 45 },
+  { key: 'shadowEssence', name: 'Essência das Sombras', icon: 'item-shadowessence', sellPrice: 320, type: 'material', dungeon: 'demons', weight: 30 },
+  { key: 'demonHorn', name: 'Chifre de Demônio', icon: 'item-demonhorn', sellPrice: 500, type: 'material', dungeon: 'demons', weight: 10 },
   // --- Caverna (minérios) --- itens com `type:'mineral'` NÃO vêm de drop de
   // monstro: entram no inventário só pelo baú da Caverna (ver CavernModule.
   // collectChest). `rarity`/`weight` controlam o sorteio de qual minério cai
@@ -456,14 +603,14 @@ const QUEST_DEFS = [
   {
     // Missão com objetivos variados de propósito (não só entrega de item) —
     // prova que o jogador já enfrenta a dungeon de verdade e já investiu num
-    // 2º armamento antes de "armar uma milícia" de verdade. O objetivo
+    // 2º armamento antes de "armar uma tropa" de verdade. O objetivo
     // `ownWeapons` exige só armas INICIAIS compráveis no próprio Ferreiro
     // (não uma arma forjada) de propósito: forjar exige minério, que só vem
     // da Caverna — e a Caverna é liberada por uma missão totalmente separada
     // (caveClearance), então exigir arma forjada aqui criaria uma dependência
     // escondida entre 2 missões que hoje podem ser feitas em qualquer ordem.
     key: 'creitonMilitia', npc: 'Creiton', unlocksBuilding: 'guilda',
-    modalElId: 'ferreiroModal', bannerElId: 'ferreiroQuestBanner', bannerLabel: 'Material pra Milícia',
+    modalElId: 'ferreiroModal', bannerElId: 'ferreiroQuestBanner', bannerLabel: 'Material pra Tropas',
     objectives: [
       { type: 'deliverItem', itemKey: 'slimeCompound', itemQty: 8 },
       { type: 'defeatCycle', count: 1, label: 'Derrotar o chefe de um ciclo em qualquer Dungeon' },
@@ -473,13 +620,18 @@ const QUEST_DEFS = [
     completeText: 'Perfeito — material temperado, você já provou que aguenta a dungeon e ainda chegou armado até os dentes. Já mandei um recado pra Guilda — pode ir até lá quando quiser armar sua tropa.'
   },
   {
+    // Anunciada pelo próprio Anselmo ao abrir a Igreja (ver
+    // QuestModule.openAnselmoCaveIntro/state.caveQuestAnnounced), igual ao
+    // padrão de Barnabé/Creiton — não é mais só um banner passivo.
     key: 'caveClearance', npc: 'Irmão Anselmo', unlocksBuilding: 'caverna',
     modalElId: 'igrejaModal', bannerElId: 'clericQuestBanner', bannerLabel: 'Reabertura da Caverna',
     objectives: [
       { type: 'deliverItem', itemKey: 'slimeGel', itemQty: 20 },
+      { type: 'deliverItem', itemKey: 'slimeCompound', itemQty: 15 },
+      { type: 'defeatCycle', count: 1, label: 'Derrotar o chefe de um ciclo em qualquer Dungeon' },
     ],
     completeTitle: 'IRMÃO ANSELMO',
-    completeText: 'Isso deve bastar pra convencer os poucos mineradores que restaram a voltar ao trabalho. A Caverna está pronta pra ser explorada.'
+    completeText: 'Isso deve bastar pra convencer os poucos mineradores que restaram a voltar ao trabalho, e sua coragem lá fora acaba com a última dúvida deles. A Caverna está pronta pra ser explorada.'
   },
 ];
 

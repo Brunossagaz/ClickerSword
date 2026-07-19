@@ -68,15 +68,22 @@ detalhados no roadmap do `README.md` são referenciados, não duplicados.
 
 ## Fase 2 — Conteúdo
 
-- [ ] **Novos ciclos / novas Dungeons** — Necrópole, Floresta Élfica, Abismo
-      Demoníaco (plano detalhado já existe em `README.md` → "Novas
-      Dungeons"). Inclui dar tiers pra Dungeon das Terras Selvagens atual.
+- [x] **Dar tiers pro Andar das Terras Selvagens** — Feito: 5 ciclos (igual
+      ao Slime/Goblin), com posições de dupla e tripla (Orc/Troll).
+- [x] **2 andares novos** — Andar do Dragão (Lagarto de Fogo novo + Dragão,
+      3 ciclos, chefe é uma DUPLA na última posição) e Andar do Demônio
+      (Sombra + Mini Servo novos + Demônio, 3 ciclos). O motor de batalha
+      em grupo (`pairChoices` em `MAPS`) agora aceita trio, não só dupla
+      (ver `MonsterModule.groupSize`), e um grupo pode ser o chefe do ciclo
+      (só a última fase do grupo fecha o ciclo, ver `MonsterModule.spawn`).
+      Necrópole/Floresta Élfica (plano antigo em `README.md` → "Novas
+      Dungeons") ainda não têm andar — usar o mesmo padrão dos 2 acima.
 - [ ] **Finalizar Inventário estilo mochila** — a aba "Mochila" já existe
       (`ui.js`, só visualização — equipar arma agora é na aba Armas, ver
       Fase 4), falta organizar por slots/quantidade e usar a classificação
       de tipo (Fase 1) pra filtrar/agrupar.
-- [ ] **Expandir loot pra outras Dungeons** — hoje só a Dungeon Slime dropa
-      item (`dropsItem` em `MAPS`).
+- [x] **Expandir loot pra outras Dungeons** — todo andar dropa item hoje
+      (Slime é o único com cadeia de arma bruta→forja, ver Fase 4).
 
 ## Fase 3 — Sistemas novos maiores
 
@@ -134,29 +141,47 @@ detalhados no roadmap do `README.md` são referenciados, não duplicados.
 
 ## Ícones da UI pendentes (`assets/icons/`)
 
-Pasta vazia de propósito — cada linha já tem uma classe CSS `.icon-<nome>`
-pronta em `css/style.css`, só falta o PNG (64×64, fundo transparente, ver
-`README.md` → "Ícones da UI (pixel art)" pro formato e passo a passo).
+Cada linha já tem uma classe CSS `.icon-<nome>` pronta em `css/style.css`, só
+falta o PNG (64×64, fundo transparente, ver `README.md` → "Ícones da UI
+(pixel art)" pro formato e passo a passo).
 
-- [ ] `ferreiro.png` — Prédio Ferreiro (~32px)
-- [ ] `guilda.png` — Prédio Guilda (~32px)
-- [ ] `caverna.png` — Prédio Caverna (~32px)
-- [ ] `loja.png` — Prédio Loja (~32px)
-- [ ] `igreja.png` — Prédio Igreja (~32px)
-- [ ] `dungeon.png` — Prédio Dungeons (~32px)
-- [ ] `inventario.png` — Prédio Inventário (~32px)
-- [ ] `academia.png` — Prédio Academia de Combate (~32px)
-- [ ] `gear.png` — Botão de Configurações (~18px)
-- [ ] `trophy.png` — Modal de Conquistas (~40px)
-- [ ] `lock.png` — Prédio/upgrade bloqueado (~12-14px)
+- [x] `ferreiro.png` — Prédio Ferreiro (~32px)
+- [x] `guilda.png` — Prédio Guilda (~32px)
+- [x] `caverna.png` — Prédio Caverna (~32px)
+- [x] `loja.png` — Prédio Loja (~32px)
+- [x] `igreja.png` — Prédio Igreja (~32px)
+- [x] `dungeon.png` — Prédio Dungeons (~32px)
+- [x] `inventario.png` — Prédio Inventário (~32px)
+- [x] `academia.png` — Prédio Academia de Combate (~32px)
+- [x] `gear.png` — Botão de Configurações (~18px)
+- [x] `trophy.png` — Modal de Conquistas (~40px)
+- [x] `lock.png` — Prédio/upgrade bloqueado (~12-14px)
 - [ ] `coin.png` — Custo/recompensa em moeda (~14px)
-- [ ] `essence.png` — Custo em Essência (Ascensão) (~14px)
-- [ ] `boss.png` — Marcador de chefe (~16px)
-- [ ] `golden-monster.png` — Marcador de monstro dourado (~16px)
-- [ ] `item-slimegel.png` — Item Geleia de Slime (~20px)
-- [ ] `weapon-sword.png` — Arma Espada Simples (~20-28px)
-- [ ] `weapon-bow.png` — Arma Arco e Flecha (~20-28px)
-- [ ] `weapon-axe.png` — Arma Machado (~20-28px)
+- [x] `essence.png` — Custo em Essência (Ascensão) (~14px)
+- [x] `boss.png` — Marcador de chefe (~16px)
+- [x] `golden-monster.png` — Marcador de monstro dourado (~16px)
+- [x] `item-slimegel.png` — Item Geleia de Slime (~20px)
+- [ ] `item-slimecompound.png` — Item Composto de Slime (~20px)
+- [ ] `item-slimesword.png` — Item Espada de Gosma (Bruta) (~20px)
+- [ ] `item-slimeaxe.png` — Item Machado de Gosma (Bruto) (~20px)
+- [ ] `item-slimeaxegreater.png` — Item Machado de Gosma Maior (Bruto) (~20px)
+- [ ] `item-goblinear.png` — Item Orelha de Goblin (~20px)
+- [ ] `item-goblinfang.png` — Item Presa de Goblin Vermelho (~20px)
+- [ ] `item-goblinshard.png` — Item Fragmento Arcano Goblin (~20px)
+- [ ] `item-goblinscale.png` — Item Escama de Armadura Goblin (~20px)
+- [ ] `item-goblinamulet.png` — Item Amuleto Sagrado Goblin (~20px)
+- [ ] `item-goblinseal.png` — Item Selo do Goblin Mestre (~20px)
+- [ ] `item-goblincrown.png` — Item Coroa Menor Goblin (~20px)
+- [ ] `item-orctusk.png` — Item Presa de Orc (~20px)
+- [ ] `item-trollhide.png` — Item Pele de Troll (~20px)
+- [ ] `item-dragonscale.png` — Item Escama de Dragão (~20px)
+- [ ] `item-demonhorn.png` — Item Chifre de Demônio (~20px)
+- [ ] `item-firelizardscale.png` — Item Escama de Lagarto de Fogo (~20px)
+- [ ] `item-miniservoclaw.png` — Item Garra de Mini Servo (~20px)
+- [ ] `item-shadowessence.png` — Item Essência das Sombras (~20px)
+- [x] `weapon-sword.png` — Arma Espada Simples (~20-28px)
+- [x] `weapon-bow.png` — Arma Arco e Flecha (~20-28px)
+- [x] `weapon-axe.png` — Arma Machado (~20-28px)
 - [ ] `weapon-slimewarriorsword.png` — Arma forjada Espada do Guerreiro Slime (~20-28px)
 - [ ] `weapon-slimewarrioraxe.png` — Arma forjada Machado do Guerreiro Slime (~20-28px)
 - [ ] `weapon-slimekinggreataxe.png` — Arma forjada Machado Ancestral do Rei Slime (~20-28px)

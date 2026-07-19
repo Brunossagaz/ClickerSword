@@ -7,7 +7,7 @@ const DungeonModule = {
   isUnlocked(key){
     const req = MAPS[key].unlockRequirement;
     if(!req) return true;
-    return state.dungeons[req.dungeon].killCount >= req.kills;
+    return (state.dungeons[req.dungeon].maxCycleCompleted || 0) >= req.cycle;
   },
   progressLabel(key){
     // Sem "/total" fixo: todo mundo dungeon é infinita na prática (o padrão

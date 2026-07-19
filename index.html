@@ -418,8 +418,30 @@
         <span class="pixel">CREITON</span>
       </div>
       <div class="modal-body" style="text-align:center;">
-        <div class="cleric-text">Então é você quem convenceu meu irmão a me mandar aquele material... Sou Creiton, o ferreiro desta cidade. Aqui eu forjo armas novas do zero e conserto as armas brutas que você trouxer da dungeon, deixando-as prontas pro combate. Já que está aqui, tenho um pedido: pra equipar uma milícia de defesa de verdade, preciso de 3 coisas de você — 8 Compostos de Slime pra temperar o metal, prova de que já derrotou o chefe de algum ciclo lá na dungeon, e que já tem pelo menos 2 armas iniciais diferentes (compre a 2ª aqui na forja). Traga tudo isso e a Guilda pode finalmente armar uma tropa de verdade.</div>
+        <div class="cleric-text">Então é você quem convenceu meu irmão a me mandar aquele material... Sou Creiton, o ferreiro desta cidade. Aqui eu forjo armas novas do zero e conserto as armas brutas que você trouxer da dungeon, deixando-as prontas pro combate. Já que está aqui, tenho um pedido: pra equipar uma tropa de defesa de verdade, preciso de 3 coisas de você — 8 Compostos de Slime pra temperar o metal, prova de que já derrotou o chefe de algum ciclo lá na dungeon, e que já tem pelo menos 2 armas iniciais diferentes (compre a 2ª aqui na forja). Traga tudo isso e a Guilda pode finalmente armar uma tropa de verdade.</div>
         <button class="ascend-btn" id="creitonContinueBtn" style="margin-top:14px;">Continuar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Sem botão de fechar de propósito: mesmo padrão do barnabeModal/creitonModal
+     — só aparece 1x, no 1º clique na Igreja (ver state.caveQuestAnnounced em
+     UI.init), apresentando a missão da Caverna em vez de deixar só o banner
+     passivo dentro do igrejaModal. -->
+<div class="modal-overlay" id="anselmoCaveModal">
+  <div class="modal-group">
+    <div class="npc-side-panel">
+      <img class="npc-portrait" src="assets/portraits/anselmo.png" alt="Irmão Anselmo">
+      <div class="npc-speech">Clérigo da cidade.</div>
+    </div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="pixel">IRMÃO ANSELMO</span>
+      </div>
+      <div class="modal-body" style="text-align:center;">
+        <div class="cleric-text">Já que está aqui, tenho um pedido. A Caverna ao norte da cidade está fechada há anos, e os poucos mineradores que restaram têm medo demais de voltar sozinhos. Se você me trouxer 20 Geleias de Slime e 15 Compostos de Slime, e provar que já derrotou o chefe de algum ciclo lá na dungeon, eu os convenço a voltar ao trabalho e reabrir a Caverna pra você.</div>
+        <button class="ascend-btn" id="anselmoCaveContinueBtn" style="margin-top:14px;">Continuar</button>
       </div>
     </div>
   </div>

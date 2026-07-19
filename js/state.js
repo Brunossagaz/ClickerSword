@@ -20,7 +20,9 @@ function freshState(){
     dungeons:{
       slimes:{killCount:0, pendingSlot:null, maxCycleCompleted:0},
       goblins:{killCount:0, pendingSlot:null, maxCycleCompleted:0},
-      wilds:{killCount:0, pendingSlot:null, maxCycleCompleted:0}
+      wilds:{killCount:0, pendingSlot:null, maxCycleCompleted:0},
+      dragons:{killCount:0, pendingSlot:null, maxCycleCompleted:0},
+      demons:{killCount:0, pendingSlot:null, maxCycleCompleted:0}
     },
     totalKillsAll:0,
     // ciclos completos (chefe derrotado) no total, vitalício — usado pra
@@ -89,6 +91,10 @@ function freshState(){
     // Ferreiro mostra a apresentação dele ou já abre o ferreiro normal —
     // mesmo padrão de metBarnabe, ver UI.init
     metCreiton:false,
+    // já ouviu o pedido do Anselmo sobre a Caverna? controla se o clique na
+    // Igreja mostra a apresentação da missão (caveClearance) ou já abre a
+    // igreja normal — mesmo padrão de metBarnabe/metCreiton, ver UI.init
+    caveQuestAnnounced:false,
     // já mostrou o aviso do Clérigo sobre a Academia liberada (5ª entrada na
     // Dungeon)? ver OnboardingModule.announceAcademiaIfNeeded
     academiaAnnounced:false,

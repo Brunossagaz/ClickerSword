@@ -531,6 +531,86 @@ def make_demon():
     return cr.sheet()
 
 
+def make_fire_lizard():
+    # Mapa 4 (Andar do Dragão) — réptil bípede, espinhos dourados na espinha
+    # e cauda saindo pela lateral direita do corpo.
+    pal = {'outline': hexc('#3d1005'), 'body': hexc('#e8642e'),
+           'highlight': hexc('#ffb366'), 'shadow': hexc('#a83d18')}
+    cr = Creature(pal)
+    set_ellipse(cr.body_grid, 16, 10, 6.5, 6)     # cabeça
+    set_ellipse(cr.body_grid, 16, 22, 8.5, 8)     # corpo
+    set_rect(cr.body_grid, 12, 10, 22, 22)        # pescoço ligando os dois
+    cr.highlight_rule = lambda r, c: 5 <= r <= 9 and 11 <= c <= 14
+    cr.shadow_rule = lambda r, c: r >= 19 and c >= 21
+    # espinhos dourados no topo da cabeça (mesmo padrão dos chifres do Dragão)
+    for c in (11, 16, 21):
+        h = 4 if c == 16 else 3
+        cells = [(6 - i, c + (i if c < 16 else (-i if c > 16 else 0))) for i in range(h)]
+        cr.add_overlay(cells, hexc('#ffd54a'))
+    # cauda saindo pela lateral direita, com contorno na diagonal de cima pra
+    # não ficar "solta" (sem isso fica um triângulo liso sem profundidade)
+    tail = [(r, c) for r in range(20, 27) for c in range(24, 31) if (c - 24) <= (26 - r)]
+    cr.add_overlay(tail, pal['body'])
+    tail_edge = [(r, c) for r in range(20, 27) for c in range(24, 31) if (c - 24) == (26 - r)]
+    cr.add_overlay(tail_edge, pal['outline'])
+    cr.eye_clusters = [
+        {'row': 9, 'left_col': 12, 'right_col': 12, 'pupil': hexc('#ffd54a')},
+        {'row': 9, 'left_col': 20, 'right_col': 20, 'pupil': hexc('#ffd54a')},
+    ]
+    cr.mouth_cells_open = [(13, c) for c in range(13, 20)]
+    cr.mouth_cells_closed = cr.mouth_cells_open
+    return cr.sheet()
+
+
+def make_shadow():
+    # Mapa 5 (Andar do Demônio) — silhueta encapuzada quase sem detalhe, sem
+    # boca (só os olhos brilham), barra do manto esfarrapada embaixo.
+    pal = {'outline': hexc('#0a0612'), 'body': hexc('#2a1a3d'),
+           'highlight': hexc('#5a3d7a'), 'shadow': hexc('#150a24')}
+    cr = Creature(pal)
+    set_ellipse(cr.body_grid, 16, 11, 7, 7)      # capuz
+    set_ellipse(cr.body_grid, 16, 23, 10, 8)     # manto
+    set_rect(cr.body_grid, 11, 9, 23, 23)
+    cr.highlight_rule = lambda r, c: 6 <= r <= 10 and 12 <= c <= 15
+    cr.shadow_rule = lambda r, c: r >= 22
+    for c, h in ((8, 2), (13, 4), (18, 1), (23, 3)):
+        for i in range(h):
+            row = 30 - i
+            if 0 <= row < GRID:
+                cr.add_overlay([(row, c)], pal['outline'])
+    cr.eye_clusters = [
+        {'row': 12, 'left_col': 12, 'right_col': 12, 'pupil': hexc('#8f5aff')},
+        {'row': 12, 'left_col': 20, 'right_col': 20, 'pupil': hexc('#8f5aff')},
+    ]
+    cr.mouth_cells_open = []
+    cr.mouth_cells_closed = []
+    return cr.sheet()
+
+
+def make_mini_servo():
+    # Mapa 5 (Andar do Demônio) — capanga pequeno, orelhas e chifres
+    # pontudos, corpo baixo (o mais "fraco" do andar).
+    pal = {'outline': hexc('#2a0a1c'), 'body': hexc('#7a1f4a'),
+           'highlight': hexc('#c46aa0'), 'shadow': hexc('#4a1230')}
+    cr = Creature(pal)
+    set_ellipse(cr.body_grid, 16, 13, 5.5, 5)     # cabeça
+    set_ellipse(cr.body_grid, 16, 23, 5, 4.5)     # corpo pequeno
+    set_rect(cr.body_grid, 16, 12, 20, 21)
+    cr.highlight_rule = lambda r, c: 9 <= r <= 12 and 12 <= c <= 15
+    cr.shadow_rule = lambda r, c: r >= 24 and c >= 19
+    cr.add_overlay([(11, 8), (12, 9), (13, 10)], pal['body'])
+    cr.add_overlay([(11, 24), (12, 23), (13, 22)], pal['body'])
+    cr.add_overlay([(6, 12), (7, 12)], hexc('#2b2b2b'))
+    cr.add_overlay([(6, 19), (7, 19)], hexc('#2b2b2b'))
+    cr.eye_clusters = [
+        {'row': 12, 'left_col': 13, 'right_col': 13, 'pupil': hexc('#ffd54a')},
+        {'row': 12, 'left_col': 19, 'right_col': 19, 'pupil': hexc('#ffd54a')},
+    ]
+    cr.mouth_cells_open = [(15, c) for c in range(14, 19)]
+    cr.mouth_cells_closed = cr.mouth_cells_open
+    return cr.sheet()
+
+
 MONSTERS = {
     # Mapa 1: Pântano dos Slimes (ciclos 1-3)
     'slime': make_slime_green,
@@ -550,7 +630,12 @@ MONSTERS = {
     # Mapa 3: Terras Selvagens (ciclo 7 em diante)
     'orc': make_orc,
     'troll': make_troll,
+    # Mapa 4: Andar do Dragão
+    'fire_lizard': make_fire_lizard,
     'dragon': make_dragon,
+    # Mapa 5: Andar do Demônio
+    'shadow': make_shadow,
+    'mini_servo': make_mini_servo,
     'demon': make_demon,
 }
 

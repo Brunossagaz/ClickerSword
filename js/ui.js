@@ -105,11 +105,18 @@ const UI = {
       });
     }
 
-    // A introdução do Clérigo agora dispara sozinha ao entrar na cidade (ver
-    // showCityView) — o clique na Igreja só abre o modal normal.
+    // A introdução do Clérigo (nome/história/arma) dispara sozinha ao entrar
+    // na cidade (ver showCityView) — o clique na Igreja, na 1ª vez, ainda
+    // apresenta a missão da Caverna (ver QuestModule.openAnselmoCaveIntro/
+    // state.caveQuestAnnounced), mesmo padrão de Barnabé na Loja/Creiton no
+    // Ferreiro; das próximas vezes em diante já abre o modal normal.
     const igrejaModal = document.getElementById('igrejaModal');
     document.getElementById('openIgrejaBtn').addEventListener('click', ()=>{
-      igrejaModal.classList.add('open');
+      if(!state.caveQuestAnnounced){
+        QuestModule.openAnselmoCaveIntro();
+      } else {
+        igrejaModal.classList.add('open');
+      }
     });
     document.getElementById('igrejaCloseBtn').addEventListener('click', ()=>igrejaModal.classList.remove('open'));
     igrejaModal.addEventListener('click', (e)=>{ if(e.target === igrejaModal) igrejaModal.classList.remove('open'); });
@@ -399,11 +406,12 @@ const UI = {
     monsterNameEl.innerHTML = (MonsterModule.current.isBoss ? '<div class="icon icon-boss"></div>CHEFE: ' : '') + t.name;
     document.getElementById('tierLabel').textContent = `${MAPS[state.currentDungeon].name} · CICLO ${loop} · MONSTRO ${slotPos}/${totalSlots} (ABATIDOS NO TOTAL: ${state.totalKillsAll})`;
 
-    // Posição de monstro duplo (ver MAPS.slimes): destaca bem qual dos 2
-    // monstros da dupla está na tela agora (1/2 ou 2/2).
+    // Posição de monstro em grupo (dupla ou tripla, ver MAPS.slimes/
+    // MAPS.dragons): destaca bem qual fase do grupo está na tela agora
+    // (1/2, 2/2, 1/3, 2/3, 3/3...).
     const badge = document.getElementById('doubleMonsterBadge');
     if(MonsterModule.current.isDouble){
-      badge.textContent = `MONSTRO ${MonsterModule.current.doubleSubKill+1}/2`;
+      badge.textContent = `MONSTRO ${MonsterModule.current.doubleSubKill+1}/${MonsterModule.current.groupSize}`;
       badge.style.display = '';
     } else {
       badge.style.display = 'none';
@@ -517,7 +525,7 @@ const UI = {
         row.innerHTML = `
           <div class="shop-info">
             <div class="name"><div class="icon icon-lock"></div>${map.name}</div>
-            <div class="desc">Requer ${req.kills} mortes na ${MAPS[req.dungeon].name}</div>
+            <div class="desc">Requer vencer o Ciclo ${req.cycle} do ${MAPS[req.dungeon].name}</div>
           </div>`;
         el.appendChild(row);
         continue;
@@ -1161,30 +1169,6 @@ const UI = {
     const div = document.createElement('div');
     div.className = 'float-dmg burn';
     div.textContent = '-'+this.fmt(dmg);
-    stage.appendChild(div);
-    setTimeout(()=>div.remove(), 850);
-  },
-  showFloatingGold(amount){
-    const stage = document.getElementById('monsterStage');
-    const div = document.createElement('div');
-    div.className = 'float-dmg';
-    div.style.color = '#ffd54a';
-    div.textContent = '+'+this.fmt(amount)+' moeda(s)';
-    div.style.left = '50%';
-    div.style.top = '50%';
-    stage.appendChild(div);
-    setTimeout(()=>div.remove(), 850);
-  },
-  showFloatingGoldAt(amount, evt){
-    const stage = document.getElementById('monsterStage');
-    const div = document.createElement('div');
-    div.className = 'float-dmg';
-    div.style.color = '#ffd54a';
-    div.textContent = '+'+this.fmt(amount)+' moeda(s)';
-    const rect = stage.getBoundingClientRect();
-    const relX = evt && evt.clientX ? (evt.clientX-rect.left) : rect.width/2;
-    div.style.left = relX+'px';
-    div.style.top = (evt && evt.clientY ? (evt.clientY-rect.top+10) : rect.height/2)+'px';
     stage.appendChild(div);
     setTimeout(()=>div.remove(), 850);
   },
