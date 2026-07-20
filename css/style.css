@@ -520,6 +520,23 @@
   }
   .qty-all-btn{font-size:11px; padding:4px 6px;}
   .qty-stepper .sell-btn{padding:6px 8px; font-size:9px;}
+  /* Campo digitável do stepper (ver #repeatCycleInput) — mesma "moldura"
+     visual do .qty-value, mas editável; remove as setinhas nativas do
+     input[type=number] pra não fugir do estilo pixel-art dos botões +/-. */
+  .qty-input{
+    width:56px;
+    text-align:center;
+    font-family:'Press Start 2P', monospace;
+    font-size:12px;
+    color:var(--parchment);
+    background:rgba(0,0,0,0.25);
+    border:2px solid var(--ember-dim);
+    border-radius:4px;
+    padding:4px 2px;
+  }
+  .qty-input::-webkit-outer-spin-button,
+  .qty-input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
+  .qty-input[type=number]{-moz-appearance:textfield;}
 
   /* .npc-portrait usa altura automática (só largura fixa) pra nunca
      distorcer a imagem, seja qual for a proporção do PNG de origem. */

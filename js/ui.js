@@ -79,6 +79,43 @@ const UI = {
       document.getElementById('cyclePickerCloseBtn').addEventListener('click', ()=>cyclePickerModal.classList.remove('open'));
       cyclePickerModal.addEventListener('click', (e)=>{ if(e.target === cyclePickerModal) cyclePickerModal.classList.remove('open'); });
     }
+    // repeatCycleModal (ver UI.openRepeatCycleModal): stepper com campo
+    // digitável, clampado entre 2 e 50 só ao confirmar/perder foco — clampar
+    // a cada tecla digitada atrapalharia quem está digitando um nº de 2
+    // dígitos (ex.: "35" ficaria preso em "3" no meio do caminho).
+    {
+      const repeatCycleModal = document.getElementById('repeatCycleModal');
+      const input = document.getElementById('repeatCycleInput');
+      const clampInput = ()=>{
+        let v = Math.round(Number(input.value));
+        if(!Number.isFinite(v)) v = 2;
+        v = Math.max(2, Math.min(50, v));
+        input.value = v;
+        return v;
+      };
+      document.getElementById('repeatCycleMinusBtn').addEventListener('click', ()=>{
+        input.value = clampInput() - 1;
+        clampInput();
+      });
+      document.getElementById('repeatCyclePlusBtn').addEventListener('click', ()=>{
+        input.value = clampInput() + 1;
+        clampInput();
+      });
+      input.addEventListener('change', clampInput);
+      document.getElementById('repeatCycleCloseBtn').addEventListener('click', ()=>repeatCycleModal.classList.remove('open'));
+      repeatCycleModal.addEventListener('click', (e)=>{ if(e.target === repeatCycleModal) repeatCycleModal.classList.remove('open'); });
+      document.getElementById('repeatCycleConfirmBtn').addEventListener('click', ()=>{
+        const times = clampInput();
+        const target = UI.repeatCycleTarget;
+        repeatCycleModal.classList.remove('open');
+        if(target) DungeonModule.startAtCycleRepeat(target.key, target.cycleNum, times);
+      });
+    }
+    {
+      const repeatCycleResultModal = document.getElementById('repeatCycleResultModal');
+      document.getElementById('repeatCycleResultCloseBtn').addEventListener('click', ()=>repeatCycleResultModal.classList.remove('open'));
+      repeatCycleResultModal.addEventListener('click', (e)=>{ if(e.target === repeatCycleResultModal) repeatCycleResultModal.classList.remove('open'); });
+    }
     this.wireBuildingModal('openAcademiaBtn', 'academiaModal', 'academiaCloseBtn');
     this.initModalTabs('sidebarInventory');
     this.initSidebarToggle();
@@ -454,8 +491,9 @@ const UI = {
   },
   renderTimer(){
     if(!MonsterModule.current) return;
-    const remainingMs = Math.max(0, CONFIG.monsterTimeLimitMs - (Date.now() - state.monsterSpawnedAt));
-    const pct = Math.max(0, (remainingMs/CONFIG.monsterTimeLimitMs)*100);
+    const limitMs = MonsterModule.timeLimitMs();
+    const remainingMs = Math.max(0, limitMs - (Date.now() - state.monsterSpawnedAt));
+    const pct = Math.max(0, (remainingMs/limitMs)*100);
     const fill = document.getElementById('timerFill');
     const text = document.getElementById('timerText');
     fill.style.width = pct+'%';
@@ -558,11 +596,61 @@ const UI = {
     for(let n=1; n<=max; n++){
       const row = document.createElement('div');
       row.className = 'shop-row';
-      row.innerHTML = `<div class="shop-info"><div class="name">Ciclo ${n}</div></div><button class="buy-btn">INICIAR</button>`;
-      row.querySelector('button').addEventListener('click', ()=>DungeonModule.startAtCycle(key, n));
+      row.innerHTML = `
+        <div class="shop-info"><div class="name">Ciclo ${n}</div></div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;">
+          <button class="buy-btn cycle-start-btn">INICIAR</button>
+          <button class="small-btn cycle-repeat-btn">Repetir Ciclo</button>
+        </div>`;
+      row.querySelector('.cycle-start-btn').addEventListener('click', ()=>DungeonModule.startAtCycle(key, n));
+      row.querySelector('.cycle-repeat-btn').addEventListener('click', ()=>UI.openRepeatCycleModal(key, n));
       el.appendChild(row);
     }
     document.getElementById('cyclePickerModal').classList.add('open');
+  },
+  // Alvo (Dungeon + nº do ciclo) pro qual o repeatCycleModal aberto no
+  // momento vai aplicar a repetição ao confirmar — setado em
+  // openRepeatCycleModal, lido só pelo listener do repeatCycleConfirmBtn
+  // (ver UI.init).
+  repeatCycleTarget:null,
+  // Abre o modal que pergunta quantas vezes (2-50) repetir um ciclo já
+  // concluído (ver DungeonModule.startAtCycleRepeat) — chamado a partir do
+  // seletor de ciclo (openCyclePicker), então `n` sempre já é um ciclo
+  // vencido antes.
+  openRepeatCycleModal(key, cycleNum){
+    this.repeatCycleTarget = { key, cycleNum };
+    document.getElementById('repeatCycleTitle').textContent = `REPETIR CICLO ${cycleNum}`;
+    document.getElementById('repeatCycleInput').value = 2;
+    document.getElementById('repeatCycleModal').classList.add('open');
+  },
+  // Resumo mostrado ao acabar uma sessão de "Repetir Ciclo" (ver
+  // MonsterModule.onDeath/DungeonModule.startAtCycleRepeat) — abre por cima
+  // da tela de seleção de Dungeons (pra onde o jogador já foi devolvido por
+  // DungeonModule.leaveToCity) com o total de cada item dropado durante as
+  // repetições.
+  showRepeatCycleResultModal(key, totals){
+    const map = MAPS[key];
+    document.getElementById('repeatCycleResultTitle').textContent = `CICLOS CONCLUÍDOS — ${map.name}`;
+    const el = document.getElementById('repeatCycleResultList');
+    el.innerHTML = '';
+    const entries = Object.entries(totals).filter(([, qty]) => qty > 0);
+    if(entries.length === 0){
+      el.innerHTML = '<div class="footer-note">Nenhum item coletado.</div>';
+    } else {
+      for(const [itemKey, qty] of entries){
+        const def = ITEM_DEFS.find(d=>d.key===itemKey);
+        const row = document.createElement('div');
+        row.className = 'shop-row';
+        row.innerHTML = `
+          <div class="shop-info">
+            <div class="name"><div class="icon icon-${def ? def.icon : 'chest'}"></div>${def ? def.name : itemKey}</div>
+          </div>
+          <div class="owned">x${qty}</div>`;
+        el.appendChild(row);
+      }
+    }
+    document.getElementById('dungeonModal').classList.add('open'); // tela de seleção de Dungeons, por baixo
+    document.getElementById('repeatCycleResultModal').classList.add('open');
   },
   // Quantidade selecionada pra vender de cada item (Loja) — sobrevive a
   // re-renders (renderShop() é chamado a cada clique de -/+/Tudo), só reseta

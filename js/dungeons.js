@@ -29,6 +29,9 @@ const DungeonModule = {
     // na 5ª entrada)
     state.dungeonEntriesCount += 1;
     OnboardingModule.announceAcademiaIfNeeded();
+    state.dungeons[key].repeatCycleNum = null; // entrada manual cancela qualquer Repetir Ciclo pendente
+    state.dungeons[key].repeatRemaining = 0;
+    state.dungeons[key].repeatLootTotals = null;
     this._enterAt(key, state.dungeons[key].killCount);
   },
   // Reinicia a Dungeon no INÍCIO de um ciclo já concluído antes (ver
@@ -42,7 +45,26 @@ const DungeonModule = {
     document.getElementById('dungeonModal').classList.remove('open');
     const kpc = MonsterModule.killsPerCycleFor(key);
     d.pendingSlot = null; // descarta qualquer dupla em andamento de uma run anterior
+    d.repeatCycleNum = null; // reinício manual (INICIAR) cancela Repetir Ciclo pendente
+    d.repeatRemaining = 0;
+    d.repeatLootTotals = null;
     this._enterAt(key, (cycleNum - 1) * kpc);
+  },
+  // Igual a startAtCycle, mas liga o modo "Repetir Ciclo" (ver
+  // UI.openRepeatCycleModal): ao derrotar o chefe desse ciclo, em vez de
+  // avançar pro próximo, volta sozinho pro monstro 1 dele — `times` vezes
+  // seguidas (2-50, ver repeatCycleModal) — acumulando o loot de tudo que
+  // morrer nesse meio tempo (ver MonsterModule.onDeath) até acabar as
+  // repetições, quando volta pra tela de seleção de Dungeons com o resumo
+  // (ver UI.showRepeatCycleResultModal).
+  startAtCycleRepeat(key, cycleNum, times){
+    if(!this.isUnlocked(key)) return;
+    const d = state.dungeons[key];
+    if(cycleNum > (d.maxCycleCompleted || 0)) return;
+    this.startAtCycle(key, cycleNum);
+    d.repeatCycleNum = cycleNum;
+    d.repeatRemaining = Math.max(2, Math.min(50, Math.round(times) || 2));
+    d.repeatLootTotals = {};
   },
   _enterAt(key, killCount){
     state.currentDungeon = key;

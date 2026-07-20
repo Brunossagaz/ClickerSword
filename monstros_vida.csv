@@ -1,0 +1,256 @@
+DUNGEON,CICLO,MONSTRO,NOME,CHEFE,VIDA
+"Andar do Pântano dos Slimes",1,1,"SLIME",Não,18
+"Andar do Pântano dos Slimes",1,2,"SLIME",Não,21
+"Andar do Pântano dos Slimes",1,3,"SLIME",Não,24
+"Andar do Pântano dos Slimes",1,4,"SLIME",Não,27
+"Andar do Pântano dos Slimes",1,5,"SLIME",Não,30
+"Andar do Pântano dos Slimes",1,6,"SLIME",Não,34
+"Andar do Pântano dos Slimes",1,7,"SLIME",Não,39
+"Andar do Pântano dos Slimes",1,8,"SLIME",Não,44
+"Andar do Pântano dos Slimes",1,9,"SLIME",Não,50
+"Andar do Pântano dos Slimes",1,10,"SLIME",Não,85
+"Andar do Pântano dos Slimes",1,11,"SLIME",Não,96
+"Andar do Pântano dos Slimes",1,12,"SLIME VERDE GUERREIRO",Sim,1142
+"Andar do Pântano dos Slimes",2,1,"SLIME",Não,128
+"Andar do Pântano dos Slimes",2,2,"SLIME",Não,146
+"Andar do Pântano dos Slimes",2,3,"SLIME",Não,166
+"Andar do Pântano dos Slimes",2,4,"SLIME AZUL",Não,282
+"Andar do Pântano dos Slimes",2,5,"SLIME",Não,212
+"Andar do Pântano dos Slimes",2,6,"SLIME",Não,242
+"Andar do Pântano dos Slimes",2,7,"SLIME AZUL",Não,410
+"Andar do Pântano dos Slimes",2,8,"SLIME AZUL",Não,466
+"Andar do Pântano dos Slimes",2,9,"SLIME AZUL",Não,528
+"Andar do Pântano dos Slimes",2,10,"SLIME AZUL",Não,900
+"Andar do Pântano dos Slimes",2,11,"SLIME AZUL",Não,1020
+"Andar do Pântano dos Slimes",2,12,"SLIME VERDE GUERREIRO",Sim,8102
+"Andar do Pântano dos Slimes",3,1,"SLIME",Não,454
+"Andar do Pântano dos Slimes",3,2,"SLIME",Não,516
+"Andar do Pântano dos Slimes",3,3,"SLIME AZUL",Não,876
+"Andar do Pântano dos Slimes",3,4,"SLIME AZUL",Não,994
+"Andar do Pântano dos Slimes",3,5,"SLIME",Não,752
+"Andar do Pântano dos Slimes",3,6,"SLIME",Não,854
+"Andar do Pântano dos Slimes",3,7,"SLIME VERMELHO",Não,3276
+"Andar do Pântano dos Slimes",3,8,"SLIME VERMELHO",Não,3718
+"Andar do Pântano dos Slimes",3,9,"SLIME VERMELHO",Não,4218
+"Andar do Pântano dos Slimes",3,10,"SLIME VERMELHO",Não,7182
+"Andar do Pântano dos Slimes",3,11,"SLIME VERMELHO",Não,8152
+"Andar do Pântano dos Slimes",3,12,"SLIME AZUL BÁRBARO",Sim,64630
+"Andar do Pântano dos Slimes",4,1,"SLIME",Não,1608
+"Andar do Pântano dos Slimes",4,2,"SLIME",Não,1826
+"Andar do Pântano dos Slimes",4,3,"SLIME AZUL",Não,3108
+"Andar do Pântano dos Slimes",4,4,"SLIME AZUL",Não,3526
+"Andar do Pântano dos Slimes",4,5,"SLIME",Não,2668
+"Andar do Pântano dos Slimes",4,6,"SLIME",Não,3030
+"Andar do Pântano dos Slimes",4,7,"SLIME VERMELHO",Não,11618
+"Andar do Pântano dos Slimes",4,8,"SLIME VERMELHO",Não,13186
+"Andar do Pântano dos Slimes",4,9,"SLIME VERMELHO",Não,14966
+"Andar do Pântano dos Slimes",4,10,"SLIME VERMELHO",Não,25478
+"Andar do Pântano dos Slimes",4,11,"SLIME VERMELHO",Não,28918
+"Andar do Pântano dos Slimes",4,12,"SLIME AZUL BÁRBARO",Sim,229290
+"Andar do Pântano dos Slimes",5,1,"SLIME VERMELHO",Não,19278
+"Andar do Pântano dos Slimes",5,2,"SLIME VERMELHO",Não,21882
+"Andar do Pântano dos Slimes",5,3,"SLIME VERMELHO",Não,24834
+"Andar do Pântano dos Slimes",5,4,"SLIME VERMELHO",Não,28188
+"Andar do Pântano dos Slimes",5,5,"SLIME VERMELHO",Não,31992
+"Andar do Pântano dos Slimes",5,6,"SLIME VERMELHO",Não,36312
+"Andar do Pântano dos Slimes",5,7,"SLIME VERMELHO",Não,41214
+"Andar do Pântano dos Slimes",5,8,"SLIME VERMELHO",Não,46778
+"Andar do Pântano dos Slimes",5,9,"SLIME VERMELHO",Não,53092
+"Andar do Pântano dos Slimes",5,10,"SLIME VERMELHO",Não,90388
+"Andar do Pântano dos Slimes",5,11,"SLIME VERMELHO",Não,102590
+"Andar do Pântano dos Slimes",5,12,"SLIME REI VERMELHO",Sim,1220202
+"Andar do Reino Goblin",1,1,"GOBLIN VERDE",Não,35895
+"Andar do Reino Goblin",1,2,"GOBLIN VERDE",Não,40740
+"Andar do Reino Goblin",1,3,"GOBLIN VERDE",Não,46240
+"Andar do Reino Goblin",1,4,"GOBLIN VERMELHO",Não,83972
+"Andar do Reino Goblin",1,5,"GOBLIN VERDE",Não,59568
+"Andar do Reino Goblin",1,6,"GOBLIN VERDE",Não,67609
+"Andar do Reino Goblin",1,7,"GOBLIN VERMELHO",Não,122778
+"Andar do Reino Goblin",1,8,"GOBLIN VERMELHO",Não,139353
+"Andar do Reino Goblin",1,9,"GOBLIN VERDE",Não,98854
+"Andar do Reino Goblin",1,10,"GOBLIN VERMELHO",Não,269277
+"Andar do Reino Goblin",1,11,"GOBLIN VERMELHO",Não,305629
+"Andar do Reino Goblin",1,12,"GOBLIN SACERDOTE",Sim,3642330
+"Andar do Reino Goblin",2,1,"GOBLIN VERMELHO",Não,407506
+"Andar do Reino Goblin",2,2,"GOBLIN VERMELHO",Não,462520
+"Andar do Reino Goblin",2,3,"GOBLIN MAGO",Não,721818
+"Andar do Reino Goblin",2,4,"GOBLIN VERMELHO",Não,595828
+"Andar do Reino Goblin",2,5,"GOBLIN VERMELHO",Não,676264
+"Andar do Reino Goblin",2,6,"GOBLIN VERMELHO",Não,767560
+"Andar do Reino Goblin",2,7,"GOBLIN GUERREIRO",Não,1524566
+"Andar do Reino Goblin",2,8,"GOBLIN VERMELHO",Não,988790
+"Andar do Reino Goblin",2,9,"GOBLIN MAGO",Não,1543130
+"Andar do Reino Goblin",2,10,"GOBLIN GUERREIRO",Não,3343682
+"Andar do Reino Goblin",2,11,"GOBLIN GUERREIRO",Não,3795080
+"Andar do Reino Goblin",2,12,"GOBLIN MESTRE",Sim,34459310
+"Andar do Reino Goblin",3,1,"GOBLIN MAGO",Não,1987900
+"Andar do Reino Goblin",3,2,"GOBLIN GUERREIRO",Não,2871610
+"Andar do Reino Goblin",3,3,"GOBLIN MAGO",Não,2560860
+"Andar do Reino Goblin",3,4,"GOBLIN GUERREIRO",Não,3699280
+"Andar do Reino Goblin",3,5,"GOBLIN MAGO",Não,3298964
+"Andar do Reino Goblin",3,6,"GOBLIN MAGO",Não,3744324
+"Andar do Reino Goblin",3,7,"GOBLIN SACERDOTE",Não,6954232
+"Andar do Reino Goblin",3,8,"GOBLIN GUERREIRO",Não,6139042
+"Andar do Reino Goblin",3,9,"GOBLIN SACERDOTE",Não,8958614
+"Andar do Reino Goblin",3,10,"GOBLIN SACERDOTE",Não,15252042
+"Andar do Reino Goblin",3,11,"GOBLIN SACERDOTE",Não,17311066
+"Andar do Reino Goblin",3,12,"GOBLIN MAIOR",Sim,165553094
+"Andar do Reino Goblin",4,1,"GOBLIN MAGO",Não,7052658
+"Andar do Reino Goblin",4,2,"GOBLIN GUERREIRO",Não,10187884
+"Andar do Reino Goblin",4,3,"GOBLIN MAGO",Não,9085410
+"Andar do Reino Goblin",4,4,"GOBLIN GUERREIRO",Não,13124286
+"Andar do Reino Goblin",4,5,"GOBLIN MAGO",Não,11704050
+"Andar do Reino Goblin",4,6,"GOBLIN MAGO",Não,13284098
+"Andar do Reino Goblin",4,7,"GOBLIN SACERDOTE",Não,24672192
+"Andar do Reino Goblin",4,8,"GOBLIN GUERREIRO",Não,21780062
+"Andar do Reino Goblin",4,9,"GOBLIN SACERDOTE",Não,31783334
+"Andar do Reino Goblin",4,10,"GOBLIN SACERDOTE",Não,54111124
+"Andar do Reino Goblin",4,11,"GOBLIN SACERDOTE",Não,61416126
+"Andar do Reino Goblin",4,12,"GOBLIN MAIOR",Sim,587348566
+"Andar do Reino Goblin",5,1,"GOBLIN MESTRE",Não,54592112
+"Andar do Reino Goblin",5,2,"GOBLIN MESTRE",Não,61962048
+"Andar do Reino Goblin",5,3,"GOBLIN MESTRE",Não,70326924
+"Andar do Reino Goblin",5,4,"GOBLIN MESTRE",Não,79821058
+"Andar do Reino Goblin",5,5,"GOBLIN MESTRE",Não,90596900
+"Andar do Reino Goblin",5,6,"GOBLIN MESTRE",Não,102827482
+"Andar do Reino Goblin",5,7,"GOBLIN MESTRE",Não,116709192
+"Andar do Reino Goblin",5,8,"GOBLIN MESTRE",Não,132464934
+"Andar do Reino Goblin",5,9,"GOBLIN MESTRE",Não,225521548
+"Andar do Reino Goblin",5,10,"GOBLIN MESTRE",Não,255966958
+"Andar do Reino Goblin",5,11,"GOBLIN MAIOR",Não,393415880
+"Andar do Reino Goblin",5,12,"GOBLIN MAIOR",Sim,2083792772
+"Andar das Terras Selvagens",1,1,"ORC",Não,71577396
+"Andar das Terras Selvagens",1,2,"ORC",Não,81240344
+"Andar das Terras Selvagens",1,3,"ORC",Não,92207790
+"Andar das Terras Selvagens",1,4,"TROLL",Não,104655842
+"Andar das Terras Selvagens",1,5,"ORC",Não,118784380
+"Andar das Terras Selvagens",1,6,"ORC",Não,134820272
+"Andar das Terras Selvagens",1,7,"TROLL",Não,153021008
+"Andar das Terras Selvagens",1,8,"ORC",Não,173678844
+"Andar das Terras Selvagens",1,9,"TROLL",Não,197125488
+"Andar das Terras Selvagens",1,10,"TROLL",Não,335606143
+"Andar das Terras Selvagens",1,11,"TROLL",Não,380912973
+"Andar das Terras Selvagens",1,12,"TROLL",Sim,2017569043
+"Andar das Terras Selvagens",2,1,"TROLL",Não,507883964
+"Andar das Terras Selvagens",2,2,"ORC",Não,576448298
+"Andar das Terras Selvagens",2,3,"TROLL",Não,654268818
+"Andar das Terras Selvagens",2,4,"ORC",Não,742595110
+"Andar das Terras Selvagens",2,5,"TROLL",Não,842845450
+"Andar das Terras Selvagens",2,6,"ORC",Não,956629584
+"Andar das Terras Selvagens",2,7,"TROLL",Não,1085774578
+"Andar das Terras Selvagens",2,8,"TROLL",Não,1232354146
+"Andar das Terras Selvagens",2,9,"ORC",Não,1398721956
+"Andar das Terras Selvagens",2,10,"TROLL",Não,2381324130
+"Andar das Terras Selvagens",2,11,"TROLL",Não,2702802886
+"Andar das Terras Selvagens",2,12,"ORC",Sim,14315845952
+"Andar das Terras Selvagens",3,1,"ORC",Não,1801868592
+"Andar das Terras Selvagens",3,2,"TROLL",Não,2045120852
+"Andar das Terras Selvagens",3,3,"ORC",Não,2321212166
+"Andar das Terras Selvagens",3,4,"TROLL",Não,2634575808
+"Andar das Terras Selvagens",3,5,"ORC",Não,2990243542
+"Andar das Terras Selvagens",3,6,"ORC",Não,3393926420
+"Andar das Terras Selvagens",3,7,"ORC",Não,3852106486
+"Andar das Terras Selvagens",3,8,"TROLL",Não,4372140862
+"Andar das Terras Selvagens",3,9,"ORC",Não,7443569818
+"Andar das Terras Selvagens",3,10,"TROLL",Não,8448451742
+"Andar das Terras Selvagens",3,11,"TROLL",Não,9588992728
+"Andar das Terras Selvagens",3,12,"TROLL",Sim,50789698142
+"Andar das Terras Selvagens",4,1,"ORC",Não,6392661818
+"Andar das Terras Selvagens",4,2,"TROLL",Não,7255671164
+"Andar das Terras Selvagens",4,3,"ORC",Não,8235186770
+"Andar das Terras Selvagens",4,4,"TROLL",Não,9346936984
+"Andar das Terras Selvagens",4,5,"ORC",Não,10608773478
+"Andar das Terras Selvagens",4,6,"ORC",Não,12040957896
+"Andar das Terras Selvagens",4,7,"ORC",Não,13666487212
+"Andar das Terras Selvagens",4,8,"TROLL",Não,15511462986
+"Andar das Terras Selvagens",4,9,"ORC",Não,26408265734
+"Andar das Terras Selvagens",4,10,"TROLL",Não,29973381608
+"Andar das Terras Selvagens",4,11,"TROLL",Não,34019788124
+"Andar das Terras Selvagens",4,12,"TROLL",Sim,180191477762
+"Andar das Terras Selvagens",5,1,"TROLL",Não,22679858750
+"Andar das Terras Selvagens",5,2,"TROLL",Não,25741639682
+"Andar das Terras Selvagens",5,3,"ORC",Não,29216761038
+"Andar das Terras Selvagens",5,4,"TROLL",Não,33161023778
+"Andar das Terras Selvagens",5,5,"TROLL",Não,37637761988
+"Andar das Terras Selvagens",5,6,"TROLL",Não,42718859856
+"Andar das Terras Selvagens",5,7,"ORC",Não,48485905936
+"Andar das Terras Selvagens",5,8,"TROLL",Não,55031503238
+"Andar das Terras Selvagens",5,9,"ORC",Não,93691134262
+"Andar das Terras Selvagens",5,10,"TROLL",Não,106339437388
+"Andar das Terras Selvagens",5,11,"ORC",Não,120695261434
+"Andar das Terras Selvagens",5,12,"TROLL",Sim,639282568060
+"Andar do Dragão",1,1,"LAGARTO DE FOGO",Não,142734047212
+"Andar do Dragão",1,2,"LAGARTO DE FOGO",Não,162003143585
+"Andar do Dragão",1,3,"LAGARTO DE FOGO",Não,183873567969
+"Andar do Dragão",1,4,"LAGARTO DE FOGO",Não,208696499645
+"Andar do Dragão",1,5,"LAGARTO DE FOGO",Sim,1658093689677
+"Andar do Dragão",2,1,"LAGARTO DE FOGO",Não,417392999290
+"Andar do Dragão",2,2,"LAGARTO DE FOGO",Não,473741054194
+"Andar do Dragão",2,3,"LAGARTO DE FOGO",Não,537696096510
+"Andar do Dragão",2,4,"LAGARTO DE FOGO",Não,610285069540
+"Andar do Dragão",2,5,"LAGARTO DE FOGO",Sim,4848714877482
+"Andar do Dragão",3,1,"DRAGÃO",Não,610285069540
+"Andar do Dragão",3,2,"DRAGÃO",Não,692673553926
+"Andar do Dragão",3,3,"DRAGÃO",Não,786184483706
+"Andar do Dragão",3,4,"DRAGÃO",Não,892319389008
+"Andar do Dragão",3,5,"DRAGÃO",Sim,7089477545654
+"Andar do Dragão",4,1,"LAGARTO DE FOGO",Não,892319389008
+"Andar do Dragão",4,2,"LAGARTO DE FOGO",Não,1012782506522
+"Andar do Dragão",4,3,"LAGARTO DE FOGO",Não,1149508144904
+"Andar do Dragão",4,4,"LAGARTO DE FOGO",Não,1304691744466
+"Andar do Dragão",4,5,"LAGARTO DE FOGO",Sim,10365775909768
+"Andar do Dragão",5,1,"LAGARTO DE FOGO",Não,1304691744466
+"Andar do Dragão",5,2,"LAGARTO DE FOGO",Não,1480825129968
+"Andar do Dragão",5,3,"LAGARTO DE FOGO",Não,1680736522514
+"Andar do Dragão",5,4,"LAGARTO DE FOGO",Não,1907635953052
+"Andar do Dragão",5,5,"LAGARTO DE FOGO",Sim,15156167646996
+"Andar do Demônio",1,1,"MINI SERVO",Não,3383951411401
+"Andar do Demônio",1,2,"MINI SERVO",Não,3840784851940
+"Andar do Demônio",1,3,"MINI SERVO",Não,4359290806952
+"Andar do Demônio",1,4,"MINI SERVO",Não,4947795065890
+"Andar do Demônio",1,5,"MINI SERVO",Não,5615747399785
+"Andar do Demônio",1,6,"MINI SERVO",Não,6373873298756
+"Andar do Demônio",1,7,"MINI SERVO",Não,7234346194088
+"Andar do Demônio",1,8,"MINI SERVO",Não,8210982930290
+"Andar do Demônio",1,9,"MINI SERVO",Não,9319465625879
+"Andar do Demônio",1,10,"MINI SERVO",Sim,74043154397605
+"Andar do Demônio",2,1,"MINI SERVO",Não,18638931251758
+"Andar do Demônio",2,2,"SOMBRA",Não,21155186970746
+"Andar do Demônio",2,3,"MINI SERVO",Não,24011137211796
+"Andar do Demônio",2,4,"SOMBRA",Não,27252640735388
+"Andar do Demônio",2,5,"MINI SERVO",Não,30931747234664
+"Andar do Demônio",2,6,"SOMBRA",Não,35107533111344
+"Andar do Demônio",2,7,"MINI SERVO",Não,39847050081376
+"Andar do Demônio",2,8,"SOMBRA",Não,45226401842362
+"Andar do Demônio",2,9,"MINI SERVO",Não,51331966091080
+"Andar do Demônio",2,10,"SOMBRA",Sim,407832470593626
+"Andar do Demônio",3,1,"DEMÔNIO",Não,51331966091080
+"Andar do Demônio",3,2,"DEMÔNIO",Não,58261781513376
+"Andar do Demônio",3,3,"DEMÔNIO",Não,66127122017682
+"Andar do Demônio",3,4,"DEMÔNIO",Não,75054283490068
+"Andar do Demônio",3,5,"DEMÔNIO",Não,85186611761228
+"Andar do Demônio",3,6,"DEMÔNIO",Não,96686804348994
+"Andar do Demônio",3,7,"DEMÔNIO",Não,109739522936108
+"Andar do Demônio",3,8,"DEMÔNIO",Não,124554358532482
+"Andar do Demônio",3,9,"DEMÔNIO",Não,141369196934366
+"Andar do Demônio",3,10,"DEMÔNIO",Sim,1123178269643534
+"Andar do Demônio",4,1,"MINI SERVO",Não,141369196934366
+"Andar do Demônio",4,2,"MINI SERVO",Não,160454038520506
+"Andar do Demônio",4,3,"MINI SERVO",Não,182115333720774
+"Andar do Demônio",4,4,"MINI SERVO",Não,206700903773078
+"Andar do Demônio",4,5,"MINI SERVO",Não,234605525782444
+"Andar do Demônio",4,6,"MINI SERVO",Não,266277271763074
+"Andar do Demônio",4,7,"MINI SERVO",Não,302224703451088
+"Andar do Demônio",4,8,"MINI SERVO",Não,343025038416986
+"Andar do Demônio",4,9,"MINI SERVO",Não,389333418603278
+"Andar do Demônio",4,10,"MINI SERVO",Sim,3093254010803038
+"Andar do Demônio",5,1,"MINI SERVO",Não,389333418603278
+"Andar do Demônio",5,2,"SOMBRA",Não,441893430114720
+"Andar do Demônio",5,3,"MINI SERVO",Não,501549043180208
+"Andar do Demônio",5,4,"SOMBRA",Não,569258164009536
+"Andar do Demônio",5,5,"MINI SERVO",Não,646108016150822
+"Andar do Demônio",5,6,"SOMBRA",Não,733332598331184
+"Andar do Demônio",5,7,"MINI SERVO",Não,832332499105894
+"Andar do Demônio",5,8,"SOMBRA",Não,944697386485188
+"Andar do Demônio",5,9,"MINI SERVO",Não,1072231533660688
+"Andar do Demônio",5,10,"SOMBRA",Sim,8518879534934166

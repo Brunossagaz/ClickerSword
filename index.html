@@ -315,6 +315,37 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="repeatCycleModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="pixel" id="repeatCycleTitle">REPETIR CICLO</span>
+      <button class="modal-close" id="repeatCycleCloseBtn">✕</button>
+    </div>
+    <div class="modal-body" style="text-align:center;">
+      <div class="footer-note" style="margin:0 0 14px;">Quantas vezes o ciclo deve se repetir sozinho? Ao derrotar o chefe, volta pro 1º monstro do ciclo em vez de avançar, até completar essa quantidade.</div>
+      <div class="qty-stepper" style="justify-content:center; margin-bottom:16px;">
+        <button class="qty-btn" id="repeatCycleMinusBtn">−</button>
+        <input type="number" id="repeatCycleInput" class="qty-input" min="2" max="50" step="1" value="2">
+        <button class="qty-btn" id="repeatCyclePlusBtn">+</button>
+      </div>
+      <button class="ascend-btn" id="repeatCycleConfirmBtn">CONFIRMAR</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="repeatCycleResultModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="pixel" id="repeatCycleResultTitle">CICLOS CONCLUÍDOS</span>
+      <button class="modal-close" id="repeatCycleResultCloseBtn">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="footer-note" style="margin:0 0 10px;">Loot total coletado nas repetições:</div>
+      <div id="repeatCycleResultList"></div>
+    </div>
+  </div>
+</div>
+
 <!-- Sem botão de fechar de propósito: o jogador precisa passar pelos 3 passos
      (nome, história, escolha de arma) — só aparece 1x, na 1ª conversa com o
      Clérigo (ver OnboardingModule.shouldShowClericIntro). -->

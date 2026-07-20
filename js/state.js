@@ -17,12 +17,20 @@ function freshState(){
     // já foi derrotado nessa Dungeon (vitalício, não reseta ao abandonar/
     // tentar de novo) — habilita o seletor de ciclo (ver DungeonModule/
     // UI.openCyclePicker): só é possível reiniciar em ciclos já concluídos.
+    // `repeatCycleNum`/`repeatRemaining`: "Repetir Ciclo" (ver
+    // DungeonModule.startAtCycleRepeat/UI.openRepeatCycleModal) — quando
+    // `repeatRemaining>0`, ao derrotar o chefe do ciclo `repeatCycleNum` o
+    // jogo volta pro monstro 1 desse MESMO ciclo em vez de avançar pro
+    // próximo, até `repeatRemaining` chegar a 0 (ver MonsterModule.onDeath).
+    // `repeatLootTotals`: soma (por item) de tudo que dropou durante essa
+    // sessão de repetição (todo monstro, não só o chefe) — mostrado no
+    // resumo ao final (ver UI.showRepeatCycleResultModal).
     dungeons:{
-      slimes:{killCount:0, pendingSlot:null, maxCycleCompleted:0},
-      goblins:{killCount:0, pendingSlot:null, maxCycleCompleted:0},
-      wilds:{killCount:0, pendingSlot:null, maxCycleCompleted:0},
-      dragons:{killCount:0, pendingSlot:null, maxCycleCompleted:0},
-      demons:{killCount:0, pendingSlot:null, maxCycleCompleted:0}
+      slimes:{killCount:0, pendingSlot:null, maxCycleCompleted:0, repeatCycleNum:null, repeatRemaining:0, repeatLootTotals:null},
+      goblins:{killCount:0, pendingSlot:null, maxCycleCompleted:0, repeatCycleNum:null, repeatRemaining:0, repeatLootTotals:null},
+      wilds:{killCount:0, pendingSlot:null, maxCycleCompleted:0, repeatCycleNum:null, repeatRemaining:0, repeatLootTotals:null},
+      dragons:{killCount:0, pendingSlot:null, maxCycleCompleted:0, repeatCycleNum:null, repeatRemaining:0, repeatLootTotals:null},
+      demons:{killCount:0, pendingSlot:null, maxCycleCompleted:0, repeatCycleNum:null, repeatRemaining:0, repeatLootTotals:null}
     },
     totalKillsAll:0,
     // ciclos completos (chefe derrotado) no total, vitalício — usado pra
@@ -54,6 +62,11 @@ function freshState(){
     // acumulado (ver PlayerModule.clickDamage())
     clickDamagePercent:0,
     critDamagePercent:0,
+    // ramos de Sorte/Monstro Dourado da Academia — somados em
+    // MonsterModule.rollDrops (só nas entradas de drop que já têm `chance`
+    // própria, ou seja, as mais raras) e MonsterModule.maybeTriggerGolden
+    rareDropChanceBonus:0,
+    goldenChanceBonus:0,
     // troops owned — derivado de TROOP_DEFS, então tropa nova nunca fica de
     // fora daqui (era a causa do bug de "Nível: undefined" / "NaN" na loja)
     troops: Object.fromEntries(TROOP_DEFS.map(d => [d.key, 0])),

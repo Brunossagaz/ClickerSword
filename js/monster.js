@@ -71,7 +71,7 @@ const MonsterModule = {
   },
   maybeTriggerGolden(){
     if(state.isGolden) return;
-    if(Math.random() < CONFIG.goldenChancePerTick){
+    if(Math.random() < CONFIG.goldenChancePerTick + state.goldenChanceBonus){
       state.isGolden = true;
       state.goldenExpiresAt = Date.now() + CONFIG.goldenDurationMs;
       UI.setGoldenVisible(true);
@@ -83,9 +83,16 @@ const MonsterModule = {
       UI.setGoldenVisible(false);
     }
   },
+  // Tempo limite pra derrotar o monstro ATUAL antes de reiniciar o ciclo —
+  // chefe (último monstro do ciclo) tem folga maior (ver CONFIG.bossTimeLimitMs),
+  // já que costuma ter bem mais vida (ver CONFIG.bossHpMult). Usado tanto
+  // aqui quanto em UI.renderTimer, pra barra e checagem nunca desalinharem.
+  timeLimitMs(){
+    return (this.current && this.current.isBoss) ? CONFIG.bossTimeLimitMs : CONFIG.monsterTimeLimitMs;
+  },
   checkTimeUp(){
     if(!this.current) return;
-    if(Date.now() - state.monsterSpawnedAt > CONFIG.monsterTimeLimitMs){
+    if(Date.now() - state.monsterSpawnedAt > this.timeLimitMs()){
       this.onTimeUp();
     }
   },
@@ -144,11 +151,20 @@ const MonsterModule = {
   spawn(isFirst){
     const d = state.dungeons[state.currentDungeon];
     const map = MAPS[state.currentDungeon];
-    const killIdx = d.killCount;
     const cyclesMap = map.cycles || { 1: map.order };
     const totalCycles = Object.keys(cyclesMap).length;
     const schedule1 = cyclesMap[1];
     const kpc = this.killsPerCycle(schedule1);
+    // Ciclo máximo = CONFIG.maxCycleNum (ver onDeath, que trava o avanço pra
+    // não passar disso daqui pra frente) — este clamp é só rede de segurança
+    // pra saves salvos ANTES desse limite existir, cujo killCount podia estar
+    // bem além do último ciclo: trava no início dele em vez de continuar
+    // mostrando um "Ciclo 6+" que não deveria mais existir.
+    if(d.killCount >= kpc * CONFIG.maxCycleNum){
+      d.killCount = kpc * (CONFIG.maxCycleNum - 1);
+      d.pendingSlot = null;
+    }
+    const killIdx = d.killCount;
     const cycleNum = Math.floor(killIdx / kpc) + 1;
     const killIdxInCycle = killIdx % kpc;
     const wrappedCycle = ((cycleNum - 1) % totalCycles) + 1;
@@ -204,7 +220,14 @@ const MonsterModule = {
     // vida (fator fixo, não acumula ciclo após ciclo) em cima disso, pra
     // garantir que fique sempre mais difícil do que estava antes, sem
     // explodir em runs longas dentro do mesmo Andar.
-    const hpKillIndex = killIdx - 2*(cycleNum-1);
+    //
+    // map.hpKillOffset (ver config.js, calculado a partir de DUNGEON_ORDER)
+    // soma quantas mortes as Dungeons ANTERIORES somariam do Ciclo 1 ao
+    // último — sem isso, toda Dungeon nova voltava a usar killIdx=0 (mesmo
+    // HP inicial do jogo, trivial pra quem já teve que zerar a anterior).
+    // Com o offset, o 1º monstro de uma Dungeon nova continua a MESMA curva
+    // exponencial de onde a anterior parou, em vez de resetar.
+    const hpKillIndex = (map.hpKillOffset || 0) + killIdx - 2*(cycleNum-1);
     const cycleDifficultyMult = cycleNum > 1 ? 2 : 1;
     const hp = this.hpFor(hpKillIndex, isBoss, (type.hpMult||1) * extraHpMult) * cycleDifficultyMult;
     state.monsterHp = hp;
@@ -232,12 +255,15 @@ const MonsterModule = {
   // MONSTER_TYPES). Retorna [{item, qty}] só com o que efetivamente dropou.
   // extraDropChance (opcional, ver WEAPON_DEFS/FORGED_WEAPON_DEFS): chance
   // de rolar a tabela inteira de novo, empilhando com o resultado normal.
+  // state.rareDropChanceBonus (ver ramo "Sorte" da Academia, config.js
+  // UPGRADE_DEFS) só soma nas entradas que JÁ têm `chance` própria (as
+  // raras) — entradas garantidas (chance == null) não têm o que melhorar.
   rollDrops(){
     const drops = (this.current && this.current.type.drops) || [];
     const rollOnce = () => {
       const results = [];
       for(const d of drops){
-        const chance = d.chance == null ? 1 : d.chance;
+        const chance = d.chance == null ? 1 : Math.min(1, d.chance + state.rareDropChanceBonus);
         if(Math.random() < chance) results.push({ item:d.item, qty:this.itemQtyFor(d) });
       }
       return results;
@@ -282,6 +308,15 @@ const MonsterModule = {
       UI.showFloatingItem(drop.qty, ITEM_DEFS.find(item=>item.key===drop.item), i);
     });
     UI.logDrops(slotPos, drops);
+    // "Repetir Ciclo" ativo (ver DungeonModule.startAtCycleRepeat): soma o
+    // loot de TODO monstro morto durante a sessão (não só o chefe), pro
+    // resumo final (ver UI.showRepeatCycleResultModal).
+    if(d.repeatCycleNum){
+      if(!d.repeatLootTotals) d.repeatLootTotals = {};
+      for(const drop of drops){
+        d.repeatLootTotals[drop.item] = (d.repeatLootTotals[drop.item] || 0) + drop.qty;
+      }
+    }
     if(wasDouble){
       if(!d.pendingSlot.phaseDrops) d.pendingSlot.phaseDrops = []; // save antigo/estado defensivo
       d.pendingSlot.phaseDrops.push(drops);
@@ -314,10 +349,41 @@ const MonsterModule = {
         state.firstCycleEverCompleted = true;
         SaveModule.save();
         DungeonModule.leaveToCity();
+      } else if(d.repeatRemaining > 0 && d.repeatCycleNum === justFinishedCycle){
+        // "Repetir Ciclo" ativo pra ESTE ciclo (ver DungeonModule.
+        // startAtCycleRepeat/UI.openRepeatCycleModal): conta essa vitória e,
+        // se ainda sobrar repetição, volta pro monstro 1 do MESMO ciclo em
+        // vez de avançar pro próximo.
+        d.repeatRemaining -= 1;
+        if(d.repeatRemaining > 0){
+          d.killCount = kpc * (justFinishedCycle - 1); // volta pro monstro 1 do ciclo repetido
+          d.pendingSlot = null;
+          this.spawn(false);
+          UI.renderAll();
+        } else {
+          // última repetição: em vez de avançar pro próximo ciclo, encerra o
+          // modo, entrega o resumo do loot acumulado e volta pra tela de
+          // seleção de Dungeons (ver UI.showRepeatCycleResultModal) — não
+          // continua a run sozinho.
+          const lootTotals = d.repeatLootTotals || {};
+          d.repeatCycleNum = null;
+          d.repeatLootTotals = null;
+          const finishedDungeonKey = state.currentDungeon;
+          DungeonModule.leaveToCity();
+          UI.showRepeatCycleResultModal(finishedDungeonKey, lootTotals);
+        }
       } else {
         // fim de ciclo normal: avança pro próximo automaticamente, sem
         // perguntar — pra sair, o jogador usa o botão "Voltar pra cidade" do
-        // cabeçalho (ver OnboardingModule.isFirstDungeonEntry)
+        // cabeçalho (ver OnboardingModule.isFirstDungeonEntry). Ciclo MÁXIMO
+        // (CONFIG.maxCycleNum): ao bater o chefe do último ciclo, não existe
+        // "próximo" — volta pro monstro 1 DESSE MESMO ciclo, que passa a se
+        // repetir pra sempre (ver também o clamp de saves antigos no topo de
+        // spawn()).
+        if(justFinishedCycle >= CONFIG.maxCycleNum){
+          d.killCount = kpc * (CONFIG.maxCycleNum - 1);
+          d.pendingSlot = null;
+        }
         this.spawn(false);
         UI.renderAll();
       }

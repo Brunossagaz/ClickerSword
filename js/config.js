@@ -12,6 +12,10 @@ const CONFIG = {
   hpGrowth: 1.135,
   cycleLength: 10,          // monstros por ciclo; o último da fileira é sempre o chefe
   bossHpMult: 7,
+  // Ciclo máximo de qualquer Dungeon — ao bater o chefe do Ciclo 5, o jogo
+  // não avança pro Ciclo 6: volta pro monstro 1 do próprio Ciclo 5, que
+  // passa a se repetir pra sempre (ver MonsterModule.onDeath/spawn).
+  maxCycleNum: 5,
   offlineCapHours: 8,
   offlineEfficiency: 0.5,
   goldenChancePerTick: 0.0025, // per 200ms tick
@@ -24,6 +28,7 @@ const CONFIG = {
   ascendKillThresholdBase: 100,
   ascendKillThresholdGrowth: 100,
   monsterTimeLimitMs: 10000, // tempo pra derrotar cada monstro antes de reiniciar o ciclo
+  bossTimeLimitMs: 20000, // igual, mas só pro chefe (último monstro do ciclo) — luta mais demorada, folga maior
   academiaUnlockEntries: 5, // nº de entradas na Dungeon pra liberar a Academia — ver OnboardingModule
   // Queimadura (ver WEAPON_DEFS.burnChance/burnDamagePercent, MonsterModule.
   // applyBurn/checkBurnTick): dano total é dividido em ticks ao longo de
@@ -370,6 +375,31 @@ const MAPS = {
     }
   },
 };
+
+// Continuidade de dificuldade entre Dungeons (ver MonsterModule.spawn,
+// hpKillIndex): cada Dungeon nova recomeça seu próprio killCount do zero,
+// mas sem um offset o 1º monstro dela voltaria a ter o MESMO HP do 1º
+// monstro do jogo inteiro — trivial pra quem já tinha acabado de vencer a
+// Dungeon anterior. `hpKillOffset` soma quantas mortes as Dungeons
+// ANTERIORES (nesta ordem de progressão) somariam do Ciclo 1 até o Ciclo
+// MÁXIMO (CONFIG.maxCycleNum) — assim toda Dungeon nova continua a MESMA
+// curva exponencial de onde a anterior parou, em vez de resetar.
+// `_groupSizeFor`/`_kpcFor` duplicam de propósito a lógica de
+// MonsterModule.groupSize/killsPerCycle (não dá pra chamar MonsterModule
+// daqui, config.js carrega ANTES de monster.js) — são só 2 linhas, ver
+// monster.js pra versão "oficial" usada durante o jogo.
+const DUNGEON_ORDER = ['slimes', 'goblins', 'wilds', 'dragons', 'demons'];
+(function assignHpKillOffsets(){
+  const _groupSizeFor = slot => (!slot || !slot.pairChoices) ? 1 : Math.max(...slot.pairChoices.map(o => o.length));
+  const _kpcFor = schedule => schedule.reduce((sum, slot) => sum + _groupSizeFor(slot), 0);
+  let offset = 0;
+  for(const key of DUNGEON_ORDER){
+    const map = MAPS[key];
+    if(!map) continue;
+    map.hpKillOffset = offset;
+    offset += _kpcFor(map.cycles[1]) * CONFIG.maxCycleNum;
+  }
+})();
 
 // Itens (todo drop de monstro vira item — ver `drops` em MONSTER_TYPES).
 // Preço fixo de venda na Loja da cidade. `type:'brokenWeapon'` (opcional):
@@ -722,6 +752,41 @@ const UPGRADE_DEFS = [
     apply: s => { s.clickDamagePercent += 0.04; s.clickDamageFlat += 6; }
   },
 
+  // --- Nível 3 do ramo Dano % (encadeado: cada um exige o SEU pai de
+  // Nível 2, não a raiz do ramo — mesmo esquema de corrente do ramo
+  // Automação, ver UI.renderDescendants) — bem mais caro que o Nível 2
+  // (baseCost 3000 vs 400). dmgPercent3B reaproveita state.dpsSynergyRatio
+  // (existia desde antes, só não tinha mais upgrade que o alimentasse — ver
+  // TroopsModule.total/comentário "Ressonância de Combate" em troops.js).
+  {
+    key: 'dmgPercent3A', name: 'Impacto Absoluto', desc: '+30 dano por clique', baseCost: 3000, costGrowth: 1.6, maxLevel: 5, requires: 'dmgPercent2A',
+    apply: s => s.clickDamageFlat += 30
+  },
+  {
+    key: 'dmgPercent3B', name: 'Ressonância de Combate', desc: '+15 dano por clique, +5% DPS', baseCost: 3000, costGrowth: 1.6, maxLevel: 5, requires: 'dmgPercent2B',
+    apply: s => { s.clickDamageFlat += 15; s.dpsSynergyRatio += 0.05; }
+  },
+  {
+    key: 'dmgPercent3C', name: 'Fúria Titânica', desc: '+30% de dano por clique', baseCost: 3000, costGrowth: 1.6, maxLevel: 5, requires: 'dmgPercent2C',
+    apply: s => s.clickDamagePercent += 0.30
+  },
+
+  // --- Nível 4 do ramo Dano % (mesmo esquema de corrente do Nível 3, cada
+  // um exige o SEU pai de Nível 3) — bem mais caro que o Nível 3
+  // (baseCost 25000 vs 3000).
+  {
+    key: 'dmgPercent4A', name: 'Golpe Definitivo', desc: '+100 dano por clique', baseCost: 25000, costGrowth: 1.7, maxLevel: 5, requires: 'dmgPercent3A',
+    apply: s => s.clickDamageFlat += 100
+  },
+  {
+    key: 'dmgPercent4B', name: 'Ressonância Amplificada', desc: '+50 dano por clique, +10% DPS', baseCost: 25000, costGrowth: 1.7, maxLevel: 5, requires: 'dmgPercent3B',
+    apply: s => { s.clickDamageFlat += 50; s.dpsSynergyRatio += 0.10; }
+  },
+  {
+    key: 'dmgPercent4C', name: 'Fúria Apocalíptica', desc: '+60% de dano por clique', baseCost: 25000, costGrowth: 1.7, maxLevel: 5, requires: 'dmgPercent3C',
+    apply: s => s.clickDamagePercent += 0.60
+  },
+
   // --- Nível 2 do ramo Dano Crítico % (requer Golpe Devastador nível 5) —
   // só reforça a própria stat, sem somar dano por clique. ---
   {
@@ -735,6 +800,47 @@ const UPGRADE_DEFS = [
   {
     key: 'critDmgPercent2C', name: 'Golpe Fatal', desc: '+18% de dano crítico', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritDmgPercent',
     apply: s => s.critDamagePercent += 0.18
+  },
+
+  // --- Ramo Sorte (drops raros) e Ramo Monstro Dourado — mesmo padrão dos
+  // 4 ramos acima (raiz de 5 níveis + 3 filhos de Nível 2 também de 5
+  // níveis, requerendo a raiz do próprio ramo), só que MUITO mais caros
+  // (baseCost/costGrowth bem acima dos ramos de dano), por serem ramos
+  // avançados de "luck". rareDropChanceBonus só afeta entradas de drop com
+  // `chance` própria em MONSTER_TYPES (as raras — as garantidas não têm
+  // `chance` e não são tocadas); goldenChanceBonus soma direto em cima de
+  // CONFIG.goldenChancePerTick (ver MonsterModule.rollDrops/maybeTriggerGolden).
+  { key: 'battleDropChance', name: 'Faro de Caçador', desc: '+3% de chance nos drops raros dos monstros', baseCost: 1500, costGrowth: 1.5, maxLevel: 5, requires: 'battleClickDmg',
+    apply: s => s.rareDropChanceBonus = Math.min(0.9, s.rareDropChanceBonus + 0.03) },
+  { key: 'battleGoldenChance', name: 'Sorte Dourada', desc: '+0.05% de chance de monstro dourado por tick', baseCost: 2000, costGrowth: 1.5, maxLevel: 5, requires: 'battleClickDmg',
+    apply: s => s.goldenChanceBonus = Math.min(0.05, s.goldenChanceBonus + 0.0005) },
+
+  // --- Nível 2 do ramo Sorte (requer Faro de Caçador nível 5) ---
+  {
+    key: 'dropChance2A', name: 'Instinto de Caçador', desc: '+4% de chance nos drops raros dos monstros', baseCost: 8000, costGrowth: 1.6, maxLevel: 5, requires: 'battleDropChance',
+    apply: s => s.rareDropChanceBonus = Math.min(0.9, s.rareDropChanceBonus + 0.04)
+  },
+  {
+    key: 'dropChance2B', name: 'Faro Apurado', desc: '+6% de chance nos drops raros dos monstros', baseCost: 8000, costGrowth: 1.6, maxLevel: 5, requires: 'battleDropChance',
+    apply: s => s.rareDropChanceBonus = Math.min(0.9, s.rareDropChanceBonus + 0.06)
+  },
+  {
+    key: 'dropChance2C', name: 'Sexto Sentido', desc: '+2% de chance nos drops raros dos monstros', baseCost: 8000, costGrowth: 1.6, maxLevel: 5, requires: 'battleDropChance',
+    apply: s => s.rareDropChanceBonus = Math.min(0.9, s.rareDropChanceBonus + 0.02)
+  },
+
+  // --- Nível 2 do ramo Monstro Dourado (requer Sorte Dourada nível 5) ---
+  {
+    key: 'goldenChance2A', name: 'Toque de Midas', desc: '+0.07% de chance de monstro dourado por tick', baseCost: 10000, costGrowth: 1.6, maxLevel: 5, requires: 'battleGoldenChance',
+    apply: s => s.goldenChanceBonus = Math.min(0.05, s.goldenChanceBonus + 0.0007)
+  },
+  {
+    key: 'goldenChance2B', name: 'Bênção Dourada', desc: '+0.10% de chance de monstro dourado por tick', baseCost: 10000, costGrowth: 1.6, maxLevel: 5, requires: 'battleGoldenChance',
+    apply: s => s.goldenChanceBonus = Math.min(0.05, s.goldenChanceBonus + 0.0010)
+  },
+  {
+    key: 'goldenChance2C', name: 'Fortuna Rara', desc: '+0.04% de chance de monstro dourado por tick', baseCost: 10000, costGrowth: 1.6, maxLevel: 5, requires: 'battleGoldenChance',
+    apply: s => s.goldenChanceBonus = Math.min(0.05, s.goldenChanceBonus + 0.0004)
   },
 ];
 
@@ -763,9 +869,24 @@ const UPGRADE_TREE = {
       label: 'Dano %', color: '#c9432f', nodes: [
         { key: 'battleDmgPercent', x: 81, y: 80 },
       ], children: [
-        { key: 'dmgPercent2A', x: 114, y: 91 },
-        { key: 'dmgPercent2B', x: 106, y: 104 },
-        { key: 'dmgPercent2C', x: 94, y: 113 },
+        // Nível 3 encadeado (não irmão): cada dmgPercent3X é filho do SEU
+        // dmgPercent2X, continuando pra fora na mesma direção radial a
+        // partir do hub — mesmo esquema de corrente do ramo Automação.
+        { key: 'dmgPercent2A', x: 114, y: 91, children: [
+          { key: 'dmgPercent3A', x: 144, y: 110, children: [
+            { key: 'dmgPercent4A', x: 174, y: 129 },
+          ] },
+        ] },
+        { key: 'dmgPercent2B', x: 106, y: 104, children: [
+          { key: 'dmgPercent3B', x: 132, y: 129, children: [
+            { key: 'dmgPercent4B', x: 158, y: 154 },
+          ] },
+        ] },
+        { key: 'dmgPercent2C', x: 94, y: 113, children: [
+          { key: 'dmgPercent3C', x: 115, y: 143, children: [
+            { key: 'dmgPercent4C', x: 136, y: 173 },
+          ] },
+        ] },
       ]
     },
     {
@@ -791,6 +912,33 @@ const UPGRADE_TREE = {
             { key: 'autoClickSpeed2', x: 118, y: -10 },
           ]
         },
+      ]
+    },
+    // Sorte (drops raros): espelha a posição de Automação, do outro lado do
+    // hub (x negativo em vez de >100).
+    {
+      label: 'Sorte', color: '#9b5de5', nodes: [
+        { key: 'battleDropChance', x: 18, y: 20 },
+      ], children: [
+        { key: 'dropChance2A', x: -15, y: 5 },
+        { key: 'dropChance2B', x: -18, y: 20 },
+        { key: 'dropChance2C', x: -15, y: 35 },
+      ]
+    },
+    // Monstro Dourado: mesmo y dos outros 2 ramos "de canto" (Dano %/Dano
+    // Crítico %, ambos y:80), só que centralizado — os 3 formam uma fileira
+    // só embaixo do hub. y:80 (não mais fundo) de propósito: o rótulo da
+    // branch (UI.renderUpgradeTree label*) empurra 13pts na direção do nó a
+    // partir do hub, e pra nó "reto pra baixo" (dx=0) isso esbarra rápido no
+    // clamp de 94 do eixo Y — acima de y:81 o texto do rótulo já invade o
+    // próprio card do nó.
+    {
+      label: 'Monstro Dourado', color: '#ffab00', nodes: [
+        { key: 'battleGoldenChance', x: 50, y: 80 },
+      ], children: [
+        { key: 'goldenChance2A', x: 35, y: 122 },
+        { key: 'goldenChance2B', x: 50, y: 128 },
+        { key: 'goldenChance2C', x: 65, y: 122 },
       ]
     },
   ]
