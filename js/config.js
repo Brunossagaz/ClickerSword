@@ -723,6 +723,7 @@ const UPGRADE_DEFS = [
   // PlayerModule.autoClickIntervalMs().
   { key: 'autoClickSpeed1', name: 'Reflexos de Aço', desc: '-25% no intervalo do Clique Automático (1s → 0.75s)', baseCost: 3000, costGrowth: 1.5, apply: s => { }, maxLevel: 1, requires: 'battleAutoClick' },
   { key: 'autoClickSpeed2', name: 'Reflexos Sobrenaturais', desc: '-25% no intervalo do Clique Automático, acumulado (0.75s → 0.5s)', baseCost: 8000, costGrowth: 1.5, apply: s => { }, maxLevel: 1, requires: 'autoClickSpeed1' },
+  { key: 'autoClickSpeed3', name: 'Reflexos Infinitos', desc: '-25% no intervalo do Clique Automático, acumulado (0.5s → 0.25s)', baseCost: 15000, costGrowth: 1.5, apply: s => { }, maxLevel: 1, requires: 'autoClickSpeed2' },
 
   // --- Nível 2 do ramo Crítico (requer Olho Certeiro nível 5) ---
   {
@@ -899,17 +900,24 @@ const UPGRADE_TREE = {
       ]
     },
     // Automação: diferente dos outros 3 ramos (3 filhos irmãos do mesmo
-    // pai), aqui os 2 upgrades de Nível 2 são uma CADEIA (autoClickSpeed2
-    // aninhado dentro de `children` de autoClickSpeed1, não direto de
+    // pai), aqui os upgrades de velocidade são uma CADEIA (autoClickSpeed2
+    // aninhado dentro de `children` de autoClickSpeed1, autoClickSpeed3
+    // dentro de `children` de autoClickSpeed2, não direto de
     // battleAutoClick) — UI.renderUpgradeTree percorre isso recursivamente,
-    // então funciona também pra profundidade 3 sem precisar de código novo.
+    // então funciona também pra qualquer profundidade sem precisar de código
+    // novo. IMPORTANTE: um upgrade em UPGRADE_DEFS só aparece na árvore se
+    // também tiver uma posição aqui em UPGRADE_TREE — as duas listas são
+    // independentes de propósito (UPGRADE_DEFS é a regra, UPGRADE_TREE é só
+    // o layout visual).
     {
       label: 'Automação', color: '#8fd9c4', nodes: [
         { key: 'battleAutoClick', x: 82, y: 20 },
       ], children: [
         {
           key: 'autoClickSpeed1', x: 100, y: 5, children: [
-            { key: 'autoClickSpeed2', x: 118, y: -10 },
+            { key: 'autoClickSpeed2', x: 118, y: -10, children: [
+              { key: 'autoClickSpeed3', x: 136, y: -25 },
+            ] },
           ]
         },
       ]

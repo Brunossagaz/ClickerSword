@@ -513,6 +513,7 @@ const UI = {
   renderStats(){
     document.getElementById('invStatGold').textContent = this.fmt(state.gold);
     document.getElementById('invStatClickDmg').textContent = this.fmt(PlayerModule.clickDamage());
+    document.getElementById('invStatClickDmgTooltip').innerHTML = this.clickDamageBreakdownHtml();
     document.getElementById('invStatDps').textContent = this.fmt(TroopsModule.totalDps());
     document.getElementById('invStatCrit').textContent = Math.round((state.critChance+state.pCritChance)*100)+'%';
     // toFixed em vez de fmt() aqui: taxas de minério começam fracionárias
@@ -523,6 +524,28 @@ const UI = {
     document.getElementById('invStatEssence').textContent = this.fmt(state.essence);
     document.getElementById('invStatKills').textContent = this.fmt(state.totalKillsAll);
     document.getElementById('invStatAutoClick').textContent = this.autoClickStatusText();
+  },
+  // Detalhamento do cálculo de Dano por Clique (tooltip ao passar o mouse
+  // sobre a linha, ver .stat-row.has-tooltip/CSS) — espelha PASSO A PASSO a
+  // MESMA fórmula de PlayerModule.clickDamage(), só pra deixar visível de
+  // onde vem o número final. % de dano da Ascensão só aparece se o jogador
+  // já tiver esse multiplicador (state.pClickMult>0), pra não poluir a
+  // tooltip de quem nunca ascendeu.
+  clickDamageBreakdownHtml(){
+    const weaponDef = PlayerModule.equippedWeaponDef();
+    const weaponBonus = weaponDef ? weaponDef.clickDamageBonus : 0;
+    const dmgPercentPts = Math.round(state.clickDamagePercent * 100);
+    const pClickPts = Math.round(state.pClickMult * 100);
+    const rows = [
+      `<div class="tt-row"><span>Dano base (Academia)</span><span>${this.fmt(state.clickDamageFlat)}</span></div>`,
+      `<div class="tt-row"><span>Dano da arma${weaponDef ? ' ('+weaponDef.name+')' : ''}</span><span>${weaponDef ? this.fmt(weaponBonus) : '—'}</span></div>`,
+      `<div class="tt-row"><span>% de dano (Academia)</span><span>+${dmgPercentPts}%</span></div>`,
+    ];
+    if(pClickPts > 0){
+      rows.push(`<div class="tt-row"><span>% de dano (Ascensão)</span><span>+${pClickPts}%</span></div>`);
+    }
+    rows.push(`<div class="tt-row tt-total"><span>Total</span><span>${this.fmt(PlayerModule.clickDamage())}</span></div>`);
+    return rows.join('');
   },
   // Texto do intervalo do Clique Automático — reaproveitado pela aba
   // Estatísticas (sempre visível) e pelo aviso dentro da Dungeon (ver

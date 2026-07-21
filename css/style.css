@@ -268,6 +268,35 @@
     border-bottom:1px solid var(--stone);
   }
   .stat-row:last-child{ border-bottom:none; }
+  /* Detalhamento do cálculo (hover) — mesmo esquema de tooltip só-CSS do
+     .node-tooltip da árvore de Upgrades, ver renderStats() em ui.js pro
+     conteúdo dinâmico. */
+  .stat-row.has-tooltip{ position:relative; cursor:help; }
+  .stat-tooltip{
+    position:absolute;
+    bottom:100%;
+    left:50%;
+    transform:translateX(-50%) translateY(-8px);
+    width:220px;
+    background:var(--stone-dark);
+    border:2px solid var(--ember);
+    border-radius:6px;
+    padding:8px 10px;
+    font-family:'VT323', monospace;
+    font-size:14px;
+    line-height:1.4;
+    color:var(--parchment);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .12s ease;
+    z-index:5;
+    box-shadow:0 4px 12px rgba(0,0,0,0.5);
+    text-align:left;
+    white-space:normal;
+  }
+  .stat-tooltip .tt-row{ display:flex; justify-content:space-between; gap:10px; }
+  .stat-tooltip .tt-total{ margin-top:6px; padding-top:6px; border-top:1px solid var(--stone); font-weight:bold; color:var(--gold-glow); }
+  .stat-row.has-tooltip:hover .stat-tooltip{ opacity:1; }
   .stat-row .label{
     font-size:13px;
     color:var(--parchment-dim);

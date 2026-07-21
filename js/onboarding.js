@@ -20,11 +20,17 @@ const OnboardingModule = {
   hasFacedDungeon(){
     return state.totalKillsAll >= 1;
   },
-  // Só personagens realmente novos (sem arma e sem nenhuma morte registrada)
-  // veem a introdução do Clérigo — quem já tinha progresso de antes desta
-  // atualização (ou é um save migrado) cai direto na Ascensão normal.
+  // Mostra a introdução do Clérigo (culminando na escolha de arma) em 2
+  // casos: personagem realmente novo (sem arma e sem nenhuma morte
+  // registrada — quem já tinha progresso de antes desta atualização, ou é
+  // um save migrado, cai direto no jogo normal) OU depois de uma Ascensão
+  // (a arma sempre reseta, ver PrestigeModule.ascend, mas totalKillsAll é
+  // vitalício e nunca volta a 0 — sem o 2º caso, `!hasFacedDungeon()`
+  // ficava falso pra sempre depois da 1ª Ascensão e travava essa tela
+  // fechada, deixando o jogador sem arma e sem como escolher outra).
   shouldShowClericIntro(){
-    return !this.hasChosenWeapon() && !this.hasFacedDungeon();
+    if(this.hasChosenWeapon()) return false;
+    return !this.hasFacedDungeon() || state.ascensionCount > 0;
   },
   // 1ª entrada na Dungeon da vida do personagem: o botão "Voltar pra
   // cidade" do CABEÇALHO da dungeon some (ver ui.js), pra forçar pelo menos
@@ -55,11 +61,16 @@ const OnboardingModule = {
 
   openClericIntro(){
     document.getElementById('clericModal').classList.add('open');
-    if(state.playerName){
-      this.showStoryStep();
-    } else {
+    if(!state.playerName){
       document.getElementById('clericNameInput').value = '';
       this.showStep('clericStepName');
+    } else if(state.ascensionCount > 0){
+      // Pós-Ascensão: mesmo herói, já conhece a história — pula direto pra
+      // escolha de arma (a única coisa que a Ascensão realmente zerou aqui).
+      this.renderWeaponChoices();
+      this.showStep('clericStepWeapon');
+    } else {
+      this.showStoryStep();
     }
   },
   showStep(stepId){
@@ -118,7 +129,15 @@ const OnboardingModule = {
       state.playerName = nameInput.value.trim() || 'Herói';
       SaveModule.save();
       UI.renderPlayerName();
-      this.showStoryStep();
+      // Só cai aqui sem nome já com ascensionCount>0 num save afetado pelo
+      // bug antigo (playerName zerava na Ascensão) — mesma lógica de pular
+      // a história de openClericIntro, pra não repetir 2x.
+      if(state.ascensionCount > 0){
+        this.renderWeaponChoices();
+        this.showStep('clericStepWeapon');
+      } else {
+        this.showStoryStep();
+      }
     };
     document.getElementById('clericNameConfirmBtn').addEventListener('click', confirmName);
     nameInput.addEventListener('keydown', e => { if(e.key === 'Enter') confirmName(); });

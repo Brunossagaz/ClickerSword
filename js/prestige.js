@@ -30,7 +30,11 @@ const PrestigeModule = {
     // contadores de progresso pra Academia/Caverna) fica permanente entre
     // ascensões, por pedido — diferente de dungeons/armas (que fazem parte
     // do próprio mecanismo de regrind do prestígio e continuam resetando).
+    // playerName também fica (é o mesmo herói ascendendo, não um personagem
+    // novo — ver OnboardingModule.openClericIntro, que usa o nome já salvo
+    // pra pular direto pra escolha de arma sem repetir a história).
     const keepOnboarding = {
+      playerName: state.playerName,
       quests: state.quests,
       metBarnabe: state.metBarnabe,
       metCreiton: state.metCreiton,
