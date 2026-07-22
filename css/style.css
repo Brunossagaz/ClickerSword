@@ -270,14 +270,18 @@
   .stat-row:last-child{ border-bottom:none; }
   /* Detalhamento do cálculo (hover) — mesmo esquema de tooltip só-CSS do
      .node-tooltip da árvore de Upgrades, ver renderStats() em ui.js pro
-     conteúdo dinâmico. */
+     conteúdo dinâmico. Abre pra BAIXO (não pra cima como o .node-tooltip):
+     .sidebar-content tem overflow-y:auto, e como essa linha fica perto do
+     topo da lista, abrir pra cima cortava o tooltip na borda do container
+     antes dele aparecer inteiro — abrir pra baixo sempre tem o resto da
+     lista de stats como espaço livre. */
   .stat-row.has-tooltip{ position:relative; cursor:help; }
   .stat-tooltip{
     position:absolute;
-    bottom:100%;
+    top:100%;
     left:50%;
-    transform:translateX(-50%) translateY(-8px);
-    width:220px;
+    transform:translateX(-50%) translateY(8px);
+    width:200px;
     background:var(--stone-dark);
     border:2px solid var(--ember);
     border-radius:6px;
