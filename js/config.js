@@ -29,6 +29,10 @@ const CONFIG = {
   ascendKillThresholdGrowth: 100,
   monsterTimeLimitMs: 10000, // tempo pra derrotar cada monstro antes de reiniciar o ciclo
   bossTimeLimitMs: 20000, // igual, mas só pro chefe (último monstro do ciclo) — luta mais demorada, folga maior
+  // Tempo total de UMA entrada na Dungeon (ver DungeonModule.tickRunTimer) —
+  // só corre enquanto há monstro ativo (pausa no modal de tempo esgotado do
+  // monstro). Ao zerar, volta pra cidade e mostra o loot da entrada.
+  dungeonTimeLimitMs: 30000,
   academiaUnlockEntries: 5, // nº de entradas na Dungeon pra liberar a Academia — ver OnboardingModule
   // Queimadura (ver WEAPON_DEFS.burnChance/burnDamagePercent, MonsterModule.
   // applyBurn/checkBurnTick): dano total é dividido em ticks ao longo de
@@ -703,11 +707,18 @@ const GUILD_EXPEDITION_DEFS = [
 // ramos de Crítico e Dano % somam um pouco de dano por clique junto da
 // própria stat nos upgrades de Nível 2 (pra reforçar a ligação com a raiz);
 // o ramo de Dano Crítico % só reforça a própria stat.
+//
+// `effects`: o que CADA nível comprado soma em `state` — `{ stat, add, cap? }`
+// (cap = teto do stat depois de somar). Só dados, pra dar pra editar no
+// Compêndio (tools/compendio.html); o `apply` de cada upgrade é montado a
+// partir disso logo abaixo da lista (ver UPGRADE_STATS). `effects: []` =
+// efeito dinâmico lido direto de state.upgrades (Clique Automático e
+// velocidades, ver PlayerModule.autoClickIntervalMs).
 const UPGRADE_DEFS = [
-  { key: 'battleClickDmg', name: 'Fúria do Guerreiro', desc: '+5 dano por clique', baseCost: 10, costGrowth: 1.3, apply: s => s.clickDamageFlat += 5, maxLevel: 5, requires: null },
-  { key: 'battleCritChance', name: 'Olho Certeiro', desc: '+3% chance de crítico', baseCost: 60, costGrowth: 1.35, apply: s => s.critChance = Math.min(0.75, s.critChance + 0.03), maxLevel: 5, requires: 'battleClickDmg' },
-  { key: 'battleDmgPercent', name: 'Força Bruta', desc: '+5% de dano por clique', baseCost: 60, costGrowth: 1.4, apply: s => s.clickDamagePercent += 0.05, maxLevel: 5, requires: 'battleClickDmg' },
-  { key: 'battleCritDmgPercent', name: 'Golpe Devastador', desc: '+10% de dano crítico', baseCost: 60, costGrowth: 1.45, apply: s => s.critDamagePercent += 0.10, maxLevel: 5, requires: 'battleClickDmg' },
+  { key: 'battleClickDmg', name: 'Fúria do Guerreiro', desc: '+5 dano por clique', baseCost: 10, costGrowth: 1.3, effects: [{ stat: 'clickDamageFlat', add: 5 }], maxLevel: 5, requires: null },
+  { key: 'battleCritChance', name: 'Olho Certeiro', desc: '+3% chance de crítico', baseCost: 60, costGrowth: 1.35, effects: [{ stat: 'critChance', add: 0.03, cap: 0.75 }], maxLevel: 5, requires: 'battleClickDmg' },
+  { key: 'battleDmgPercent', name: 'Força Bruta', desc: '+5% de dano por clique', baseCost: 60, costGrowth: 1.4, effects: [{ stat: 'clickDamagePercent', add: 0.05 }], maxLevel: 5, requires: 'battleClickDmg' },
+  { key: 'battleCritDmgPercent', name: 'Golpe Devastador', desc: '+10% de dano crítico', baseCost: 60, costGrowth: 1.45, effects: [{ stat: 'critDamagePercent', add: 0.10 }], maxLevel: 5, requires: 'battleClickDmg' },
   // Clique Automático — só 1 nível (compra única, sem escalar): liga um
   // clique automático periódico enquanto houver monstro ativo E o ciclo
   // atual já tiver sido concluído antes (ver PlayerModule.isAutoClickActive
@@ -716,41 +727,41 @@ const UPGRADE_DEFS = [
   // velocidade abaixo — não é um stat de state, `apply` fica vazio de
   // propósito, o efeito é 100% dinâmico a partir de
   // state.upgrades.battleAutoClick > 0.
-  { key: 'battleAutoClick', name: 'Clique Automático', desc: 'Clica sozinho a cada 1s (só em ciclos já vencidos antes)', baseCost: 1000, costGrowth: 1.5, apply: s => { }, maxLevel: 1, requires: 'battleClickDmg', autoClickIntervalMs: 1000 },
+  { key: 'battleAutoClick', name: 'Clique Automático', desc: 'Clica sozinho a cada 1s (só em ciclos já vencidos antes)', baseCost: 1000, costGrowth: 1.5, effects: [], maxLevel: 1, requires: 'battleClickDmg', autoClickIntervalMs: 1000 },
   // Upgrades de velocidade do Clique Automático — encadeados (o 2º exige o
   // 1º, não a raiz), cada um -25 pontos percentuais do intervalo BASE
   // (1000ms), acumulando: 1000ms → 750ms → 500ms. Ver
   // PlayerModule.autoClickIntervalMs().
-  { key: 'autoClickSpeed1', name: 'Reflexos de Aço', desc: '-25% no intervalo do Clique Automático (1s → 0.75s)', baseCost: 3000, costGrowth: 1.5, apply: s => { }, maxLevel: 1, requires: 'battleAutoClick' },
-  { key: 'autoClickSpeed2', name: 'Reflexos Sobrenaturais', desc: '-25% no intervalo do Clique Automático, acumulado (0.75s → 0.5s)', baseCost: 8000, costGrowth: 1.5, apply: s => { }, maxLevel: 1, requires: 'autoClickSpeed1' },
-  { key: 'autoClickSpeed3', name: 'Reflexos Infinitos', desc: '-25% no intervalo do Clique Automático, acumulado (0.5s → 0.25s)', baseCost: 15000, costGrowth: 1.5, apply: s => { }, maxLevel: 1, requires: 'autoClickSpeed2' },
+  { key: 'autoClickSpeed1', name: 'Reflexos de Aço', desc: '-25% no intervalo do Clique Automático (1s → 0.75s)', baseCost: 3000, costGrowth: 1.5, effects: [], maxLevel: 1, requires: 'battleAutoClick' },
+  { key: 'autoClickSpeed2', name: 'Reflexos Sobrenaturais', desc: '-25% no intervalo do Clique Automático, acumulado (0.75s → 0.5s)', baseCost: 8000, costGrowth: 1.5, effects: [], maxLevel: 1, requires: 'autoClickSpeed1' },
+  { key: 'autoClickSpeed3', name: 'Reflexos Infinitos', desc: '-25% no intervalo do Clique Automático, acumulado (0.5s → 0.25s)', baseCost: 15000, costGrowth: 1.5, effects: [], maxLevel: 1, requires: 'autoClickSpeed2' },
 
   // --- Nível 2 do ramo Crítico (requer Olho Certeiro nível 5) ---
   {
     key: 'critChance2A', name: 'Visão de Falcão', desc: '+4% chance de crítico, +4 dano por clique', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritChance',
-    apply: s => { s.critChance = Math.min(0.75, s.critChance + 0.04); s.clickDamageFlat += 4; }
+    effects: [{ stat: 'critChance', add: 0.04, cap: 0.75 }, { stat: 'clickDamageFlat', add: 4 }]
   },
   {
     key: 'critChance2B', name: 'Reflexos Rápidos', desc: '+6% chance de crítico, +2 dano por clique', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritChance',
-    apply: s => { s.critChance = Math.min(0.75, s.critChance + 0.06); s.clickDamageFlat += 2; }
+    effects: [{ stat: 'critChance', add: 0.06, cap: 0.75 }, { stat: 'clickDamageFlat', add: 2 }]
   },
   {
     key: 'critChance2C', name: 'Instinto Selvagem', desc: '+2% chance de crítico, +7 dano por clique', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritChance',
-    apply: s => { s.critChance = Math.min(0.75, s.critChance + 0.02); s.clickDamageFlat += 7; }
+    effects: [{ stat: 'critChance', add: 0.02, cap: 0.75 }, { stat: 'clickDamageFlat', add: 7 }]
   },
 
   // --- Nível 2 do ramo Dano % (requer Força Bruta nível 5) ---
   {
     key: 'dmgPercent2A', name: 'Impacto Brutal', desc: '+7% de dano por clique, +3 dano por clique', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleDmgPercent',
-    apply: s => { s.clickDamagePercent += 0.07; s.clickDamageFlat += 3; }
+    effects: [{ stat: 'clickDamagePercent', add: 0.07 }, { stat: 'clickDamageFlat', add: 3 }]
   },
   {
     key: 'dmgPercent2B', name: 'Força Titânica', desc: '+10% de dano por clique, +1 dano por clique', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleDmgPercent',
-    apply: s => { s.clickDamagePercent += 0.10; s.clickDamageFlat += 1; }
+    effects: [{ stat: 'clickDamagePercent', add: 0.10 }, { stat: 'clickDamageFlat', add: 1 }]
   },
   {
     key: 'dmgPercent2C', name: 'Golpe Pesado', desc: '+4% de dano por clique, +6 dano por clique', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleDmgPercent',
-    apply: s => { s.clickDamagePercent += 0.04; s.clickDamageFlat += 6; }
+    effects: [{ stat: 'clickDamagePercent', add: 0.04 }, { stat: 'clickDamageFlat', add: 6 }]
   },
 
   // --- Nível 3 do ramo Dano % (encadeado: cada um exige o SEU pai de
@@ -761,15 +772,15 @@ const UPGRADE_DEFS = [
   // TroopsModule.total/comentário "Ressonância de Combate" em troops.js).
   {
     key: 'dmgPercent3A', name: 'Impacto Absoluto', desc: '+30 dano por clique', baseCost: 3000, costGrowth: 1.6, maxLevel: 5, requires: 'dmgPercent2A',
-    apply: s => s.clickDamageFlat += 30
+    effects: [{ stat: 'clickDamageFlat', add: 30 }]
   },
   {
     key: 'dmgPercent3B', name: 'Ressonância de Combate', desc: '+15 dano por clique, +5% DPS', baseCost: 3000, costGrowth: 1.6, maxLevel: 5, requires: 'dmgPercent2B',
-    apply: s => { s.clickDamageFlat += 15; s.dpsSynergyRatio += 0.05; }
+    effects: [{ stat: 'clickDamageFlat', add: 15 }, { stat: 'dpsSynergyRatio', add: 0.05 }]
   },
   {
     key: 'dmgPercent3C', name: 'Fúria Titânica', desc: '+30% de dano por clique', baseCost: 3000, costGrowth: 1.6, maxLevel: 5, requires: 'dmgPercent2C',
-    apply: s => s.clickDamagePercent += 0.30
+    effects: [{ stat: 'clickDamagePercent', add: 0.30 }]
   },
 
   // --- Nível 4 do ramo Dano % (mesmo esquema de corrente do Nível 3, cada
@@ -777,30 +788,30 @@ const UPGRADE_DEFS = [
   // (baseCost 25000 vs 3000).
   {
     key: 'dmgPercent4A', name: 'Golpe Definitivo', desc: '+100 dano por clique', baseCost: 25000, costGrowth: 1.7, maxLevel: 5, requires: 'dmgPercent3A',
-    apply: s => s.clickDamageFlat += 100
+    effects: [{ stat: 'clickDamageFlat', add: 100 }]
   },
   {
     key: 'dmgPercent4B', name: 'Ressonância Amplificada', desc: '+50 dano por clique, +10% DPS', baseCost: 25000, costGrowth: 1.7, maxLevel: 5, requires: 'dmgPercent3B',
-    apply: s => { s.clickDamageFlat += 50; s.dpsSynergyRatio += 0.10; }
+    effects: [{ stat: 'clickDamageFlat', add: 50 }, { stat: 'dpsSynergyRatio', add: 0.10 }]
   },
   {
     key: 'dmgPercent4C', name: 'Fúria Apocalíptica', desc: '+60% de dano por clique', baseCost: 25000, costGrowth: 1.7, maxLevel: 5, requires: 'dmgPercent3C',
-    apply: s => s.clickDamagePercent += 0.60
+    effects: [{ stat: 'clickDamagePercent', add: 0.60 }]
   },
 
   // --- Nível 2 do ramo Dano Crítico % (requer Golpe Devastador nível 5) —
   // só reforça a própria stat, sem somar dano por clique. ---
   {
     key: 'critDmgPercent2A', name: 'Fragmentação', desc: '+12% de dano crítico', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritDmgPercent',
-    apply: s => s.critDamagePercent += 0.12
+    effects: [{ stat: 'critDamagePercent', add: 0.12 }]
   },
   {
     key: 'critDmgPercent2B', name: 'Execução Brutal', desc: '+15% de dano crítico', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritDmgPercent',
-    apply: s => s.critDamagePercent += 0.15
+    effects: [{ stat: 'critDamagePercent', add: 0.15 }]
   },
   {
     key: 'critDmgPercent2C', name: 'Golpe Fatal', desc: '+18% de dano crítico', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritDmgPercent',
-    apply: s => s.critDamagePercent += 0.18
+    effects: [{ stat: 'critDamagePercent', add: 0.18 }]
   },
 
   // --- Ramo Sorte (drops raros) e Ramo Monstro Dourado — mesmo padrão dos
@@ -812,53 +823,88 @@ const UPGRADE_DEFS = [
   // `chance` e não são tocadas); goldenChanceBonus soma direto em cima de
   // CONFIG.goldenChancePerTick (ver MonsterModule.rollDrops/maybeTriggerGolden).
   { key: 'battleDropChance', name: 'Faro de Caçador', desc: '+3% de chance nos drops raros dos monstros', baseCost: 1500, costGrowth: 1.5, maxLevel: 5, requires: 'battleClickDmg',
-    apply: s => s.rareDropChanceBonus = Math.min(0.9, s.rareDropChanceBonus + 0.03) },
-  { key: 'battleGoldenChance', name: 'Sorte Dourada', desc: '+0.05% de chance de monstro dourado por tick', baseCost: 2000, costGrowth: 1.5, maxLevel: 5, requires: 'battleClickDmg',
-    apply: s => s.goldenChanceBonus = Math.min(0.05, s.goldenChanceBonus + 0.0005) },
+    effects: [{ stat: 'rareDropChanceBonus', add: 0.03, cap: 0.9 }] },
+  { key: 'battleGoldenChance', name: 'Sorte Dourada', desc: 'Libera o monstro dourado (0.25% por tick) e soma +0.05% por nível', baseCost: 2000, costGrowth: 1.5, maxLevel: 5, requires: 'battleClickDmg',
+    effects: [{ stat: 'goldenChanceBonus', add: 0.0005, cap: 0.05 }] },
+
+  // --- Ramo Tempo: cada nível soma +5s ao tempo de uma entrada na Dungeon
+  // (CONFIG.dungeonTimeLimitMs, ver DungeonModule.runTimeLimitMs). Raiz de
+  // 5 níveis + 1 nó encadeado de 5 níveis, mais caro — até +50s no total.
+  { key: 'dungeonTime', name: 'Fôlego do Explorador', desc: '+5s de tempo dentro da Dungeon', baseCost: 150, costGrowth: 1.5, maxLevel: 5, requires: 'battleClickDmg',
+    effects: [{ stat: 'dungeonTimeBonusMs', add: 5000 }] },
+  { key: 'dungeonTime2', name: 'Resistência Incansável', desc: '+5s de tempo dentro da Dungeon', baseCost: 2500, costGrowth: 1.6, maxLevel: 5, requires: 'dungeonTime',
+    effects: [{ stat: 'dungeonTimeBonusMs', add: 5000 }] },
 
   // --- Nível 2 do ramo Sorte (requer Faro de Caçador nível 5) ---
   {
     key: 'dropChance2A', name: 'Instinto de Caçador', desc: '+4% de chance nos drops raros dos monstros', baseCost: 8000, costGrowth: 1.6, maxLevel: 5, requires: 'battleDropChance',
-    apply: s => s.rareDropChanceBonus = Math.min(0.9, s.rareDropChanceBonus + 0.04)
+    effects: [{ stat: 'rareDropChanceBonus', add: 0.04, cap: 0.9 }]
   },
   {
     key: 'dropChance2B', name: 'Faro Apurado', desc: '+6% de chance nos drops raros dos monstros', baseCost: 8000, costGrowth: 1.6, maxLevel: 5, requires: 'battleDropChance',
-    apply: s => s.rareDropChanceBonus = Math.min(0.9, s.rareDropChanceBonus + 0.06)
+    effects: [{ stat: 'rareDropChanceBonus', add: 0.06, cap: 0.9 }]
   },
   {
     key: 'dropChance2C', name: 'Sexto Sentido', desc: '+2% de chance nos drops raros dos monstros', baseCost: 8000, costGrowth: 1.6, maxLevel: 5, requires: 'battleDropChance',
-    apply: s => s.rareDropChanceBonus = Math.min(0.9, s.rareDropChanceBonus + 0.02)
+    effects: [{ stat: 'rareDropChanceBonus', add: 0.02, cap: 0.9 }]
   },
 
   // --- Nível 2 do ramo Monstro Dourado (requer Sorte Dourada nível 5) ---
   {
     key: 'goldenChance2A', name: 'Toque de Midas', desc: '+0.07% de chance de monstro dourado por tick', baseCost: 10000, costGrowth: 1.6, maxLevel: 5, requires: 'battleGoldenChance',
-    apply: s => s.goldenChanceBonus = Math.min(0.05, s.goldenChanceBonus + 0.0007)
+    effects: [{ stat: 'goldenChanceBonus', add: 0.0007, cap: 0.05 }]
   },
   {
     key: 'goldenChance2B', name: 'Bênção Dourada', desc: '+0.10% de chance de monstro dourado por tick', baseCost: 10000, costGrowth: 1.6, maxLevel: 5, requires: 'battleGoldenChance',
-    apply: s => s.goldenChanceBonus = Math.min(0.05, s.goldenChanceBonus + 0.0010)
+    effects: [{ stat: 'goldenChanceBonus', add: 0.0010, cap: 0.05 }]
   },
   {
     key: 'goldenChance2C', name: 'Fortuna Rara', desc: '+0.04% de chance de monstro dourado por tick', baseCost: 10000, costGrowth: 1.6, maxLevel: 5, requires: 'battleGoldenChance',
-    apply: s => s.goldenChanceBonus = Math.min(0.05, s.goldenChanceBonus + 0.0004)
+    effects: [{ stat: 'goldenChanceBonus', add: 0.0004, cap: 0.05 }]
   },
 ];
 
+// Stats de `state` que um upgrade pode somar (ver `effects` acima) — rótulo e
+// formato usados pelo Compêndio pra editar/gerar a descrição.
+const UPGRADE_STATS = {
+  clickDamageFlat:     { label: 'dano por clique',                     format: 'flat' },
+  clickDamagePercent:  { label: 'de dano por clique',                  format: 'pct' },
+  critChance:          { label: 'chance de crítico',                   format: 'pct' },
+  critDamagePercent:   { label: 'de dano crítico',                     format: 'pct' },
+  dpsSynergyRatio:     { label: 'DPS',                                 format: 'pct' },
+  rareDropChanceBonus: { label: 'de chance nos drops raros dos monstros', format: 'pct' },
+  goldenChanceBonus:   { label: 'de chance de monstro dourado por tick', format: 'pct' },
+  dungeonTimeBonusMs:  { label: 'de tempo dentro da Dungeon',          format: 'sec' },
+};
+for(const def of UPGRADE_DEFS){
+  // lê def.effects na hora da compra (não copia), então valores trocados
+  // depois (js/overrides.js) já valem
+  def.apply = s => {
+    for(const e of def.effects || []){
+      if(!(e.stat in UPGRADE_STATS)) continue;
+      const v = (s[e.stat] || 0) + e.add;
+      s[e.stat] = e.cap != null ? Math.min(e.cap, v) : v;
+    }
+  };
+}
+
 // Layout visual da árvore de Upgrades (Academia de Combate): `root` fica no
 // centro (`hub`) e os 3 de Nível 1 brotam dele (ver UI.renderUpgradeTree —
-// as linhas são curvas, não retas). Cada branch agora tem também
+// as linhas são caminhos em degrau, estilo pixel art). Cada branch tem também
 // `children`: os 3 upgrades de Nível 2 daquele ramo, brotando do nó de
 // Nível 1 (não do hub) — de propósito posicionados FORA da área 0-100
 // visível a zoom 1, então só aparecem se o jogador der zoom out ou
-// arrastar o mapa (ver .tree-wrap/UI.initTreePanZoom). O desbloqueio real
+// arrastar o mapa (ver .tree-wrap/UI.initTreePanZoom). `icon`/`rootIcon`
+// são classes .icon-* (pixel art, ver style.css) — um ícone por ramo,
+// repetido em todos os nós dele. O desbloqueio real
 // vem de `requires` em UPGRADE_DEFS, não daqui — isto é só o layout.
 const UPGRADE_TREE = {
   root: 'battleClickDmg',
+  rootIcon: 'tree-root',
   hub: { x: 50, y: 50 },
   branches: [
     {
-      label: 'Crítico', color: '#4fd1c5', nodes: [
+      label: 'Crítico', color: '#4fd1c5', icon: 'tree-crit', nodes: [
         { key: 'battleCritChance', x: 50, y: 15 },
       ], children: [
         { key: 'critChance2A', x: 35, y: -17 },
@@ -867,7 +913,7 @@ const UPGRADE_TREE = {
       ]
     },
     {
-      label: 'Dano %', color: '#c9432f', nodes: [
+      label: 'Dano %', color: '#c9432f', icon: 'tree-dmg', nodes: [
         { key: 'battleDmgPercent', x: 81, y: 80 },
       ], children: [
         // Nível 3 encadeado (não irmão): cada dmgPercent3X é filho do SEU
@@ -891,7 +937,7 @@ const UPGRADE_TREE = {
       ]
     },
     {
-      label: 'Dano Crítico %', color: '#ffd54a', nodes: [
+      label: 'Dano Crítico %', color: '#ffd54a', icon: 'tree-critdmg', nodes: [
         { key: 'battleCritDmgPercent', x: 19, y: 80 },
       ], children: [
         { key: 'critDmgPercent2A', x: 6, y: 113 },
@@ -910,7 +956,7 @@ const UPGRADE_TREE = {
     // independentes de propósito (UPGRADE_DEFS é a regra, UPGRADE_TREE é só
     // o layout visual).
     {
-      label: 'Automação', color: '#8fd9c4', nodes: [
+      label: 'Automação', color: '#8fd9c4', icon: 'tree-auto', nodes: [
         { key: 'battleAutoClick', x: 82, y: 20 },
       ], children: [
         {
@@ -922,10 +968,22 @@ const UPGRADE_TREE = {
         },
       ]
     },
+    // Tempo: único lado ainda livre em volta do hub (direita, na altura
+    // dele). x:75, não mais pra fora: o rótulo vai 13pts além do nó e é
+    // limitado a x<=88 (UI.renderUpgradeTree) — com o nó em 88 o texto
+    // cairia em cima do círculo. O nó encadeado continua reto pra fora, entre os filhos de
+    // Automação (y<=5) e de Dano % (y>=91).
+    {
+      label: 'Tempo', color: '#e0b14a', icon: 'tree-time', nodes: [
+        { key: 'dungeonTime', x: 75, y: 50 },
+      ], children: [
+        { key: 'dungeonTime2', x: 110, y: 50 },
+      ]
+    },
     // Sorte (drops raros): espelha a posição de Automação, do outro lado do
     // hub (x negativo em vez de >100).
     {
-      label: 'Sorte', color: '#9b5de5', nodes: [
+      label: 'Sorte', color: '#9b5de5', icon: 'tree-luck', nodes: [
         { key: 'battleDropChance', x: 18, y: 20 },
       ], children: [
         { key: 'dropChance2A', x: -15, y: 5 },
@@ -941,7 +999,7 @@ const UPGRADE_TREE = {
     // clamp de 94 do eixo Y — acima de y:81 o texto do rótulo já invade o
     // próprio card do nó.
     {
-      label: 'Monstro Dourado', color: '#ffab00', nodes: [
+      label: 'Monstro Dourado', color: '#ffab00', icon: 'golden', nodes: [
         { key: 'battleGoldenChance', x: 50, y: 80 },
       ], children: [
         { key: 'goldenChance2A', x: 35, y: 122 },

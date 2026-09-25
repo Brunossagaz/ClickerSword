@@ -340,7 +340,7 @@
       <button class="modal-close" id="repeatCycleResultCloseBtn">✕</button>
     </div>
     <div class="modal-body">
-      <div class="footer-note" style="margin:0 0 10px;">Loot total coletado nas repetições:</div>
+      <div class="footer-note" id="repeatCycleResultSubtitle" style="margin:0 0 10px;">Loot total coletado nas repetições:</div>
       <div id="repeatCycleResultList"></div>
     </div>
   </div>
@@ -591,6 +591,10 @@
           <div class="timer-fill" id="timerFill"></div>
           <div class="timer-text" id="timerText">15s</div>
         </div>
+        <div class="timer-wrap">
+          <div class="timer-fill dungeon-timer-fill" id="dungeonTimerFill"></div>
+          <div class="timer-text" id="dungeonTimerText">5:00</div>
+        </div>
         <div class="golden-tag" id="goldenTag"><div class="icon icon-golden" style="display:inline-block;"></div> MONSTRO DOURADO! CLIQUE RÁPIDO!</div>
       </div>
       <div class="footer-note">Clique no monstro para atacar manualmente.</div>
@@ -604,6 +608,8 @@
 
 <!-- Ordem importa: cada módulo depende de globais definidos nos anteriores -->
 <script src="js/config.js"></script>
+<script src="js/overrides-data.js"></script>
+<script src="js/overrides.js"></script>
 <script src="js/progression.js"></script>
 <script src="js/state.js"></script>
 <script src="js/save.js"></script>

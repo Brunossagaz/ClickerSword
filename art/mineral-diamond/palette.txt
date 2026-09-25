@@ -1,0 +1,6 @@
+# mineral-diamond - luz de cima/esquerda
+A=#1A161E
+W=#FFFFFF
+H=#D8F4FF
+C=#8ED8F0
+B=#4A9AC0

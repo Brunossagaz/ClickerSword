@@ -68,6 +68,7 @@ const DungeonModule = {
   },
   _enterAt(key, killCount){
     state.currentDungeon = key;
+    state.dungeonRun = { elapsedMs:0, loot:{} }; // toda entrada começa com o tempo cheio
     state.dungeons[key].killCount = killCount;
     // isFirst só quando a Dungeon começa exatamente no monstro 1 — assim
     // reentrar no meio de uma luta de chefe não "desliga" o chefe à toa
@@ -75,6 +76,32 @@ const DungeonModule = {
     UI.showDungeonView();
     UI.resetDropLog(); // registro de drops é por entrada, não sobrevive daqui pra frente
     UI.renderAll();
+  },
+  // Chamado a cada tick do game loop (ver main.js). Só conta enquanto há
+  // monstro ativo — o modal de tempo esgotado do monstro (current=null)
+  // pausa também o tempo da Dungeon.
+  tickRunTimer(ms){
+    if(!state.currentDungeon || !MonsterModule.current) return;
+    state.dungeonRun.elapsedMs += ms;
+    if(state.dungeonRun.elapsedMs >= this.runTimeLimitMs()) this.onRunTimeUp();
+  },
+  // Tempo base + bônus do ramo Tempo da Academia (ver UPGRADE_DEFS dungeonTime*)
+  runTimeLimitMs(){
+    return CONFIG.dungeonTimeLimitMs + (state.dungeonTimeBonusMs || 0);
+  },
+  // Tempo da Dungeon acabou: mesmo reset de sair manualmente no meio do
+  // ciclo (MonsterModule.abandonCycle), cancela Repetir Ciclo pendente e
+  // mostra o loot de toda a entrada.
+  onRunTimeUp(){
+    const key = state.currentDungeon;
+    const d = state.dungeons[key];
+    const loot = state.dungeonRun.loot;
+    MonsterModule.abandonCycle();
+    d.repeatCycleNum = null;
+    d.repeatRemaining = 0;
+    d.repeatLootTotals = null;
+    this.leaveToCity();
+    UI.showLootSummaryModal(`TEMPO DA DUNGEON ESGOTADO — ${MAPS[key].name}`, 'Itens obtidos nesta entrada:', loot);
   },
   leaveToCity(){
     state.currentDungeon = null;

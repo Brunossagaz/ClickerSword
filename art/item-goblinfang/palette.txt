@@ -1,0 +1,7 @@
+# item-goblinfang - luz de cima/esquerda
+A=#1A161E
+W=#F2EAD0
+H=#FFFFFF
+B=#CFC3A0
+R=#B8322A
+K=#7A1E1A

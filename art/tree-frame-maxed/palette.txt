@@ -1,0 +1,6 @@
+# tree-frame-maxed
+A=#1A161E
+M=#E0B030
+L=#FFE88A
+D=#9A6A12
+V=#FFF8D8

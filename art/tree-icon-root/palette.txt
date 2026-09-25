@@ -1,0 +1,6 @@
+# tree-icon-root
+A=#1A161E
+R=#C9432F
+O=#FF8A2A
+Y=#FFD54A
+W=#FFF4C0

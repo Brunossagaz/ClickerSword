@@ -1,0 +1,7 @@
+# item-goblinscale - luz de cima/esquerda
+A=#1A161E
+I=#9A9EA8
+H=#D0D4DC
+D=#5E626C
+R=#A0582A
+K=#2E2A30

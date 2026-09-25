@@ -69,8 +69,14 @@ const MonsterModule = {
     hp *= hpMult || 1;
     return Math.ceil(hp);
   },
+  // Só existe depois de desbloquear o ramo na Academia (Sorte Dourada nível
+  // 1+, ver UPGRADE_DEFS battleGoldenChance) — antes disso a chance base de
+  // CONFIG.goldenChancePerTick não vale.
+  isGoldenUnlocked(){
+    return (state.upgrades.battleGoldenChance || 0) > 0;
+  },
   maybeTriggerGolden(){
-    if(state.isGolden) return;
+    if(state.isGolden || !this.isGoldenUnlocked()) return;
     if(Math.random() < CONFIG.goldenChancePerTick + state.goldenChanceBonus){
       state.isGolden = true;
       state.goldenExpiresAt = Date.now() + CONFIG.goldenDurationMs;
@@ -134,6 +140,10 @@ const MonsterModule = {
     const kpc = this.killsPerCycleFor(state.currentDungeon);
     d.killCount = Math.floor(d.killCount / kpc) * kpc; // volta pro monstro 1 do ciclo atual
     d.pendingSlot = null; // descarta o sorteio de dupla em andamento, se houver
+    // tentar de novo recomeça o tempo da Dungeon também (ver
+    // DungeonModule.tickRunTimer) — o loot já coletado continua somando no
+    // resumo do fim do tempo
+    state.dungeonRun.elapsedMs = 0;
     this.spawn(false);
     UI.renderAll();
   },
@@ -308,6 +318,11 @@ const MonsterModule = {
       UI.showFloatingItem(drop.qty, ITEM_DEFS.find(item=>item.key===drop.item), i);
     });
     UI.logDrops(slotPos, drops);
+    // loot da entrada atual, pro resumo do fim do tempo da Dungeon (ver
+    // DungeonModule.onRunTimeUp)
+    for(const drop of drops){
+      state.dungeonRun.loot[drop.item] = (state.dungeonRun.loot[drop.item] || 0) + drop.qty;
+    }
     // "Repetir Ciclo" ativo (ver DungeonModule.startAtCycleRepeat): soma o
     // loot de TODO monstro morto durante a sessão (não só o chefe), pro
     // resumo final (ver UI.showRepeatCycleResultModal).

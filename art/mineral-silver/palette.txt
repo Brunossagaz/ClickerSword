@@ -1,0 +1,7 @@
+# mineral-silver - luz de cima/esquerda
+A=#1A161E
+R=#7A7480
+H=#A8A2AE
+D=#4E4A56
+X=#C8D0DC
+Y=#FFFFFF

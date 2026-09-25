@@ -1,0 +1,18 @@
+# weapon-slimekinggreataxe - luz de cima/esquerda
+A=#1A161E
+E=#FFFFFF
+H=#E4ECF2
+B=#B4C2CE
+C=#C8D4DC
+M=#A0AEBA
+D=#6E7C8A
+R=#7A4E2C
+RH=#A06A3C
+RD=#4E3018
+K=#E0B030
+KH=#FFE88A
+KD=#9A6A12
+W=#2E9A45
+WD=#1E6A30
+G=#3FE07A
+GH=#D8FFE0

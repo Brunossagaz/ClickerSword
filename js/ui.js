@@ -222,6 +222,11 @@ const UI = {
     const canvas = document.getElementById('upgradeTreeCanvas');
     const v = this.treeView;
     canvas.style.transform = `translate(${v.x}px, ${v.y}px) scale(${v.scale})`;
+    // ladrilho de fundo (.tree-wrap) anda junto com o mapa, senão os nós
+    // "deslizam" por cima de um chão parado
+    const wrap = document.getElementById('upgradeTreeWrap');
+    wrap.style.backgroundPosition = `${v.x}px ${v.y}px`;
+    wrap.style.backgroundSize = `${64*v.scale}px ${64*v.scale}px`;
   },
   resetTreeView(){
     this.treeView = { x:0, y:0, scale:1 };
@@ -497,8 +502,18 @@ const UI = {
     const fill = document.getElementById('timerFill');
     const text = document.getElementById('timerText');
     fill.style.width = pct+'%';
-    text.textContent = Math.ceil(remainingMs/1000)+'s';
+    text.textContent = 'Monstro: '+Math.ceil(remainingMs/1000)+'s';
     fill.classList.toggle('urgent', remainingMs < 5000);
+
+    // 2ª barra: tempo da entrada inteira na Dungeon (ver DungeonModule.tickRunTimer)
+    const runLimitMs = DungeonModule.runTimeLimitMs();
+    const runRemainingMs = Math.max(0, runLimitMs - state.dungeonRun.elapsedMs);
+    const runSecs = Math.ceil(runRemainingMs/1000);
+    const runFill = document.getElementById('dungeonTimerFill');
+    runFill.style.width = ((runRemainingMs/runLimitMs)*100)+'%';
+    document.getElementById('dungeonTimerText').textContent =
+      `Dungeon: ${Math.floor(runSecs/60)}:${String(runSecs%60).padStart(2,'0')}`;
+    runFill.classList.toggle('urgent', runRemainingMs < 10000);
   },
   setGoldenVisible(v){
     document.getElementById('goldenTag').style.display = v ? 'block' : 'none';
@@ -652,8 +667,13 @@ const UI = {
   // DungeonModule.leaveToCity) com o total de cada item dropado durante as
   // repetições.
   showRepeatCycleResultModal(key, totals){
-    const map = MAPS[key];
-    document.getElementById('repeatCycleResultTitle').textContent = `CICLOS CONCLUÍDOS — ${map.name}`;
+    this.showLootSummaryModal(`CICLOS CONCLUÍDOS — ${MAPS[key].name}`, 'Loot total coletado nas repetições:', totals);
+  },
+  // Mesmo modal, genérico — também usado quando o tempo da Dungeon acaba
+  // (ver DungeonModule.onRunTimeUp).
+  showLootSummaryModal(title, subtitle, totals){
+    document.getElementById('repeatCycleResultTitle').textContent = title;
+    document.getElementById('repeatCycleResultSubtitle').textContent = subtitle;
     const el = document.getElementById('repeatCycleResultList');
     el.innerHTML = '';
     const entries = Object.entries(totals).filter(([, qty]) => qty > 0);
@@ -1079,41 +1099,52 @@ const UI = {
 
     const hub = UPGRADE_TREE.hub;
 
-    // Curva suave (Bezier quadrática) em vez de linha reta, pra parecer raiz
-    // de verdade brotando do centro — o SVG usa viewBox 0-100 (ver
-    // index.html), então as mesmas coordenadas dos nós (%) valem aqui.
+    // Ligação em degrau (só trechos horizontais/verticais), estilo pixel
+    // art: sai na direção dominante até o meio do caminho, dobra 90° e
+    // chega no nó. O SVG usa viewBox 0-100 (ver index.html), então as
+    // mesmas coordenadas dos nós (%) valem aqui. Traço desenhado 2x — um
+    // escuro mais grosso por baixo (contorno) e o da cor do ramo por cima —
+    // com espessura fixa em px (vector-effect), já que o viewBox é esticado
+    // de forma diferente em X e Y (preserveAspectRatio="none").
     const rootPath = (x1,y1,x2,y2,color)=>{
-      const dx = x2-x1, dy = y2-y1;
-      const len = Math.hypot(dx,dy) || 1;
-      const CURVE = 8; // deslocamento perpendicular do ponto de controle
-      const ctrlX = (x1+x2)/2 + (-dy/len)*CURVE;
-      const ctrlY = (y1+y2)/2 + (dx/len)*CURVE;
-      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-      path.setAttribute('d', `M ${x1} ${y1} Q ${ctrlX} ${ctrlY} ${x2} ${y2}`);
-      path.setAttribute('stroke', color);
-      path.setAttribute('stroke-width', '2');
-      path.setAttribute('fill', 'none');
-      path.setAttribute('opacity', '0.7');
-      linesEl.appendChild(path);
+      const d = Math.abs(x2-x1) >= Math.abs(y2-y1)
+        ? `M ${x1} ${y1} H ${(x1+x2)/2} V ${y2} H ${x2}`
+        : `M ${x1} ${y1} V ${(y1+y2)/2} H ${x2} V ${y2}`;
+      for(const [stroke, width] of [['#0e0a14', 10], [color, 4]]){
+        const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+        path.setAttribute('d', d);
+        path.setAttribute('stroke', stroke);
+        path.setAttribute('stroke-width', width);
+        path.setAttribute('stroke-linecap', 'square');
+        path.setAttribute('stroke-linejoin', 'miter');
+        path.setAttribute('fill', 'none');
+        path.setAttribute('vector-effect', 'non-scaling-stroke');
+        path.setAttribute('shape-rendering', 'crispEdges');
+        linesEl.appendChild(path);
+      }
     };
 
     // Monta um nó (raiz ou branch) — mesmo card pros dois casos, só o da
-    // raiz ganha a classe extra `root-node` (maior, brilho de brasa fixo).
-    const buildNode = (key, x, y, color, isRoot)=>{
+    // raiz ganha a classe extra `root-node` (maior, moldura de brasa). A
+    // moldura pixel art vem do CSS (border-image por estado); a cor do ramo
+    // entra como filete interno via --branch-color. `icon` = classe .icon-*
+    // do ramo (UPGRADE_TREE.branches[].icon / rootIcon).
+    const buildNode = (key, x, y, color, isRoot, icon)=>{
       const def = UPGRADE_DEFS.find(u=>u.key===key);
       const el = document.createElement('div');
       el.className = 'tree-node'+(isRoot ? ' root-node' : '');
       el.style.left = x+'%';
       el.style.top = y+'%';
-      if(!isRoot) el.style.borderColor = color;
+      if(!isRoot) el.style.setProperty('--branch-color', color);
 
       if(!ProgressionModule.isUnlocked('upgrade', key)){
         el.classList.add('locked');
         el.innerHTML = `
-          <div class="node-name"><div class="icon icon-lock"></div>${def.name}</div>
+          <div class="icon node-icon icon-lock"></div>
+          <div class="node-name">${def.name}</div>
           <div class="node-tooltip">${ProgressionModule.lockLabel('upgrade', key)}</div>`;
         nodesEl.appendChild(el);
-        return;
+        return el;
       }
 
       const lvl = state.upgrades[key];
@@ -1123,16 +1154,20 @@ const UI = {
       if(maxed) el.classList.add('maxed');
 
       el.innerHTML = `
+        <div class="icon node-icon icon-${icon}"></div>
         <div class="node-name">${def.name}</div>
         <div class="node-level">${lvl}/${def.maxLevel}</div>
-        <div class="node-cost">${maxed ? 'MÁX' : '<div class=\"icon icon-coin\"></div> '+UI.fmt(cost)}</div>
-        ${maxed ? '' : `<button class="node-plus-btn" ${canAfford?'':'disabled'}>+</button>`}
+        <div class="node-footer">
+          <div class="node-cost">${maxed ? 'MÁX' : '<div class=\"icon icon-coin\"></div> '+UI.fmt(cost)}</div>
+          ${maxed ? '' : `<button class="node-plus-btn" ${canAfford?'':'disabled'}>+</button>`}
+        </div>
         <div class="node-tooltip">${def.desc}</div>`;
       if(!maxed){
         const plusBtn = el.querySelector('.node-plus-btn');
         plusBtn.addEventListener('click', (e)=>{ e.stopPropagation(); UpgradesModule.buy(key); });
       }
       nodesEl.appendChild(el);
+      return el;
     };
 
     // Desenha recursivamente os descendentes de um nó (Nível 2, 3, ...) —
@@ -1144,19 +1179,19 @@ const UI = {
     // ramos de irmãos, sem código separado pra cada formato. De propósito
     // ficam fora da área 0-100 visível a zoom 1 (ver posições em
     // UPGRADE_TREE), então só aparecem dando zoom out ou arrastando o mapa.
-    const renderDescendants = (parentNode, children, color)=>{
+    const renderDescendants = (parentNode, children, color, icon)=>{
       for(const child of (children || [])){
         const childDef = UPGRADE_DEFS.find(u=>u.key===child.key);
         if(state.upgrades[childDef.requires] <= 0) continue;
         rootPath(parentNode.x, parentNode.y, child.x, child.y, color);
-        buildNode(child.key, child.x, child.y, color, false);
-        renderDescendants(child, child.children, color);
+        buildNode(child.key, child.x, child.y, color, false, icon);
+        renderDescendants(child, child.children, color, icon);
       }
     };
 
     // raiz no centro, primeiro (fica embaixo das raízes na ordem do DOM,
     // mas ambos têm z-index próprio via CSS então não faz diferença visual)
-    buildNode(UPGRADE_TREE.root, hub.x, hub.y, null, true);
+    buildNode(UPGRADE_TREE.root, hub.x, hub.y, null, true, UPGRADE_TREE.rootIcon);
 
     for(const branch of UPGRADE_TREE.branches){
       const node = branch.nodes[0];
@@ -1164,23 +1199,16 @@ const UI = {
       // 1ª vez (nível >= 1) — antes disso nem o cadeado é mostrado, o ramo
       // inteiro fica reservado/invisível (rótulo incluso).
       if(state.upgrades[UPGRADE_TREE.root] <= 0) continue;
-      // rótulo da branch, um pouco além do nó (perto colide com o círculo)
-      const dx = node.x - hub.x, dy = node.y - hub.y;
-      const dist = Math.sqrt(dx*dx + dy*dy) || 1;
-      const EXTEND = 13; // pontos percentuais além do centro do nó
-      const labelX = Math.max(12, Math.min(88, node.x + (dx/dist)*EXTEND));
-      const labelY = Math.max(6, Math.min(94, node.y + (dy/dist)*EXTEND));
+      rootPath(hub.x, hub.y, node.x, node.y, branch.color);
+      const nodeEl = buildNode(node.key, node.x, node.y, branch.color, false, branch.icon);
+      // rótulo da branch: placa presa logo acima da moldura do nó de Nível
+      // 1 (filho do nó, então anda junto e nunca colide com outro nó)
       const label = document.createElement('div');
       label.className = 'tree-branch-label';
-      label.style.left = labelX+'%';
-      label.style.top = labelY+'%';
       label.style.color = branch.color;
       label.textContent = branch.label;
-      nodesEl.appendChild(label);
-
-      rootPath(hub.x, hub.y, node.x, node.y, branch.color);
-      buildNode(node.key, node.x, node.y, branch.color, false);
-      renderDescendants(node, branch.children, branch.color);
+      nodeEl.appendChild(label);
+      renderDescendants(node, branch.children, branch.color, branch.icon);
     }
   },
   renderPrestigeTab(){

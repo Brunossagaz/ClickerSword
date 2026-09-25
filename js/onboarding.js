@@ -85,6 +85,7 @@ const OnboardingModule = {
     const el = document.getElementById('weaponChoiceGrid');
     el.innerHTML = '';
     for(const def of WEAPON_DEFS){
+      if(def.custom) continue; // armas criadas no Compêndio ficam só no Ferreiro, não viram escolha grátis
       const btn = document.createElement('button');
       btn.className = 'weapon-choice-card';
       btn.innerHTML = `

@@ -1,0 +1,6 @@
+# item-trollhide - luz de cima/esquerda
+A=#1A161E
+B=#7A7058
+H=#A89A78
+D=#4E4636
+F=#5E6B48

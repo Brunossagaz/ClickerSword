@@ -1,0 +1,9 @@
+# item-slimecompound - luz de cima/esquerda
+A=#1A161E
+C=#B8864E
+K=#8A5E32
+G=#8EAADC
+W=#FFFFFF
+L=#5FD46A
+D=#2E9A45
+E=#A8F0A0

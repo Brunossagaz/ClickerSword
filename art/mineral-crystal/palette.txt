@@ -1,0 +1,6 @@
+# mineral-crystal - luz de cima/esquerda
+A=#1A161E
+H=#F0D8FF
+L=#B070F0
+D=#6A30B0
+G=#5A4E6A

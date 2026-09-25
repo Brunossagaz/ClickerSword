@@ -1,0 +1,7 @@
+# item-goblinshard - luz de cima/esquerda
+A=#1A161E
+P=#8A4FD8
+L=#C39BFF
+H=#F0E0FF
+D=#4E2A8A
+C=#5FE0E0

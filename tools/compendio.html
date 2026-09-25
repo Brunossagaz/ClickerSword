@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Tudo (assets e js/*) é resolvido a partir da raiz do jogo -->
+<base href="../">
+<title>Compêndio ClickerSword</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#14101c; --bg-panel:#241d30; --bg-panel-2:#2f2740;
+    --stone:#3a3350; --stone-dark:#1c1826;
+    --ember:#e8974a; --blood:#c9432f; --arcane:#4fd1c5;
+    --parchment:#e8ddc4; --parchment-dim:#a89d84; --gold-glow:#ffd54a;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg-deep); color:var(--parchment); font-family:'VT323', monospace; font-size:20px; line-height:1.2;}
+  header{position:sticky; top:0; z-index:5; background:var(--bg-deep); border-bottom:2px solid var(--stone); padding:12px 16px 0;}
+  .head-row{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;}
+  h1{font-family:'Press Start 2P', monospace; font-size:16px; color:var(--gold-glow); margin:0 0 4px;}
+  .sub{color:var(--parchment-dim); font-size:17px; margin-bottom:10px;}
+  .savebar{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:10px;}
+  .savebar .status{font-size:18px; color:var(--parchment-dim);}
+  .savebar .status.dirty{color:var(--ember);}
+  button{font:inherit; font-size:18px; cursor:pointer; color:var(--parchment); background:var(--bg-panel-2); border:2px solid var(--stone); border-radius:4px; padding:3px 10px;}
+  button:hover{border-color:var(--ember);}
+  button.primary{background:#2a8d84; border-color:var(--arcane); color:#fff;}
+  button.primary:disabled{opacity:.45; cursor:default;}
+  button.danger{border-color:var(--blood); color:#ffb3a8;}
+  button.x{padding:0 7px; font-size:17px; color:#ffb3a8;}
+  nav{display:flex; gap:4px; flex-wrap:wrap;}
+  nav button{font-size:19px; color:var(--parchment-dim); background:var(--bg-panel); border-bottom:none; padding:6px 12px; border-radius:4px 4px 0 0;}
+  nav button.active{color:var(--gold-glow); background:var(--bg-panel-2); border-color:var(--ember);}
+  main{padding:16px; max-width:1240px; margin:0 auto;}
+  section{display:none;} section.active{display:block;}
+  .toolbar{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px;}
+  .toolbar label{color:var(--parchment-dim); font-size:18px;}
+  input, select{font:inherit; font-size:19px; color:var(--parchment); background:var(--stone-dark); border:2px solid var(--stone); border-radius:4px; padding:3px 6px;}
+  input[type=search]{min-width:220px;}
+  /* campos editáveis: parecem texto até passar o mouse/focar */
+  .ed{background:transparent; border:1px dashed transparent; padding:1px 4px; border-radius:3px; min-width:0;}
+  .ed:hover{border-color:var(--stone);}
+  .ed:focus{outline:none; border:1px solid var(--arcane); background:var(--stone-dark);}
+  .ed.changed{color:var(--gold-glow); border-bottom:1px solid var(--ember);}
+  .ed.bad{border:1px solid var(--blood);}
+  input.ed[type=number]{width:80px; text-align:right;}
+  input.ed.w-name{width:100%;}
+  input.ed.w-sm{width:60px;}
+  select.ed{padding:1px 2px;}
+  select.ed option{background:var(--stone-dark);}
+  .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:12px;}
+  .card{background:var(--bg-panel); border:2px solid var(--stone); border-radius:6px; padding:12px;}
+  .card.custom{border-color:#2a8d84;}
+  .card h3{font-family:'Press Start 2P', monospace; font-size:11px; line-height:1.5; margin:0 0 8px; color:var(--ember); display:flex; align-items:center; gap:4px;}
+  .card h3 input.ed{font-family:'Press Start 2P', monospace; font-size:11px; color:var(--ember);}
+  .row{display:flex; gap:12px; align-items:flex-start;}
+  .sprite{flex:none; width:96px; height:96px; background-repeat:no-repeat; background-size:300% 100%; background-position:0 0; image-rendering:pixelated; background-color:var(--stone-dark); border:2px solid var(--stone); border-radius:4px;}
+  .portrait{flex:none; width:96px; height:136px; object-fit:cover; object-position:top; border:2px solid var(--stone); border-radius:4px; background:var(--stone-dark);}
+  .meta{font-size:18px; color:var(--parchment-dim);}
+  .meta b{color:var(--parchment); font-weight:normal;}
+  .kv{display:grid; grid-template-columns:max-content 1fr; gap:2px 8px; align-items:center; font-size:18px; color:var(--parchment-dim);}
+  .kv > span{min-width:0;}
+  .kv-icon{display:flex; align-items:center; gap:8px; font-size:18px; color:var(--parchment-dim); margin-bottom:4px;}
+  .kv input.ed[type=text]{width:100%;}
+  .icon{display:inline-block; flex:none; width:24px; height:24px; vertical-align:middle; margin-right:6px; image-rendering:pixelated; background:var(--stone-dark); border-radius:3px;}
+  .icon.missing{outline:2px dashed var(--blood); outline-offset:-2px;}
+  .tag{display:inline-block; font-size:16px; padding:0 6px; border-radius:3px; border:1px solid var(--stone); color:var(--parchment-dim); margin:2px 4px 2px 0;}
+  .tag.boss{color:#fff; background:var(--blood); border-color:var(--blood);}
+  .tag.strong{color:var(--bg-deep); background:var(--ember); border-color:var(--ember);}
+  .tag.warn{color:var(--blood); border-color:var(--blood);}
+  .tag.new{color:var(--arcane); border-color:var(--arcane);}
+  ul.drops{list-style:none; margin:6px 0 0; padding:0; font-size:18px;}
+  ul.drops li{margin:3px 0; display:flex; align-items:center; gap:2px 6px; flex-wrap:wrap;}
+  ul.drops .d-item{display:flex; align-items:center; flex:1 1 150px; min-width:0;}
+  ul.drops .d-item select.ed{flex:1; min-width:0;}
+  ul.drops .d-qty{display:flex; align-items:center; gap:2px; flex:none; white-space:nowrap;}
+  ul.drops .d-qty input.ed{flex:none; width:58px;}
+  td input.ed.w-name{min-width:220px;}
+  #monGrid{grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));}
+  .table-wrap{overflow-x:auto; border:2px solid var(--stone); border-radius:6px;}
+  table{border-collapse:collapse; width:100%; font-size:19px;}
+  th, td{padding:5px 8px; text-align:left; border-bottom:1px solid var(--stone); white-space:nowrap;}
+  th{position:sticky; top:0; background:var(--bg-panel-2); color:var(--gold-glow); cursor:pointer; user-select:none; font-weight:normal;}
+  th[data-num], td.num{text-align:right;}
+  td.wrap{white-space:normal; min-width:150px;}
+  tbody tr:nth-child(even){background:rgba(255,255,255,0.025);}
+  tbody tr:hover{background:rgba(79,209,197,0.08);}
+  tr.cycle-start td{border-top:2px solid var(--ember);}
+  .mini-sprite{display:inline-block; width:28px; height:28px; vertical-align:middle; margin-right:6px; background-repeat:no-repeat; background-size:300% 100%; image-rendering:pixelated;}
+  .count{color:var(--parchment-dim); font-size:18px; margin:8px 0;}
+  .stats{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;}
+  .stat{background:var(--bg-panel); border:2px solid var(--stone); border-radius:6px; padding:8px 12px; min-width:150px;}
+  .stat .v{font-size:26px; color:var(--gold-glow);}
+  .stat .v input.ed{font-size:26px; color:var(--gold-glow); width:110px; text-align:left;}
+  .stat .l{font-size:16px; color:var(--parchment-dim);}
+  .quote{font-style:italic; color:var(--parchment-dim); font-size:18px; margin:2px 0;}
+  h2{font-family:'Press Start 2P', monospace; font-size:12px; color:var(--arcane); margin:22px 0 10px;}
+  .create{display:flex; gap:8px; flex-wrap:wrap; align-items:center; background:var(--bg-panel); border:2px dashed var(--stone); border-radius:6px; padding:8px 10px; margin-bottom:12px;}
+  .create b{color:var(--arcane); font-weight:normal;}
+  .hint{font-size:17px; color:var(--parchment-dim); margin:0 0 12px;}
+  .hint b{color:var(--parchment); font-weight:normal;}
+  .tree-card{margin-bottom:10px;}
+  .tree-cols{display:grid; grid-template-columns:minmax(0, 300px) minmax(0, 1fr); gap:16px;}
+  @media (max-width:700px){ .tree-cols{grid-template-columns:1fr;} .tree-card{margin-left:0 !important;} }
+  #toast{position:fixed; right:16px; bottom:16px; max-width:420px; background:var(--bg-panel-2); border:2px solid var(--arcane); border-radius:6px; padding:10px 14px; display:none; z-index:10;}
+  #toast.err{border-color:var(--blood);}
+  @media (max-width:600px){ input[type=search]{min-width:0; width:100%;} }
+</style>
+</head>
+<body>
+<header>
+  <div class="head-row">
+    <div>
+      <h1>COMPÊNDIO</h1>
+      <div class="sub">Lido de <code>js/config.js</code> + suas alterações (<code>js/overrides-data.js</code>). Clique em qualquer valor para editar.</div>
+    </div>
+    <div class="savebar">
+      <span class="status" id="saveStatus"></span>
+      <button class="primary" id="saveBtn">Salvar no jogo</button>
+      <button id="downloadBtn" title="Baixa js/overrides-data.js pra colocar na pasta js/ manualmente">Baixar arquivo</button>
+      <button id="discardBtn" title="Recarrega a última versão salva">Descartar</button>
+      <button class="danger" id="resetBtn" title="Apaga todas as alterações e volta ao config.js original">Restaurar original</button>
+    </div>
+  </div>
+  <nav id="tabs">
+    <button data-tab="monstros" class="active">Monstros</button>
+    <button data-tab="vida">Vida dos Monstros</button>
+    <button data-tab="itens">Itens</button>
+    <button data-tab="armas">Armas</button>
+    <button data-tab="arvore">Árvore</button>
+    <button data-tab="personagens">Personagens</button>
+  </nav>
+</header>
+<main>
+  <section id="monstros" class="active">
+    <div class="toolbar">
+      <input type="search" id="monSearch" placeholder="Buscar monstro ou item…">
+      <label>Dungeon <select id="monDungeon"></select></label>
+    </div>
+    <p class="hint">Nome, multiplicador de vida e drops são editáveis. Chance vazia = 100%.</p>
+    <div class="grid" id="monGrid"></div>
+  </section>
+
+  <section id="vida">
+    <p class="hint">Os valores gerais abaixo valem para todos os monstros; o multiplicador de cada um fica na aba Monstros. A partir do ciclo 2 a vida é ×2 (fixo no código).</p>
+    <div class="stats" id="hpStats"></div>
+    <div class="toolbar">
+      <label>Dungeon <select id="hpDungeon"></select></label>
+      <label>Ciclo <select id="hpCycle"></select></label>
+      <input type="search" id="hpSearch" placeholder="Filtrar por monstro…">
+      <label><input type="checkbox" id="hpBossOnly"> Só chefes</label>
+    </div>
+    <div class="count" id="hpCount"></div>
+    <div class="table-wrap"><table id="hpTable">
+      <thead><tr>
+        <th data-k="dungeonName">Dungeon</th>
+        <th data-k="cycle" data-num>Ciclo</th>
+        <th data-k="kill" data-num>Abate</th>
+        <th data-k="pos" data-num>Posição</th>
+        <th data-k="name">Monstro</th>
+        <th data-k="kind">Tipo</th>
+        <th data-k="hp" data-num>Vida</th>
+        <th data-k="limit" data-num>Tempo</th>
+        <th data-k="dpsNeed" data-num title="Dano por segundo mínimo pra vencer dentro do tempo do monstro">DPS mín.</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </section>
+
+  <section id="itens">
+    <div class="create">
+      <b>Novo item:</b>
+      <input id="newItemName" placeholder="Nome">
+      <input id="newItemKey" placeholder="chave (opcional)" style="width:170px">
+      <select id="newItemType"></select>
+      <button id="newItemBtn">Criar</button>
+    </div>
+    <div class="toolbar">
+      <input type="search" id="itemSearch" placeholder="Buscar item…">
+      <label>Tipo <select id="itemType"></select></label>
+      <label><input type="checkbox" id="itemMissing"> Só sem ícone</label>
+    </div>
+    <div class="count" id="itemCount"></div>
+    <div class="table-wrap"><table id="itemTable">
+      <thead><tr>
+        <th data-k="name">Item</th>
+        <th data-k="icon">Ícone</th>
+        <th data-k="typeLabel">Tipo</th>
+        <th data-k="sellPrice" data-num>Venda</th>
+        <th data-k="origin">Origem</th>
+        <th data-k="droppedBy">Dropado por</th>
+        <th data-k="usedIn">Usado em</th>
+        <th></th>
+      </tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </section>
+
+  <section id="armas">
+    <div class="create">
+      <b>Nova arma:</b>
+      <input id="newWeaponName" placeholder="Nome">
+      <input id="newWeaponKey" placeholder="chave (opcional)" style="width:170px">
+      <select id="newWeaponKind">
+        <option value="forgedWeapons">Forjada (receita no Ferreiro)</option>
+        <option value="weapons">Básica (compra no Ferreiro)</option>
+      </select>
+      <button id="newWeaponBtn">Criar</button>
+    </div>
+    <p class="hint">Bônus vazio = arma não tem esse bônus. Para uma arma forjada vir de um drop, crie antes um item do tipo "Arma bruta", coloque-o nos drops de um monstro e na receita.</p>
+    <h2>Armas básicas</h2>
+    <div class="grid" id="weaponGrid"></div>
+    <h2>Armas forjadas</h2>
+    <div class="grid" id="forgedGrid"></div>
+  </section>
+
+  <section id="arvore">
+    <p class="hint">Árvore de habilidades da Academia de Combate, na ordem dos ramos. Cada efeito é somado <b>por nível comprado</b>; "teto" limita o total do atributo.
+      Mudanças nos efeitos valem para os próximos níveis comprados — níveis já comprados num save continuam com o valor antigo (use um save novo para testar).</p>
+    <div class="toolbar">
+      <input type="search" id="treeSearch" placeholder="Buscar habilidade…">
+    </div>
+    <div id="treeList"></div>
+  </section>
+
+  <section id="personagens">
+    <h2>Moradores da cidade</h2>
+    <div class="grid" id="npcGrid"></div>
+    <h2>Tropas (Guilda)</h2>
+    <div class="grid" id="troopGrid"></div>
+    <h2>Mineradores (Caverna)</h2>
+    <div class="grid" id="prospectorGrid"></div>
+  </section>
+</main>
+<div id="toast"></div>
+
+<script src="js/config.js"></script>
+<script>
+// Cópia do config.js ORIGINAL, antes de aplicar js/overrides-data.js — é a
+// base pra calcular o que mudou na hora de salvar (ConfigOverrides.diff).
+const BASE = JSON.parse(JSON.stringify({
+  config: Object.fromEntries(Object.entries(CONFIG).filter(([, v]) => typeof v === 'number')),
+  monsters: MONSTER_TYPES, items: ITEM_DEFS, weapons: WEAPON_DEFS, forgedWeapons: FORGED_WEAPON_DEFS, troops: TROOP_DEFS, upgrades: UPGRADE_DEFS
+}));
+</script>
+<script src="js/overrides-data.js"></script>
+<script src="js/overrides.js"></script>
+<script>
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => n.toLocaleString('pt-BR');
+const round = (n, d = 4) => Math.round(n * 10 ** d) / 10 ** d;
+const LISTS = { monsters: MONSTER_TYPES, items: ITEM_DEFS, weapons: WEAPON_DEFS, forgedWeapons: FORGED_WEAPON_DEFS, troops: TROOP_DEFS, upgrades: UPGRADE_DEFS };
+const current = () => ({ config: CONFIG, ...LISTS });
+const itemDef = key => ITEM_DEFS.find(d => d.key === key);
+const monDef = key => MONSTER_TYPES.find(m => m.key === key);
+const baseEntry = (coll, key) => coll === 'config' ? BASE.config : (BASE[coll] || []).find(e => e.key === key);
+const TYPE_LABELS = { material:'Material', brokenWeapon:'Arma bruta', mineral:'Minério' };
+let savedJson = JSON.stringify(ConfigOverrides.diff(BASE, current()));
+
+// ---------------------------------------------------------------------
+// Campos editáveis. data-bind = "coleção|chave|caminho|tipo":
+//   tipos: str, num, int, pct (guardado 0-1, mostrado 0-100), sec (guardado
+//   ms, mostrado s); sufixo "?" = campo opcional (vazio remove o campo).
+// ---------------------------------------------------------------------
+function getPath(obj, path){
+  return path.split('.').reduce((o, p) => o == null ? undefined : o[p], obj);
+}
+function entryOf(coll, key){
+  return coll === 'config' ? CONFIG : LISTS[coll].find(e => e.key === key);
+}
+function display(v, kind){
+  if(v === undefined || v === null) return '';
+  const k = kind.replace('?', '');
+  if(k === 'pct') return round(v * 100, 3);
+  if(k === 'sec') return round(v / 1000, 3);
+  return v;
+}
+function isChanged(coll, key, path){
+  const b = baseEntry(coll, key);
+  if(!b) return false; // entrada nova: tudo é "novo", sem destaque campo a campo
+  return JSON.stringify(getPath(b, path)) !== JSON.stringify(getPath(entryOf(coll, key), path));
+}
+function field(coll, key, path, kind, opts = {}){
+  const bind = `${coll}|${key}|${path}|${kind}`;
+  const v = display(getPath(entryOf(coll, key), path), kind);
+  const changed = isChanged(coll, key, path);
+  const cls = ['ed', opts.cls || '', changed ? 'changed' : ''].join(' ');
+  const base = baseEntry(coll, key);
+  const title = base && changed ? ` title="Original: ${esc(display(getPath(base, path), kind))}"` : '';
+  if(opts.options){
+    return `<select class="${cls}" data-bind="${esc(bind)}"${title}>${opts.options.map(([ov, ol]) =>
+      `<option value="${esc(ov)}"${String(ov) === String(v) ? ' selected' : ''}>${esc(ol)}</option>`).join('')}</select>`;
+  }
+  const type = kind.startsWith('str') ? 'text' : 'number';
+  const step = opts.step || (kind.startsWith('int') ? '1' : 'any');
+  return `<input class="${cls}" data-bind="${esc(bind)}" type="${type}" ${type === 'number' ? `step="${step}" min="0"` : ''} value="${esc(v)}" placeholder="${esc(opts.placeholder || '')}"${opts.list ? ` list="${opts.list}"` : ''}${title}>`;
+}
+
+function setValue(bind, raw){
+  const [coll, key, path, kindRaw] = bind.split('|');
+  const optional = kindRaw.endsWith('?');
+  const kind = kindRaw.replace('?', '');
+  const obj = entryOf(coll, key);
+  if(!obj) return false;
+  const parts = path.split('.');
+  const parent = parts.slice(0, -1).reduce((o, p) => o[p], obj);
+  const last = parts[parts.length - 1];
+  const old = parent[last];
+  let v;
+  if(kind === 'str'){
+    v = String(raw).trim();
+    if(!v) return false;
+    if(path === 'icon' && !ConfigOverrides.ICON_RE.test(v)) return false;
+  } else {
+    const s = String(raw).trim().replace(',', '.');
+    if(s === ''){
+      if(!optional) return false;
+      delete parent[last];
+      afterSet(coll, obj, path, old);
+      return true;
+    }
+    v = Number(s);
+    if(!isFinite(v) || v < 0) return false;
+    if(kind === 'pct') v = round(v / 100, 6);
+    if(kind === 'sec') v = Math.round(v * 1000);
+    if(kind === 'int') v = Math.round(v);
+  }
+  parent[last] = v;
+  afterSet(coll, obj, path, old);
+  return true;
+}
+// efeitos colaterais que mantêm os dados coerentes com o que o jogo espera
+function afterSet(coll, obj, path, old){
+  if(coll === 'troops' && path === 'dps' && obj.desc === `+${old} DPS`) obj.desc = `+${obj.dps} DPS`;
+  if(coll === 'items' && path === 'type') normalizeItemType(obj);
+  const m = path.match(/^drops\.(\d+)\.(qtyMin|qtyMax)$/);
+  if(m && coll === 'monsters'){
+    const d = obj.drops[+m[1]];
+    if(d.qtyMax < d.qtyMin){ if(m[2] === 'qtyMin') d.qtyMax = d.qtyMin; else d.qtyMin = d.qtyMax; }
+  }
+  if(coll === 'monsters' && /^drops\.\d+\.chance$/.test(path)){
+    const d = getPath(obj, path.replace(/\.chance$/, ''));
+    if(d.chance > 1) d.chance = 1;
+  }
+  if(coll === 'upgrades'){
+    if(path === 'maxLevel' && obj.maxLevel < 1) obj.maxLevel = 1;
+    // trocou o atributo do efeito pra um de outro formato (ex.: dano fixo -> %):
+    // o número antigo não faz sentido no novo formato, recomeça num valor pequeno
+    const s = path.match(/^effects\.(\d+)\.stat$/);
+    if(s){
+      const e = obj.effects[+s[1]];
+      if(UPGRADE_STATS[old] && UPGRADE_STATS[old].format !== UPGRADE_STATS[e.stat].format){
+        e.add = STAT_DEFAULT_ADD[UPGRADE_STATS[e.stat].format];
+        delete e.cap;
+      }
+    }
+  }
+}
+// material precisa de dungeon (Guilda sorteia por ela); minério precisa de raridade/peso (Caverna)
+function normalizeItemType(it){
+  if(it.type === 'material'){ it.dungeon = it.dungeon || DUNGEON_ORDER[0]; it.weight = it.weight || 10; delete it.rarity; }
+  else if(it.type === 'mineral'){ it.rarity = it.rarity || 'comum'; it.weight = it.weight || 1; delete it.dungeon; }
+  else { delete it.dungeon; delete it.weight; delete it.rarity; }
+  refreshMinerals();
+}
+function refreshMinerals(){ MINERAL_DEFS.splice(0, MINERAL_DEFS.length, ...ITEM_DEFS.filter(d => d.type === 'mineral')); }
+
+// Re-render adiado: o `change` dispara ANTES do foco ir pro próximo campo —
+// espera o foco mudar, redesenha e devolve o foco pro mesmo campo.
+let renderQueued = false;
+function queueRender(){
+  if(renderQueued) return;
+  renderQueued = true;
+  setTimeout(() => {
+    renderQueued = false;
+    const active = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.bind : null;
+    renderAll();
+    if(active){
+      const el = [...document.querySelectorAll('[data-bind]')].find(e => e.dataset.bind === active);
+      if(el) el.focus();
+    }
+  }, 0);
+}
+document.addEventListener('change', e => {
+  const el = e.target.closest('[data-bind]');
+  if(!el) return;
+  // descrição de habilidade que ainda está no texto gerado acompanha a mudança do efeito
+  const [coll, key] = el.dataset.bind.split('|');
+  const upg = coll === 'upgrades' ? UPGRADE_DEFS.find(u => u.key === key) : null;
+  const autoDesc = upg && upg.effects.length && upg.desc === describeEffects(upg.effects);
+  if(setValue(el.dataset.bind, el.value)){
+    if(autoDesc && upg.effects.length) upg.desc = describeEffects(upg.effects);
+    queueRender();
+  } else { el.classList.add('bad'); toast('Valor inválido — use um número ≥ 0 (ou texto não vazio; ícone só com letras, números, - e _).', true); }
+});
+document.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && e.target.matches('input.ed')) e.target.blur();
+});
+
+// Botões de ação: data-action="nome|arg1|arg2"
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-action]');
+  if(!btn) return;
+  const [action, a, b] = btn.dataset.action.split('|');
+  if(action === 'add-drop'){
+    const m = monDef(a);
+    m.drops = m.drops || [];
+    m.drops.push({ item: ITEM_DEFS[0].key, qtyMin: 1, qtyMax: 1 });
+  } else if(action === 'del-drop'){
+    monDef(a).drops.splice(+b, 1);
+  } else if(action === 'add-mat'){
+    FORGED_WEAPON_DEFS.find(x => x.key === a).recipe.materials.push({ itemKey: ITEM_DEFS[0].key, qty: 1 });
+  } else if(action === 'del-mat'){
+    FORGED_WEAPON_DEFS.find(x => x.key === a).recipe.materials.splice(+b, 1);
+  } else if(action === 'del-custom'){
+    deleteCustom(a, b);
+  } else if(action === 'add-effect' || action === 'del-effect'){
+    const u = UPGRADE_DEFS.find(x => x.key === a);
+    const autoDesc = u.effects.length && u.desc === describeEffects(u.effects);
+    if(action === 'add-effect') u.effects.push({ stat: 'clickDamageFlat', add: 1 });
+    else u.effects.splice(+b, 1);
+    if(autoDesc && u.effects.length) u.desc = describeEffects(u.effects);
+  } else if(action === 'gen-desc'){
+    const u = UPGRADE_DEFS.find(x => x.key === a);
+    if(u.effects.length) u.desc = describeEffects(u.effects);
+  } else return;
+  queueRender();
+});
+
+function deleteCustom(coll, key){
+  const list = LISTS[coll];
+  const e = list.find(x => x.key === key);
+  if(!e || !e.custom) return;
+  if(coll === 'items'){
+    const refs = [
+      ...MONSTER_TYPES.filter(m => (m.drops || []).some(d => d.item === key)).map(m => m.name),
+      ...FORGED_WEAPON_DEFS.filter(w => w.recipe.materials.some(m => m.itemKey === key)).map(w => w.name)
+    ];
+    if(!confirm(`Excluir "${e.name}"?` + (refs.length ? `\nTambém será removido de: ${refs.join(', ')}` : ''))) return;
+    for(const m of MONSTER_TYPES) if(m.drops) m.drops = m.drops.filter(d => d.item !== key);
+    for(const w of FORGED_WEAPON_DEFS) w.recipe.materials = w.recipe.materials.filter(m => m.itemKey !== key);
+  } else if(!confirm(`Excluir "${e.name}"?`)) return;
+  list.splice(list.indexOf(e), 1);
+  refreshMinerals();
+}
+
+// chave a partir do nome: "Espada de Fogo" -> espadaDeFogo
+function slugKey(name){
+  const words = name.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9 ]/g, ' ').trim().split(/\s+/).filter(Boolean);
+  let k = words.map((w, i) => i ? w[0].toUpperCase() + w.slice(1).toLowerCase() : w.toLowerCase()).join('');
+  if(!/^[a-zA-Z]/.test(k)) k = 'x' + k;
+  return k.slice(0, 40);
+}
+function newKey(nameEl, keyEl){
+  const name = nameEl.value.trim();
+  if(!name){ toast('Dê um nome primeiro.', true); return null; }
+  const key = keyEl.value.trim() || slugKey(name);
+  if(!ConfigOverrides.KEY_RE.test(key)){ toast('Chave inválida: use letras/números, começando com letra.', true); return null; }
+  if(ConfigOverrides.keyTaken({ ITEM_DEFS, WEAPON_DEFS, FORGED_WEAPON_DEFS }, key)){ toast(`A chave "${key}" já existe.`, true); return null; }
+  return { name, key };
+}
+
+// ---------------------------------------------------------------------
+// Ícones: item novo começa sem arquivo — mostra quadrado vermelho até existir
+// assets/icons/<icone>.png. Sugestões = listagem da pasta (o dev_server.py
+// lista diretórios) + ícones já usados.
+// ---------------------------------------------------------------------
+const missingIcons = new Set();
+function iconHtml(icon){
+  return `<img class="icon" data-icon="${esc(icon)}" src="assets/icons/${esc(icon)}.png" alt="" onerror="iconMissing(this)">`;
+}
+function iconMissing(img){
+  const ph = document.createElement('span');
+  ph.className = 'icon missing';
+  ph.title = 'Ícone não existe: assets/icons/' + img.dataset.icon + '.png';
+  img.replaceWith(ph);
+  if(!missingIcons.has(img.dataset.icon)){ missingIcons.add(img.dataset.icon); scheduleItemCount(); }
+}
+const iconList = document.createElement('datalist');
+iconList.id = 'iconList';
+document.body.appendChild(iconList);
+let dirIcons = [];
+function refreshIconList(){
+  const names = new Set([...ITEM_DEFS, ...WEAPON_DEFS, ...FORGED_WEAPON_DEFS].map(d => d.icon).concat(dirIcons));
+  iconList.innerHTML = [...names].sort().map(n => `<option value="${esc(n)}">`).join('');
+}
+fetch('assets/icons/').then(r => r.ok ? r.text() : '').then(html => {
+  dirIcons = [...html.matchAll(/href="([^"/]+)\.png"/g)].map(m => decodeURIComponent(m[1])).filter(n => ConfigOverrides.ICON_RE.test(n));
+  refreshIconList();
+}).catch(() => {});
+
+// ---------------------------------------------------------------------
+// Vida: mesma conta de MonsterModule.spawn/hpFor (js/monster.js). Se a
+// fórmula mudar lá, atualizar aqui também.
+// ---------------------------------------------------------------------
+const groupSize = slot => (!slot || !slot.pairChoices) ? 1 : Math.max(...slot.pairChoices.map(o => o.length));
+const kpcOf = schedule => schedule.reduce((s, slot) => s + groupSize(slot), 0);
+function hpFor(killIndex, isBoss, hpMult){
+  let hp = CONFIG.baseHp * Math.pow(CONFIG.hpGrowth, killIndex);
+  if(isBoss) hp *= CONFIG.bossHpMult;
+  hp *= hpMult || 1;
+  return Math.ceil(hp);
+}
+function buildHpRows(){
+  const rows = [];
+  for(const dKey of DUNGEON_ORDER){
+    const map = MAPS[dKey];
+    const cyclesMap = map.cycles || { 1: map.order };
+    const totalCycles = Object.keys(cyclesMap).length;
+    const kpc = kpcOf(cyclesMap[1]);
+    for(let cycle = 1; cycle <= CONFIG.maxCycleNum; cycle++){
+      const schedule = cyclesMap[((cycle - 1) % totalCycles) + 1];
+      let consumed = 0;
+      schedule.forEach((slot, slotIdx) => {
+        const size = groupSize(slot);
+        const isLastSlot = slotIdx === schedule.length - 1;
+        const options = slot.pairChoices ? slot.pairChoices : [[slot]];
+        options.forEach((opt, optIdx) => {
+          opt.forEach((mKey, sub) => {
+            const killIdx = (cycle - 1) * kpc + consumed + sub;
+            const isBoss = slot.pairChoices ? (isLastSlot && sub === size - 1) : isLastSlot;
+            const extra = (slot.pairChoices && slot.strong) ? 1.5 : 1;
+            const type = monDef(mKey);
+            const hpKillIndex = (map.hpKillOffset || 0) + killIdx - 2 * (cycle - 1);
+            const hp = hpFor(hpKillIndex, isBoss, (type.hpMult || 1) * extra) * (cycle > 1 ? 2 : 1);
+            const limit = (isBoss ? CONFIG.bossTimeLimitMs : CONFIG.monsterTimeLimitMs) / 1000;
+            let kind = 'Normal';
+            if(slot.pairChoices) kind = (size === 2 ? 'Dupla' : size === 3 ? 'Tripla' : 'Grupo') + ` ${sub+1}/${size}` + (options.length > 1 ? ` · opção ${optIdx+1}` : '');
+            rows.push({
+              dungeon:dKey, dungeonName:map.name.replace(/^Andar d[aoe]s? /, ''), cycle, kill:killIdx % kpc + 1, pos:slotIdx + 1,
+              totalPos:schedule.length, key:mKey, name:type.name, image:type.image,
+              kind, isBoss, strong:!!(slot.pairChoices && slot.strong), hp, limit,
+              dpsNeed: limit > 0 ? Math.ceil(hp / limit) : hp, firstOfCycle: slotIdx === 0 && optIdx === 0 && sub === 0
+            });
+          });
+        });
+        consumed += size;
+      });
+    }
+  }
+  return rows;
+}
+let HP_ROWS = [];
+const appearances = {};
+for(const r of buildHpRows()){
+  const a = appearances[r.key] = appearances[r.key] || {};
+  (a[r.dungeon] = a[r.dungeon] || new Set()).add(r.cycle);
+}
+
+// ---------------------------------------------------------------------
+// Abas / filtros / ordenação
+// ---------------------------------------------------------------------
+document.getElementById('tabs').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-tab]');
+  if(!btn) return;
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('active', b === btn));
+  document.querySelectorAll('main section').forEach(s => s.classList.toggle('active', s.id === btn.dataset.tab));
+  try{ localStorage.setItem('compendioTab', btn.dataset.tab); }catch(e){}
+});
+try{
+  const saved = location.hash.slice(1) || localStorage.getItem('compendioTab');
+  const btn = saved && document.querySelector(`#tabs button[data-tab="${saved}"]`);
+  if(btn) btn.click();
+}catch(e){}
+// o #hash é igual ao id da seção — sem isso o navegador rola até ela
+window.addEventListener('load', () => window.scrollTo(0, 0));
+
+function fillSelect(sel, options){
+  sel.innerHTML = options.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join('');
+}
+const dungeonOptions = [['', 'Todas'], ...DUNGEON_ORDER.map(k => [k, MAPS[k].name])];
+const dungeonChoices = DUNGEON_ORDER.map(k => [k, MAPS[k].name.replace(/^Andar d[aoe]s? /, '')]);
+const itemChoices = () => ITEM_DEFS.map(d => [d.key, d.name]);
+
+function sortable(table, render){
+  let sortKey = null, dir = 1;
+  table.querySelector('thead').addEventListener('click', e => {
+    const th = e.target.closest('th[data-k]');
+    if(!th) return;
+    dir = (sortKey === th.dataset.k) ? -dir : 1;
+    sortKey = th.dataset.k;
+    table.querySelectorAll('th').forEach(t => t.textContent = t.textContent.replace(/ [▲▼]$/, ''));
+    th.textContent += dir > 0 ? ' ▲' : ' ▼';
+    render();
+  });
+  return rows => !sortKey ? rows : [...rows].sort((a, b) => {
+    const x = a[sortKey], y = b[sortKey];
+    return (typeof x === 'number' ? x - y : String(x).localeCompare(String(y), 'pt-BR')) * dir;
+  });
+}
+
+// ---------------------------------------------------------------------
+// Monstros
+// ---------------------------------------------------------------------
+fillSelect(document.getElementById('monDungeon'), dungeonOptions);
+function renderMonsters(){
+  const q = document.getElementById('monSearch').value.trim().toLowerCase();
+  const dFilter = document.getElementById('monDungeon').value;
+  const grid = document.getElementById('monGrid');
+  const list = MONSTER_TYPES.filter(m => {
+    if(dFilter && !(appearances[m.key] && appearances[m.key][dFilter])) return false;
+    if(!q) return true;
+    const hay = [m.name, ...(m.drops || []).map(d => itemDef(d.item) ? itemDef(d.item).name : d.item)].join(' ').toLowerCase();
+    return hay.includes(q);
+  });
+  grid.innerHTML = list.map(m => {
+    const app = appearances[m.key] || {};
+    const where = Object.keys(app).length
+      ? DUNGEON_ORDER.filter(k => app[k]).map(k => `<span class="tag">${esc(MAPS[k].name.replace(/^Andar d[aoe]s? /, ''))} · ciclo ${[...app[k]].sort().join(', ')}</span>`).join('')
+      : '<span class="tag warn">Não aparece em nenhuma dungeon</span>';
+    const hpRange = HP_ROWS.filter(r => r.key === m.key).map(r => r.hp);
+    const drops = (m.drops || []).map((d, i) => {
+      const it = itemDef(d.item);
+      return `<li><span class="d-item">${iconHtml(it ? it.icon : 'chest')}${field('monsters', m.key, `drops.${i}.item`, 'str', { options: itemChoices() })}</span>
+        <span class="d-qty">×${field('monsters', m.key, `drops.${i}.qtyMin`, 'int', { cls: 'w-sm' })}–${field('monsters', m.key, `drops.${i}.qtyMax`, 'int', { cls: 'w-sm' })}
+        ${field('monsters', m.key, `drops.${i}.chance`, 'pct?', { cls: 'w-sm', placeholder: '100' })}%
+        <button class="x" data-action="del-drop|${esc(m.key)}|${i}" title="Remover drop">×</button></span></li>`;
+    }).join('');
+    return `<div class="card">
+      <h3>${field('monsters', m.key, 'name', 'str', { cls: 'w-name' })}</h3>
+      <div class="row">
+        <div class="sprite" style="background-image:url('${esc(m.image)}')"></div>
+        <div class="meta">
+          <div>Mult. de vida: ${field('monsters', m.key, 'hpMult', 'num?', { cls: 'w-sm', placeholder: '1' })}×</div>
+          ${hpRange.length ? `<div>Vida: <b>${fmt(Math.min(...hpRange))}</b> a <b>${fmt(Math.max(...hpRange))}</b></div>` : ''}
+          <div style="margin-top:4px;">${where}</div>
+        </div>
+      </div>
+      <ul class="drops">${drops}</ul>
+      <button data-action="add-drop|${esc(m.key)}" style="margin-top:6px">+ drop</button>
+    </div>`;
+  }).join('') || '<div class="meta">Nenhum monstro encontrado.</div>';
+}
+['monSearch', 'monDungeon'].forEach(id => document.getElementById(id).addEventListener('input', renderMonsters));
+
+// ---------------------------------------------------------------------
+// Vida dos monstros
+// ---------------------------------------------------------------------
+fillSelect(document.getElementById('hpDungeon'), dungeonOptions);
+fillSelect(document.getElementById('hpCycle'), [['', 'Todos'], ...Array.from({length:CONFIG.maxCycleNum}, (_, i) => [String(i+1), `Ciclo ${i+1}`])]);
+const hpTable = document.getElementById('hpTable');
+const hpSort = sortable(hpTable, renderHp);
+function renderHp(){
+  const d = document.getElementById('hpDungeon').value;
+  const c = document.getElementById('hpCycle').value;
+  const q = document.getElementById('hpSearch').value.trim().toLowerCase();
+  const bossOnly = document.getElementById('hpBossOnly').checked;
+  const rows = hpSort(HP_ROWS.filter(r =>
+    (!d || r.dungeon === d) && (!c || r.cycle === +c) && (!bossOnly || r.isBoss) && (!q || r.name.toLowerCase().includes(q))
+  ));
+  hpTable.querySelector('tbody').innerHTML = rows.map(r => `
+    <tr class="${r.firstOfCycle ? 'cycle-start' : ''}">
+      <td>${esc(r.dungeonName)}</td>
+      <td class="num">${r.cycle}</td>
+      <td class="num">${r.kill}</td>
+      <td class="num">${r.pos}/${r.totalPos}</td>
+      <td><span class="mini-sprite" style="background-image:url('${esc(r.image)}')"></span>${esc(r.name)}</td>
+      <td class="wrap">${r.isBoss ? '<span class="tag boss">Chefe</span>' : ''}${r.strong ? '<span class="tag strong">Forte ×1.5</span>' : ''}${esc(r.kind)}</td>
+      <td class="num">${fmt(r.hp)}</td>
+      <td class="num">${r.limit}s</td>
+      <td class="num">${fmt(r.dpsNeed)}</td>
+    </tr>`).join('');
+  document.getElementById('hpCount').textContent = `${rows.length} linha(s). Posições de dupla/tripla com várias opções sorteáveis aparecem uma vez por opção.`;
+}
+['hpDungeon', 'hpCycle', 'hpSearch', 'hpBossOnly'].forEach(id => document.getElementById(id).addEventListener('input', renderHp));
+function renderHpStats(){
+  const stat = (inputHtml, label, suffix = '') => `<div class="stat"><div class="v">${inputHtml}${suffix}</div><div class="l">${esc(label)}</div></div>`;
+  document.getElementById('hpStats').innerHTML = [
+    stat(field('config', '', 'baseHp', 'num'), 'Vida base'),
+    stat('×' + field('config', '', 'hpGrowth', 'num'), 'Crescimento por abate'),
+    stat('×' + field('config', '', 'bossHpMult', 'num'), 'Vida do chefe'),
+    stat(field('config', '', 'monsterTimeLimitMs', 'sec'), 'Tempo por monstro', 's'),
+    stat(field('config', '', 'bossTimeLimitMs', 'sec'), 'Tempo do chefe', 's'),
+    stat(field('config', '', 'dungeonTimeLimitMs', 'sec'), 'Tempo base da dungeon', 's'),
+    stat('×' + field('config', '', 'goldenRewardMult', 'num'), 'Itens do monstro dourado'),
+    stat(field('config', '', 'goldenChancePerTick', 'pct'), 'Chance dourado por tick (200ms)', '%'),
+  ].join('');
+}
+
+// ---------------------------------------------------------------------
+// Itens
+// ---------------------------------------------------------------------
+fillSelect(document.getElementById('itemType'), [['', 'Todos'], ...Object.entries(TYPE_LABELS)]);
+fillSelect(document.getElementById('newItemType'), Object.entries(TYPE_LABELS));
+const itemTable = document.getElementById('itemTable');
+const itemSort = sortable(itemTable, renderItems);
+function itemRows(){
+  const forgeUses = {};
+  for(const w of FORGED_WEAPON_DEFS){
+    for(const m of (w.recipe && w.recipe.materials) || []) (forgeUses[m.itemKey] = forgeUses[m.itemKey] || []).push(`${w.name} (${m.qty})`);
+  }
+  return ITEM_DEFS.map(it => {
+    const droppedBy = MONSTER_TYPES.filter(m => (m.drops || []).some(d => d.item === it.key)).map(m => m.name);
+    const origin = it.type === 'mineral' ? 'Caverna' : it.dungeon && MAPS[it.dungeon] ? MAPS[it.dungeon].name : 'Drop';
+    return { def: it, key: it.key, name: it.name, icon: it.icon, type: it.type, sellPrice: it.sellPrice,
+      typeLabel: TYPE_LABELS[it.type] || it.type, origin, droppedBy: droppedBy.join(', ') || '—', usedIn: (forgeUses[it.key] || []).join(', ') || '—' };
+  });
+}
+function originFields(it){
+  if(it.type === 'material'){
+    return `${field('items', it.key, 'dungeon', 'str', { options: dungeonChoices })} peso ${field('items', it.key, 'weight', 'num', { cls: 'w-sm' })}`;
+  }
+  if(it.type === 'mineral'){
+    return `Caverna · ${field('items', it.key, 'rarity', 'str', { options: Object.entries(RARITY_DEFS).map(([k, r]) => [k, r.label]) })} peso ${field('items', it.key, 'weight', 'num', { cls: 'w-sm' })}`;
+  }
+  return 'Drop';
+}
+function renderItems(){
+  const q = document.getElementById('itemSearch').value.trim().toLowerCase();
+  const t = document.getElementById('itemType').value;
+  const onlyMissing = document.getElementById('itemMissing').checked;
+  const rows = itemSort(itemRows().filter(r =>
+    (!t || r.type === t) && (!onlyMissing || missingIcons.has(r.icon)) &&
+    (!q || (r.name + ' ' + r.droppedBy + ' ' + r.origin).toLowerCase().includes(q))
+  ));
+  itemTable.querySelector('tbody').innerHTML = rows.map(r => {
+    const it = r.def;
+    return `<tr>
+      <td>${iconHtml(it.icon)}${field('items', it.key, 'name', 'str', { cls: 'w-name' })}${it.custom ? '<span class="tag new">novo</span>' : ''}</td>
+      <td>${field('items', it.key, 'icon', 'str', { list: 'iconList' })}</td>
+      <td>${field('items', it.key, 'type', 'str', { options: Object.entries(TYPE_LABELS) })}</td>
+      <td class="num">${field('items', it.key, 'sellPrice', 'num')}</td>
+      <td>${originFields(it)}</td>
+      <td class="wrap">${esc(r.droppedBy)}</td>
+      <td class="wrap">${esc(r.usedIn)}</td>
+      <td>${it.custom ? `<button class="x" data-action="del-custom|items|${esc(it.key)}" title="Excluir item">×</button>` : ''}</td>
+    </tr>`;
+  }).join('');
+  scheduleItemCount();
+}
+let countTimer = null;
+function scheduleItemCount(){
+  clearTimeout(countTimer);
+  countTimer = setTimeout(() => {
+    const shown = itemTable.querySelectorAll('tbody tr').length;
+    const missing = ITEM_DEFS.filter(d => missingIcons.has(d.icon)).length;
+    document.getElementById('itemCount').textContent = `${shown} item(ns)` + (missing ? ` · ${missing} sem ícone (contorno vermelho — crie assets/icons/<ícone>.png)` : '');
+  }, 100);
+}
+['itemSearch', 'itemType', 'itemMissing'].forEach(id => document.getElementById(id).addEventListener('input', renderItems));
+document.getElementById('newItemBtn').addEventListener('click', () => {
+  const k = newKey(document.getElementById('newItemName'), document.getElementById('newItemKey'));
+  if(!k) return;
+  const it = { key: k.key, name: k.name, icon: 'item-' + k.key.toLowerCase(), sellPrice: 1, type: document.getElementById('newItemType').value, custom: true };
+  ITEM_DEFS.push(it);
+  normalizeItemType(it);
+  document.getElementById('newItemName').value = document.getElementById('newItemKey').value = '';
+  toast(`Item "${it.name}" criado. Coloque-o nos drops de um monstro (aba Monstros) para ele aparecer no jogo.`);
+  queueRender();
+});
+
+// ---------------------------------------------------------------------
+// Armas
+// ---------------------------------------------------------------------
+const BONUS_FIELDS = [
+  ['clickDamageBonus', 'Dano por clique', 'num?'],
+  ['dpsBonus', 'DPS', 'num?'],
+  ['critChanceBonus', 'Chance de crítico %', 'pct?'],
+  ['critDamageBonus', 'Dano crítico %', 'pct?'],
+  ['extraDropChance', 'Drop extra %', 'pct?'],
+  ['burnChance', 'Chance de queimadura %', 'pct?'],
+  ['burnDamagePercent', 'Queimadura (% do clique)', 'pct?'],
+];
+function weaponCard(coll, w){
+  const bonuses = BONUS_FIELDS.map(([f, label, kind]) => `<span>${esc(label)}</span><span>${field(coll, w.key, f, kind, { placeholder: '—' })}</span>`).join('');
+  let extra = '';
+  if(coll === 'weapons'){
+    extra = `<div class="kv" style="margin-top:6px"><span>Preço no Ferreiro</span><span>${field(coll, w.key, 'buyCost', 'int')}</span></div>`;
+  } else {
+    const mats = w.recipe.materials.map((m, i) => {
+      const it = itemDef(m.itemKey);
+      return `<li><span class="d-item">${iconHtml(it ? it.icon : 'chest')}${field(coll, w.key, `recipe.materials.${i}.itemKey`, 'str', { options: itemChoices() })}</span>
+        <span class="d-qty">×${field(coll, w.key, `recipe.materials.${i}.qty`, 'int', { cls: 'w-sm' })}
+        <button class="x" data-action="del-mat|${esc(w.key)}|${i}" title="Remover material">×</button></span></li>`;
+    }).join('');
+    extra = `<div class="kv" style="margin-top:6px"><span>Receita: moedas</span><span>${field(coll, w.key, 'recipe.coinCost', 'int')}</span></div>
+      <ul class="drops">${mats}</ul><button data-action="add-mat|${esc(w.key)}" style="margin-top:6px">+ material</button>`;
+  }
+  return `<div class="card${w.custom ? ' custom' : ''}">
+    <h3>${iconHtml(w.icon)}${field(coll, w.key, 'name', 'str', { cls: 'w-name' })}
+      ${w.custom ? `<button class="x" data-action="del-custom|${coll}|${esc(w.key)}" title="Excluir arma">×</button>` : ''}</h3>
+    <div class="kv-icon"><span>Ícone</span>${field(coll, w.key, 'icon', 'str', { list: 'iconList', cls: 'w-name' })}</div>
+    <div class="kv">${bonuses}</div>
+    ${extra}
+  </div>`;
+}
+function renderWeapons(){
+  document.getElementById('weaponGrid').innerHTML = WEAPON_DEFS.map(w => weaponCard('weapons', w)).join('');
+  document.getElementById('forgedGrid').innerHTML = FORGED_WEAPON_DEFS.map(w => weaponCard('forgedWeapons', w)).join('');
+}
+document.getElementById('newWeaponBtn').addEventListener('click', () => {
+  const k = newKey(document.getElementById('newWeaponName'), document.getElementById('newWeaponKey'));
+  if(!k) return;
+  const coll = document.getElementById('newWeaponKind').value;
+  const w = { key: k.key, name: k.name, icon: 'weapon-' + k.key.toLowerCase(), clickDamageBonus: 1, custom: true };
+  if(coll === 'weapons') w.buyCost = 500;
+  else w.recipe = { coinCost: 100, materials: [] };
+  LISTS[coll].push(w);
+  document.getElementById('newWeaponName').value = document.getElementById('newWeaponKey').value = '';
+  toast(`Arma "${w.name}" criada.`);
+  queueRender();
+});
+
+// ---------------------------------------------------------------------
+// Árvore de habilidades (UPGRADE_DEFS + layout de UPGRADE_TREE)
+// ---------------------------------------------------------------------
+const STAT_KIND = { flat: 'num', pct: 'pct', sec: 'sec' };
+const STAT_DEFAULT_ADD = { flat: 1, pct: 0.01, sec: 1000 };
+function fmtStatValue(stat, v){
+  const f = UPGRADE_STATS[stat].format;
+  if(f === 'pct') return `${round(v * 100, 3)}%`;
+  if(f === 'sec') return `${round(v / 1000, 3)}s`;
+  return `${round(v, 3)}`;
+}
+// mesmo estilo das descrições originais: "+4% chance de crítico, +4 dano por clique"
+function describeEffects(effects){
+  return effects.filter(e => UPGRADE_STATS[e.stat]).map(e => `+${fmtStatValue(e.stat, e.add)} ${UPGRADE_STATS[e.stat].label}`).join(', ');
+}
+// percorre o layout na mesma ordem da tela da Academia: raiz, depois cada
+// ramo com seus filhos (recursivo). Upgrade sem posição no layout vai pro fim.
+function treeOrder(){
+  const out = [{ key: UPGRADE_TREE.root, branch: null, color: '#ffd54a', depth: 0 }];
+  const walk = (nodes, branch, depth) => {
+    for(const n of nodes || []){
+      out.push({ key: n.key, branch: branch.label, color: branch.color, depth });
+      walk(n.children, branch, depth + 1);
+    }
+  };
+  for(const b of UPGRADE_TREE.branches){ walk(b.nodes, b, 1); walk(b.children, b, 2); }
+  const seen = new Set(out.map(o => o.key));
+  for(const u of UPGRADE_DEFS) if(!seen.has(u.key)) out.push({ key: u.key, branch: 'Fora da árvore', color: '#a89d84', depth: 1 });
+  return out;
+}
+const statChoices = Object.entries(UPGRADE_STATS).map(([k, s]) => [k, s.label]);
+function upgradeCard(o){
+  const u = UPGRADE_DEFS.find(x => x.key === o.key);
+  if(!u) return '';
+  const req = u.requires ? UPGRADE_DEFS.find(x => x.key === u.requires) : null;
+  const effects = u.effects.map((e, i) => {
+    const kind = STAT_KIND[UPGRADE_STATS[e.stat] ? UPGRADE_STATS[e.stat].format : 'flat'];
+    const unit = kind === 'pct' ? '%' : kind === 'sec' ? 's' : '';
+    return `<li><span class="d-item">+${field('upgrades', u.key, `effects.${i}.add`, kind)}${unit}
+        ${field('upgrades', u.key, `effects.${i}.stat`, 'str', { options: statChoices })}</span>
+      <span class="d-qty">teto ${field('upgrades', u.key, `effects.${i}.cap`, kind + '?', { cls: 'w-sm', placeholder: '—' })}${unit}
+        <button class="x" data-action="del-effect|${esc(u.key)}|${i}" title="Remover efeito">×</button></span></li>`;
+  }).join('');
+  const costs = Array.from({ length: u.maxLevel }, (_, l) => Math.ceil(u.baseCost * Math.pow(u.costGrowth, l)));
+  const total = costs.reduce((a, b) => a + b, 0);
+  const totals = u.effects.filter(e => UPGRADE_STATS[e.stat]).map(e => {
+    const v = e.cap != null ? Math.min(e.cap, e.add * u.maxLevel) : e.add * u.maxLevel;
+    return `+${fmtStatValue(e.stat, v)} ${UPGRADE_STATS[e.stat].label}`;
+  }).join(', ');
+  return `<div class="card tree-card" style="margin-left:${o.depth * 22}px; border-left:4px solid ${esc(o.color)}">
+    <h3>${field('upgrades', u.key, 'name', 'str', { cls: 'w-name' })}</h3>
+    <div class="kv-icon"><span>Descrição</span>${field('upgrades', u.key, 'desc', 'str', { cls: 'w-name' })}
+      ${u.effects.length ? `<button class="x" data-action="gen-desc|${esc(u.key)}" title="Gerar descrição a partir dos efeitos">↻</button>` : ''}</div>
+    <div class="tree-cols">
+      <div class="kv">
+        <span>Níveis</span><span>${field('upgrades', u.key, 'maxLevel', 'int', { cls: 'w-sm' })}</span>
+        <span>Custo inicial</span><span>${field('upgrades', u.key, 'baseCost', 'int')}</span>
+        <span>Crescimento</span><span>×${field('upgrades', u.key, 'costGrowth', 'num', { cls: 'w-sm' })} por nível</span>
+        <span>Requer</span><span>${req ? `${esc(req.name)} nv ${req.maxLevel}` : '— (raiz)'}</span>
+      </div>
+      <div>
+        <div class="meta">Efeito por nível:</div>
+        ${u.effects.length ? `<ul class="drops">${effects}</ul>` : '<div class="meta"><span class="tag">efeito especial no código</span> (Clique Automático / velocidade)</div>'}
+        <button data-action="add-effect|${esc(u.key)}" style="margin-top:4px">+ efeito</button>
+      </div>
+    </div>
+    <div class="meta" style="margin-top:6px">Custo por nível: ${costs.map(fmt).join(' → ')} · <b>total ${fmt(total)}</b>${totals ? ` · no máximo: <b>${esc(totals)}</b>` : ''}</div>
+  </div>`;
+}
+function renderTree(){
+  const q = document.getElementById('treeSearch').value.trim().toLowerCase();
+  let lastBranch;
+  document.getElementById('treeList').innerHTML = treeOrder().map(o => {
+    const u = UPGRADE_DEFS.find(x => x.key === o.key);
+    if(!u || (q && !(u.name + ' ' + u.desc + ' ' + (o.branch || '')).toLowerCase().includes(q))) return '';
+    let head = '';
+    if(o.branch !== lastBranch){
+      lastBranch = o.branch;
+      head = `<h2 style="color:${esc(o.color)}">${esc(o.branch || 'Raiz')}</h2>`;
+    }
+    return head + upgradeCard(o);
+  }).join('') || '<div class="meta">Nenhuma habilidade encontrada.</div>';
+}
+document.getElementById('treeSearch').addEventListener('input', renderTree);
+
+// ---------------------------------------------------------------------
+// Personagens
+// ---------------------------------------------------------------------
+const NPCS = [
+  { name:'Irmão Anselmo', role:'Clérigo da Igreja — recebe o forasteiro e dá a primeira arma', portrait:'assets/portraits/anselmo.png', lines:ANSELMO_LINES },
+  { name:'Barnabé', role:'Dono da Loja — compra seus drops e minérios', portrait:'assets/portraits/barnabe.png', lines:BARNABE_LINES },
+  { name:'Creiton', role:'Ferreiro, irmão do Barnabé — vende e forja armas', portrait:'assets/portraits/creiton.png', lines:CREITON_LINES },
+];
+document.getElementById('npcGrid').innerHTML = NPCS.map(n => `
+  <div class="card"><h3>${esc(n.name)}</h3>
+    <div class="row">
+      <img class="portrait" src="${esc(n.portrait)}" alt="">
+      <div><div class="meta">${esc(n.role)}</div>${n.lines.map(l => `<div class="quote">“${esc(l)}”</div>`).join('')}</div>
+    </div>
+  </div>`).join('');
+function renderTroops(){
+  document.getElementById('troopGrid').innerHTML = TROOP_DEFS.map(t => `<div class="card"><h3>${field('troops', t.key, 'name', 'str', { cls: 'w-name' })}</h3>
+    <div class="kv">
+      <span>Descrição</span><span>${field('troops', t.key, 'desc', 'str', { cls: 'w-name' })}</span>
+      <span>DPS</span><span>${field('troops', t.key, 'dps', 'num')}</span>
+      <span>Custo inicial</span><span>${field('troops', t.key, 'baseCost', 'int')}</span>
+      <span>Crescimento</span><span>×${field('troops', t.key, 'costGrowth', 'num')} por compra</span>
+    </div></div>`).join('');
+}
+document.getElementById('prospectorGrid').innerHTML = PROSPECTOR_DEFS.map(p => `<div class="card"><h3>${esc(p.name)}</h3>
+  <div class="meta">${esc(p.desc || '')}</div>
+  <div class="meta">Custo inicial: <b>${fmt(p.baseCost)}</b> · cresce <b>×${p.costGrowth}</b> por compra</div></div>`).join('');
+
+// ---------------------------------------------------------------------
+// Salvar
+// ---------------------------------------------------------------------
+function currentOverrides(){ return ConfigOverrides.diff(BASE, current()); }
+function renderSaveStatus(){
+  const ov = currentOverrides();
+  const n = ConfigOverrides.countChanges(ov);
+  const dirty = JSON.stringify(ov) !== savedJson;
+  const el = document.getElementById('saveStatus');
+  el.textContent = (n ? `${n} alteração(ões) em relação ao original` : 'Igual ao original') + (dirty ? ' · não salvo' : ' · salvo');
+  el.classList.toggle('dirty', dirty);
+  document.getElementById('saveBtn').disabled = !dirty;
+}
+function fileText(ov){
+  return '// Gerado pelo Compêndio (tools/compendio.html) — valores customizados por\n' +
+    '// cima de js/config.js (ver js/overrides.js). Vazio = jogo original.\n' +
+    'window.CONFIG_OVERRIDES = ' + JSON.stringify(ov, null, 2) + ';\n';
+}
+function download(ov){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([fileText(ov)], { type: 'text/javascript' }));
+  a.download = 'overrides-data.js';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+async function saveToGame(ov){
+  const res = await fetch('api/overrides', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ov) });
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+}
+document.getElementById('saveBtn').addEventListener('click', async () => {
+  const ov = currentOverrides();
+  try{
+    await saveToGame(ov);
+    savedJson = JSON.stringify(ov);
+    renderSaveStatus();
+    toast('Salvo em js/overrides-data.js. Recarregue o jogo para ver as mudanças.');
+  }catch(e){
+    download(ov);
+    toast('Não consegui salvar direto (o servidor não é o tools/dev_server.py?). Baixei o arquivo: coloque-o em js/overrides-data.js.', true);
+  }
+});
+document.getElementById('downloadBtn').addEventListener('click', () => download(currentOverrides()));
+document.getElementById('discardBtn').addEventListener('click', () => {
+  if(JSON.stringify(currentOverrides()) === savedJson || confirm('Descartar as alterações não salvas?')){ savedJson = JSON.stringify(currentOverrides()); location.reload(); }
+});
+document.getElementById('resetBtn').addEventListener('click', async () => {
+  if(!confirm('Apagar TODAS as alterações e voltar ao config.js original?')) return;
+  try{ await saveToGame({}); savedJson = JSON.stringify(currentOverrides()); location.reload(); }
+  catch(e){ download({}); toast('Não consegui salvar direto. Baixei um arquivo vazio: coloque-o em js/overrides-data.js.', true); }
+});
+window.addEventListener('beforeunload', e => {
+  if(JSON.stringify(currentOverrides()) !== savedJson){ e.preventDefault(); e.returnValue = ''; }
+});
+
+let toastTimer = null;
+function toast(msg, isErr){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.toggle('err', !!isErr);
+  el.style.display = 'block';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.style.display = 'none', 6000);
+}
+
+function renderAll(){
+  HP_ROWS = buildHpRows();
+  refreshIconList();
+  renderMonsters();
+  renderHpStats();
+  renderHp();
+  renderItems();
+  renderWeapons();
+  renderTroops();
+  renderTree();
+  renderSaveStatus();
+}
+renderAll();
+</script>
+</body>
+</html>

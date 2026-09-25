@@ -1,0 +1,5 @@
+# item-goblinseal - luz de cima/esquerda
+A=#1A161E
+W=#C0392B
+H=#E86A5A
+D=#7A1E1A

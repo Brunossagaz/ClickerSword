@@ -1,0 +1,7 @@
+# mineral-bronze - luz de cima/esquerda
+A=#1A161E
+R=#B0703A
+H=#E0A060
+D=#6E4020
+X=#4E9A7A
+Y=#F0C890

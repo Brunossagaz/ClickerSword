@@ -438,6 +438,9 @@
     width:100%;
     transition:width 1s linear;
   }
+  .dungeon-timer-fill{
+    background:linear-gradient(180deg, #e0b14a, #9a6d1f);
+  }
   .timer-fill.urgent{
     background:linear-gradient(180deg, #e0574a, var(--blood));
     animation:pulse 0.5s infinite alternate;
@@ -519,6 +522,10 @@
   .recipe-material.unmet{ color:var(--blood); }
   .shop-info{flex:1 1 140px;}
   .shop-info .name{font-size:17px;color:var(--parchment);}
+  /* Ícone de item/arma/minério nas listas (Loja, Inventário, Ferreiro,
+     loot) — maior que os 20px padrão de cada .icon-* pra dar pra ver o
+     detalhe do pixel art. PNGs são 64x64, então 32px escala exato (2x). */
+  .shop-info .name .icon{width:32px; height:32px; margin-right:8px;}
   .shop-info .desc{font-size:13px;color:var(--parchment-dim);}
   .shop-info .owned{font-size:13px;color:var(--arcane);}
   /* Seletor de quantidade a vender (Loja) — botões pequenos de propósito. */
@@ -618,9 +625,13 @@
     position:relative;
     width:100%;
     height:520px;
-    background:radial-gradient(circle at 50% 52%, #241a30 0%, #150f1e 75%);
-    border:2px solid var(--stone);
-    border-radius:6px;
+    /* ladrilho de pedra pixel art (art/tree-bg-tile, 32x32 exportado em 2x)
+       — posição/tamanho acompanham o pan/zoom, ver UI.applyTreeTransform */
+    background:#150f1e url('../assets/icons/tree-bg-tile.png') 0 0 / 64px 64px repeat;
+    image-rendering:pixelated;
+    border:4px solid #0e0a14;
+    box-shadow:0 0 0 2px var(--stone);
+    border-radius:0;
     overflow:hidden;
     cursor:grab;
     touch-action:none;
@@ -645,7 +656,7 @@
     height:100%;
     pointer-events:none;
     /* SVG recorta por padrão qualquer coisa fora do viewBox (0-100) — sem
-       isso, as curvas dos nós de Nível 2 que ficam fora dessa área de
+       isso, as ligações dos nós de Nível 2 que ficam fora dessa área de
        propósito (ver UPGRADE_TREE) eram cortadas quase inteiras, mesmo com
        o resto do mapa visível via pan/zoom. O corte de verdade continua
        acontecendo (só que na borda do .tree-wrap, que é o que queremos). */
@@ -655,63 +666,98 @@
     position:absolute;
     inset:0;
   }
+  /* Nó = moldura pixel art 9-slice (art/tree-frame-*, 16x16 exportado em
+     2x → slice de 12px). Uma moldura por estado: normal (pedra), locked
+     (ferro escuro), maxed (ouro), root (brasa). A cor do ramo vira um
+     filete interno (--branch-color, setado inline por UI.buildNode). Altura
+     automática (mín. = largura) pra nomes longos não vazarem da moldura. */
   .tree-node{
     position:absolute;
-    width:78px; height:78px;
+    width:88px; min-height:88px;
+    box-sizing:border-box;
     transform:translate(-50%,-50%);
-    border-radius:50%;
-    background:var(--stone-dark);
-    border:3px solid var(--stone);
+    border:12px solid transparent;
+    border-image:url('../assets/icons/tree-frame-normal.png') 12 / 12px stretch;
+    background:#1c1526;
+    background-clip:padding-box;
+    box-shadow:inset 0 0 0 2px var(--branch-color, transparent);
+    image-rendering:pixelated;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     text-align:center;
-    padding:4px;
-    transition:transform .12s ease, box-shadow .12s ease;
+    padding:2px 0 4px;
+    transition:transform .1s steps(2);
     z-index:2;
   }
-  .tree-node:hover{transform:translate(-50%,-50%) scale(1.06);}
-  /* Nó raiz (Fúria do Guerreiro) — maior e com o brilho de brasa que antes
-     era só do hub decorativo, pra ficar claro que é o "tronco" de onde os
-     outros brotam. */
+  /* "levanta" 2px em vez de scale — escala fracionária borra o pixel art */
+  .tree-node:hover{transform:translate(-50%,calc(-50% - 2px));}
+  .tree-node .node-icon{
+    width:32px; height:32px;
+    flex-shrink:0;
+  }
+  /* Nó raiz (Fúria do Guerreiro) — maior e com moldura de brasa, pra ficar
+     claro que é o "tronco" de onde os outros brotam. Ícone em 3x. */
   .tree-node.root-node{
-    width:96px; height:96px;
-    border-color:var(--ember);
-    background:radial-gradient(circle, #3a2e1a 0%, var(--stone-dark) 100%);
-    box-shadow:0 0 16px rgba(232,151,74,0.35);
+    width:104px; min-height:104px;
+    border-image-source:url('../assets/icons/tree-frame-root.png');
+    background:#2a1c14;
+    background-clip:padding-box;
     z-index:3;
   }
-  .tree-node.root-node.locked{ box-shadow:none; }
+  .tree-node.root-node .node-icon{ width:48px; height:48px; }
   .tree-node .node-name{
-    font-size:10px;
-    line-height:1.15;
+    font-size:11px;
+    line-height:1;
     color:var(--parchment);
+    padding:0 2px;
+    text-shadow:1px 1px 0 #000;
   }
+  /* Nível: etiqueta pendurada no canto de cima-direita da moldura */
   .tree-node .node-level{
-    font-size:10px;
+    position:absolute;
+    top:-18px; right:-18px;
+    font-family:'Press Start 2P', monospace;
+    font-size:7px;
     color:var(--arcane);
-    margin-top:2px;
+    background:#0e0a14;
+    border:2px solid var(--branch-color, var(--ember));
+    padding:3px 3px 2px;
+    z-index:4;
+  }
+  /* Custo + botão "+": plaquinha pendurada embaixo da moldura */
+  .tree-node .node-footer{
+    position:absolute;
+    bottom:-24px; left:50%;
+    transform:translateX(-50%);
+    display:flex; align-items:center; gap:4px;
+    white-space:nowrap;
+    background:#0e0a14;
+    border:2px solid #3e3a4a;
+    padding:2px 3px 2px 5px;
+    z-index:4;
   }
   .tree-node .node-cost{
     font-family:'Press Start 2P', monospace;
-    font-size:8px;
+    font-size:7px;
     color:var(--gold-glow);
-    margin-top:2px;
+    display:flex; align-items:center; gap:3px;
   }
   .node-plus-btn{
-    margin-top:3px;
-    width:22px; height:22px;
-    border-radius:50%;
-    border:2px solid var(--ember-dim);
-    background:linear-gradient(180deg, var(--ember), var(--ember-dim));
+    width:18px; height:18px;
+    padding:0;
+    border:2px solid #0e0a14;
+    border-radius:0;
+    background:var(--ember);
+    box-shadow:inset -2px -2px 0 var(--ember-dim), inset 2px 2px 0 #ffc890;
     color:#1a1208;
     font-family:'Press Start 2P', monospace;
-    font-size:12px;
+    font-size:9px;
     line-height:1;
     cursor:pointer;
-    box-shadow:0 2px 0 rgba(0,0,0,0.4);
   }
-  .node-plus-btn:active{transform:translateY(1px); box-shadow:none;}
+  .node-plus-btn:active{box-shadow:inset 2px 2px 0 var(--ember-dim);}
   .node-plus-btn:disabled{
-    background:#4a4458; color:#8a839a; border-color:#3a3550; cursor:not-allowed; box-shadow:none;
+    background:#4a4458; color:#8a839a; cursor:not-allowed;
+    box-shadow:inset -2px -2px 0 #3a3550, inset 2px 2px 0 #5e5870;
   }
   /* Tooltip só em CSS (:hover) — mostra o que a habilidade faz, ou o
      requisito de desbloqueio se ainda estiver trancada */
@@ -719,11 +765,11 @@
     position:absolute;
     bottom:100%;
     left:50%;
-    transform:translateX(-50%) translateY(-8px);
+    transform:translateX(-50%) translateY(-22px);
     width:150px;
-    background:var(--stone-dark);
+    background:#0e0a14;
     border:2px solid var(--ember);
-    border-radius:6px;
+    border-radius:0;
     padding:8px 10px;
     font-family:'VT323', monospace;
     font-size:14px;
@@ -733,35 +779,47 @@
     pointer-events:none;
     transition:opacity .12s ease;
     z-index:5;
-    box-shadow:0 4px 12px rgba(0,0,0,0.5);
+    box-shadow:4px 4px 0 rgba(0,0,0,0.6);
   }
   .tree-node:hover .node-tooltip{opacity:1;}
-  /* Trancado = opacidade normal (só ficava "lavado"/apagado antes) — o
-     estado de bloqueio já fica claro pelo ícone de cadeado, o nome
-     esmaecido e o fundo listrado, sem precisar deixar o nó transparente. */
+  /* Trancado: moldura de ferro escuro + miolo listrado + cadeado no lugar
+     do ícone do ramo */
   .tree-node.locked{
-    background:repeating-linear-gradient(135deg, var(--stone-dark) 0 8px, #1a1522 8px 16px);
+    border-image-source:url('../assets/icons/tree-frame-locked.png');
+    background:repeating-linear-gradient(135deg, #1c1526 0 6px, #140f1c 6px 12px);
+    background-clip:padding-box;
+    box-shadow:none;
   }
   .tree-node.locked:hover{transform:translate(-50%,-50%);}
+  .tree-node.locked .node-icon{ width:24px; height:24px; margin:0 0 2px; }
   .tree-node.locked .node-name{color:var(--parchment-dim);}
   .tree-node.maxed{
-    border-color:var(--gold-glow);
-    box-shadow:0 0 12px rgba(255,213,74,0.5);
+    border-image-source:url('../assets/icons/tree-frame-maxed.png');
   }
   .tree-node.maxed .node-cost{color:var(--gold-glow);}
+  .tree-node.maxed .node-level{border-color:var(--gold-glow); color:var(--gold-glow);}
+  /* Placa com o nome do ramo, presa acima da moldura do nó de Nível 1 (é
+     filha do .tree-node, ver UI.renderUpgradeTree). Ancorada pela base,
+     então rótulos de 2 linhas crescem pra cima, longe da etiqueta de
+     nível (.node-level) no canto da moldura. */
   .tree-branch-label{
     position:absolute;
-    transform:translate(-50%,-50%);
+    bottom:calc(100% + 22px);
+    left:50%;
+    transform:translateX(-50%);
+    width:max-content;
+    max-width:120px;
     font-family:'Press Start 2P', monospace;
-    font-size:9px;
+    font-size:8px;
+    line-height:1.3;
     letter-spacing:1px;
     text-shadow:1px 1px 0 #000;
-    /* acima dos nós (z-index:2) de propósito — com só 1 nó por branch agora,
-       o rótulo fica perto o bastante do nó pro círculo (pintado depois no
-       DOM) cobrir parte do texto se ficarem no mesmo nível de empilhamento */
-    z-index:3;
+    background:#0e0a14;
+    border:2px solid currentColor;
+    padding:4px 5px 3px;
+    z-index:4;
     text-align:center;
-    max-width:100px;
+    pointer-events:none;
   }
 
   .view-content{display:none;}
@@ -846,9 +904,10 @@
   }
 
   /* ---- Ícones pixel art (ver assets/icons/) ----
-     Cada .icon-* aponta pra um PNG que ainda não existe — até o arquivo ser
-     criado, o espaço fica em branco (sem quebrar layout). Ver lista de
-     ícones pendentes combinada com o usuário. */
+     Cada .icon-* aponta pra um PNG 64x64 (sprite 16x16 exportado em 4x,
+     ou 32x32 em 2x nas armas de gosma/forjadas).
+     Os fontes editáveis no GridFab ficam em art/<nome-do-ícone>/. Se um
+     PNG faltar, o espaço fica em branco (sem quebrar layout). */
   .icon{
     display:inline-block;
     background-size:contain;
@@ -870,7 +929,7 @@
     --icon-gear:url('../assets/icons/gear.png');
     --icon-trophy:url('../assets/icons/trophy.png');
     --icon-lock:url('../assets/icons/lock.png');
-    --icon-coin:url('../assets/icons/coin.png');
+    --icon-coin:url('../assets/icons/gold.png');
     --icon-essence:url('../assets/icons/essence.png');
     --icon-boss:url('../assets/icons/boss.png');
     --icon-golden:url('../assets/icons/golden-monster.png');
@@ -931,6 +990,9 @@
   .icon-item-trollhide{background-image:var(--icon-item-trollhide); width:20px; height:20px;}
   .icon-item-dragonscale{background-image:var(--icon-item-dragonscale); width:20px; height:20px;}
   .icon-item-demonhorn{background-image:var(--icon-item-demonhorn); width:20px; height:20px;}
+  .icon-item-firelizardscale{background-image:var(--icon-item-firelizardscale); width:20px; height:20px;}
+  .icon-item-miniservoclaw{background-image:var(--icon-item-miniservoclaw); width:20px; height:20px;}
+  .icon-item-shadowessence{background-image:var(--icon-item-shadowessence); width:20px; height:20px;}
   .icon-weapon-sword{background-image:var(--icon-weapon-sword); width:20px; height:20px;}
   .icon-weapon-bow{background-image:var(--icon-weapon-bow); width:20px; height:20px;}
   .icon-weapon-axe{background-image:var(--icon-weapon-axe); width:20px; height:20px;}
@@ -944,6 +1006,15 @@
   .icon-mineral-diamond{background-image:var(--icon-mineral-diamond); width:20px; height:20px;}
   .icon-mineral-crystal{background-image:var(--icon-mineral-crystal); width:20px; height:20px;}
   .icon-chest{background-image:var(--icon-chest); width:28px; height:28px;}
+  /* Ícones dos ramos da árvore de habilidades (art/tree-icon-*) — tamanho
+     vem de .tree-node .node-icon */
+  .icon-tree-root{background-image:url('../assets/icons/tree-icon-root.png');}
+  .icon-tree-crit{background-image:url('../assets/icons/tree-icon-crit.png');}
+  .icon-tree-dmg{background-image:url('../assets/icons/tree-icon-dmg.png');}
+  .icon-tree-critdmg{background-image:url('../assets/icons/tree-icon-critdmg.png');}
+  .icon-tree-auto{background-image:url('../assets/icons/tree-icon-auto.png');}
+  .icon-tree-time{background-image:url('../assets/icons/tree-icon-time.png');}
+  .icon-tree-luck{background-image:url('../assets/icons/tree-icon-luck.png');}
   /* cores só pra diferenciar cada prédio por enquanto — sprites de verdade
      entram depois */
   .building-ferreiro{ --card-image:var(--icon-ferreiro); }

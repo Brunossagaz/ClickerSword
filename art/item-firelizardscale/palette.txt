@@ -1,0 +1,6 @@
+# item-firelizardscale - luz de cima/esquerda
+A=#1A161E
+O=#E8781E
+H=#FFC24A
+D=#A8480E
+Y=#FFE88A

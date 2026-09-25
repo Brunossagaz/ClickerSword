@@ -1,0 +1,6 @@
+# tree-icon-luck
+A=#1A161E
+G=#6FCF5A
+H=#C8FFB0
+D=#2E7A2A
+S=#3E8A30

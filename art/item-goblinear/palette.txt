@@ -1,0 +1,6 @@
+# item-goblinear - luz de cima/esquerda
+A=#1A161E
+G=#6FBF4A
+H=#A6E07A
+D=#3F7F2A
+P=#4E8F35

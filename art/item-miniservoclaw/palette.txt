@@ -1,0 +1,7 @@
+# item-miniservoclaw - luz de cima/esquerda
+A=#1A161E
+C=#E0D6E8
+S=#9A8AAA
+P=#4A2A5A
+Q=#6E3F84
+K=#2A1A34

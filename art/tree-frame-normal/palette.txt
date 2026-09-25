@@ -1,0 +1,6 @@
+# tree-frame-normal
+A=#1A161E
+M=#6A6478
+L=#9A94A8
+D=#3E3A4A
+V=#C8C0D8

@@ -1,0 +1,7 @@
+# Presa de Orc - luz de cima/esquerda
+O=#2B1D14
+D=#9C8462
+B=#DCCBA2
+H=#F6EFDC
+R=#7A5236
+K=#4E3220

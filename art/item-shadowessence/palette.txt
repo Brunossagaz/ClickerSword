@@ -1,0 +1,7 @@
+# item-shadowessence - luz de cima/esquerda
+A=#1A161E
+K=#1E1430
+P=#5A2A8A
+L=#9A5AD8
+H=#D8B0FF
+G=#3A1E5A

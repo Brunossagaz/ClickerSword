@@ -1,0 +1,7 @@
+# item-demonhorn - luz de cima/esquerda
+A=#1A161E
+R=#8A1E2A
+H=#C04050
+D=#4A0E18
+K=#2A2030
+B=#D8C8A8

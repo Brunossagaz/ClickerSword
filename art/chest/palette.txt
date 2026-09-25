@@ -1,0 +1,8 @@
+# chest - luz de cima/esquerda
+A=#1A161E
+W=#8A5A2E
+H=#B07A42
+D=#5A3A1E
+G=#F0C83C
+K=#C8961E
+L=#2A2030

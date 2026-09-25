@@ -49,6 +49,10 @@ function freshState(){
     monsterHp:0,
     monsterMaxHp:0,
     monsterSpawnedAt:0,
+    // entrada atual na Dungeon (ver DungeonModule._enterAt/tickRunTimer):
+    // tempo já gasto (contra CONFIG.dungeonTimeLimitMs) e loot somado por
+    // item, mostrado no resumo quando o tempo da Dungeon acaba.
+    dungeonRun:{ elapsedMs:0, loot:{} },
     isBoss:false,
     isGolden:false,
     goldenExpiresAt:0,
@@ -67,6 +71,9 @@ function freshState(){
     // própria, ou seja, as mais raras) e MonsterModule.maybeTriggerGolden
     rareDropChanceBonus:0,
     goldenChanceBonus:0,
+    // ramo Tempo da Academia — soma em CONFIG.dungeonTimeLimitMs (ver
+    // DungeonModule.runTimeLimitMs)
+    dungeonTimeBonusMs:0,
     // troops owned — derivado de TROOP_DEFS, então tropa nova nunca fica de
     // fora daqui (era a causa do bug de "Nível: undefined" / "NaN" na loja)
     troops: Object.fromEntries(TROOP_DEFS.map(d => [d.key, 0])),

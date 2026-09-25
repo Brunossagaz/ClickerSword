@@ -1,0 +1,6 @@
+# tree-frame-locked
+A=#1A161E
+M=#3A3644
+L=#524E60
+D=#24202C
+V=#6E6A7A

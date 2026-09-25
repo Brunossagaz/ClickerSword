@@ -1,0 +1,7 @@
+# tree-icon-dmg
+A=#1A161E
+H=#FFFFFF
+B=#B0BCC8
+K=#C9432F
+D=#7A2418
+G=#5F3C23

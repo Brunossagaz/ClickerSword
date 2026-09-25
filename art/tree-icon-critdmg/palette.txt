@@ -1,0 +1,5 @@
+# tree-icon-critdmg
+A=#1A161E
+Y=#FFD54A
+O=#FF9A2A
+W=#FFF8D0

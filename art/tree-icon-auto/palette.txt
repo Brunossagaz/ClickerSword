@@ -1,0 +1,5 @@
+# tree-icon-auto
+A=#1A161E
+G=#8FD9C4
+H=#D8FFF4
+D=#3E8A76

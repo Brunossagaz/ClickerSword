@@ -1,0 +1,5 @@
+# item-dragonscale - luz de cima/esquerda
+A=#1A161E
+R=#C0392B
+H=#F06A4A
+D=#7A1E1A

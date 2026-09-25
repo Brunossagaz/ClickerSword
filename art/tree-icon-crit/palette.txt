@@ -1,0 +1,6 @@
+# tree-icon-crit
+A=#1A161E
+R=#D23C3C
+RD=#8A1E1E
+W=#F4EEE0
+WD=#C8BEA8

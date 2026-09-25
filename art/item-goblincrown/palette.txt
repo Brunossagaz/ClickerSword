@@ -1,0 +1,7 @@
+# item-goblincrown - luz de cima/esquerda
+A=#1A161E
+G=#F0C83C
+H=#FFEB8C
+D=#C8961E
+R=#D23C3C
+E=#3FBF6A

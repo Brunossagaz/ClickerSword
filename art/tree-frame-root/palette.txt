@@ -1,0 +1,6 @@
+# tree-frame-root
+A=#1A161E
+M=#C8642A
+L=#F0A050
+D=#7A3414
+V=#FFD890
