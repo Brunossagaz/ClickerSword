@@ -905,7 +905,7 @@
 
   /* ---- Ícones pixel art (ver assets/icons/) ----
      Cada .icon-* aponta pra um PNG 64x64 (sprite 16x16 exportado em 4x,
-     ou 32x32 em 2x nas armas de gosma/forjadas).
+     ou 32x32 em 2x nas armas — iniciais, de gosma e forjadas).
      Os fontes editáveis no GridFab ficam em art/<nome-do-ícone>/. Se um
      PNG faltar, o espaço fica em branco (sem quebrar layout). */
   .icon{
@@ -1152,7 +1152,7 @@
   }
   .weapon-choice-card:hover{ border-color:var(--ember); }
   .weapon-choice-card:active{ transform:translateY(2px); box-shadow:none; }
-  .weapon-choice-card .weapon-icon{ width:28px; height:28px; }
+  .weapon-choice-card .weapon-icon{ width:32px; height:32px; }
   .weapon-choice-card .weapon-name{ font-size:10px; text-align:center; }
   .weapon-choice-card .weapon-desc{ font-family:'VT323', monospace; font-size:13px; color:var(--arcane); }
 
