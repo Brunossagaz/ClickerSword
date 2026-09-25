@@ -19,7 +19,9 @@ const SaveModule = {
     if(!raw) return { slot:n, occupied:false };
     try{
       const parsed = JSON.parse(raw);
-      return { slot:n, occupied:true, playerName: parsed.playerName || '', lastSave: parsed.lastSave || 0 };
+      return { slot:n, occupied:true,
+        playerName: typeof parsed.playerName === 'string' ? parsed.playerName.slice(0, 20) : '',
+        lastSave: typeof parsed.lastSave === 'number' && isFinite(parsed.lastSave) ? parsed.lastSave : 0 };
     }catch(e){ return { slot:n, occupied:false, corrupted:true }; }
   },
 
@@ -82,16 +84,103 @@ const SaveModule = {
     }catch(e){ console.warn('Falha ao migrar save legado', e); }
   },
 
+  // Reconstrói o save só com campos conhecidos e do tipo certo (mesmo formato
+  // de freshState()). Campo ausente ou inválido fica de fora (undefined) —
+  // assim as migrações de applyLoaded, que testam `loaded.x === undefined`,
+  // continuam funcionando e o default de freshState() entra por baixo.
+  // Só copia chaves conhecidas, então `__proto__`/`constructor` vindos do
+  // JSON nunca chegam num Object.assign.
+  sanitizeLoaded(raw){
+    const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+    const isNum = v => typeof v === 'number' && isFinite(v) && v >= 0;
+    const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+    const numMap = (src, keys) => {
+      const m = {};
+      if(isObj(src)) for(const k of keys) if(has(src, k) && isNum(src[k])) m[k] = src[k];
+      return m;
+    };
+    const boolMap = (src, keys) => {
+      const m = {};
+      if(isObj(src)) for(const k of keys) if(has(src, k) && typeof src[k] === 'boolean') m[k] = src[k];
+      return m;
+    };
+    const out = {};
+    if(!isObj(raw)) return out;
+    const fresh = freshState();
+    const itemKeys = ITEM_DEFS.map(d => d.key);
+    const monsterKeys = MONSTER_TYPES.map(d => d.key);
+
+    // escalares: mesmo tipo que o freshState() usa
+    for(const [k, def] of Object.entries(fresh)){
+      if(!has(raw, k)) continue;
+      if(typeof def === 'number' && isNum(raw[k])) out[k] = raw[k];
+      else if(typeof def === 'boolean' && typeof raw[k] === 'boolean') out[k] = raw[k];
+    }
+    if(has(raw, 'killCount') && isNum(raw.killCount)) out.killCount = raw.killCount; // legado (ver migração de Dungeons)
+    if(typeof raw.playerName === 'string'){
+      out.playerName = raw.playerName.replace(/[\u0000-\u001f\u007f<>]/g, '').slice(0, 20);
+    }
+    if(raw.currentDungeon === null || (typeof raw.currentDungeon === 'string' && has(fresh.dungeons, raw.currentDungeon))){
+      out.currentDungeon = raw.currentDungeon;
+    }
+    if(raw.equippedWeapon === null || (typeof raw.equippedWeapon === 'string' && has(fresh.weapons, raw.equippedWeapon))){
+      out.equippedWeapon = raw.equippedWeapon;
+    }
+
+    for(const k of ['troops', 'prospectors', 'cavernUpgrades', 'cavernChest', 'upgrades', 'inventory', 'weapons', 'prestige']){
+      if(isObj(raw[k])) out[k] = numMap(raw[k], Object.keys(fresh[k]));
+    }
+    if(isObj(raw.quests)) out.quests = boolMap(raw.quests, Object.keys(fresh.quests));
+
+    if(isObj(raw.guild)){
+      const g = raw.guild;
+      out.guild = numMap(g, ['startedAt', 'durationMs']);
+      if(typeof g.active === 'boolean') out.guild.active = g.active;
+      if(g.cycleKey === null || (typeof g.cycleKey === 'string' && GUILD_EXPEDITION_DEFS.some(d => d.key === g.cycleKey))){
+        out.guild.cycleKey = g.cycleKey;
+      }
+    }
+
+    if(isObj(raw.dungeonRun)){
+      out.dungeonRun = numMap(raw.dungeonRun, ['elapsedMs']);
+      out.dungeonRun.loot = numMap(raw.dungeonRun.loot, itemKeys);
+    }
+
+    if(isObj(raw.dungeons)){
+      out.dungeons = {};
+      for(const key of Object.keys(fresh.dungeons)){
+        const src = raw.dungeons[key];
+        if(!isObj(src)) continue;
+        const d = numMap(src, ['killCount', 'maxCycleCompleted', 'repeatRemaining']);
+        if(src.repeatCycleNum === null || isNum(src.repeatCycleNum)) d.repeatCycleNum = src.repeatCycleNum;
+        if(src.repeatLootTotals === null) d.repeatLootTotals = null;
+        else if(isObj(src.repeatLootTotals)) d.repeatLootTotals = numMap(src.repeatLootTotals, itemKeys);
+        if(src.pendingSlot === null) d.pendingSlot = null;
+        else if(isObj(src.pendingSlot) && Array.isArray(src.pendingSlot.keys)){
+          const keys = src.pendingSlot.keys.filter(k => typeof k === 'string' && monsterKeys.includes(k)).slice(0, 10);
+          const phases = Array.isArray(src.pendingSlot.phaseDrops) ? src.pendingSlot.phaseDrops : [];
+          const phaseDrops = phases.filter(Array.isArray).slice(0, 10).map(list =>
+            list.filter(x => isObj(x) && typeof x.item === 'string' && itemKeys.includes(x.item) && isNum(x.qty))
+                .map(x => ({ item: x.item, qty: x.qty })));
+          d.pendingSlot = keys.length ? { keys, phaseDrops } : null;
+        }
+        out.dungeons[key] = d;
+      }
+    }
+    return out;
+  },
+
   // Aplica um objeto de save já parseado ao estado atual do jogo. Usado tanto
   // por loadSlot() (localStorage) quanto por SettingsModule.uploadSaveFromFile()
   // (arquivo baixado pelo jogador) — mesma lógica de compatibilidade nos dois casos.
   applyLoaded(loaded){
+    // loaded pode vir de um arquivo de terceiros (upload de save) ou de um
+    // localStorage editado à mão — vários valores do state são interpolados
+    // em innerHTML pela UI, então nada passa daqui sem validação de tipo
+    // (ver sanitizeLoaded).
+    loaded = this.sanitizeLoaded(loaded);
     state = Object.assign(freshState(), loaded);
-    // loaded pode vir de um arquivo de terceiros (upload de save) — nunca
-    // confiar no tipo/tamanho de playerName, mesmo que os pontos de
-    // renderização atuais já usem textContent (defesa em profundidade).
     if(typeof state.playerName !== 'string') state.playerName = '';
-    state.playerName = state.playerName.slice(0, 20);
     // guard against missing nested keys from older saves (ou de novos
     // upgrades/tropas/mineradores/itens adicionados depois que o save foi criado)
     state.troops = Object.assign(Object.fromEntries(TROOP_DEFS.map(d => [d.key, 0])), loaded.troops||{});

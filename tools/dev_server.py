@@ -7,8 +7,11 @@ Uso:  python tools/dev_server.py [porta]      (padrão 8123)
 - Serve a raiz do projeto sem cache (sempre a versão atual dos arquivos).
 - POST /api/overrides grava js/overrides-data.js (ver js/overrides.js).
   Só aceita Content-Type application/json vindo da própria página
-  (Origin igual ao host), pra outro site aberto no navegador não conseguir
-  alterar o arquivo.
+  (Origin obrigatório e igual ao host), pra outro site aberto no navegador
+  não conseguir alterar o arquivo.
+- Só responde a Host localhost/127.0.0.1 (bloqueia DNS rebinding: um site
+  externo apontando o próprio domínio pra 127.0.0.1 e lendo/gravando aqui).
+- Não serve arquivos/pastas ocultos (.git, .claude, ...).
 """
 import functools
 import http.server
@@ -23,10 +26,37 @@ HEADER = ('// Gerado pelo Compêndio (tools/compendio.html) — valores customiz
           '// cima de js/config.js (ver js/overrides.js). Vazio = jogo original.\n')
 
 
+ALLOWED_HOSTNAMES = {'localhost', '127.0.0.1'}
+
+
 class Handler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header('Cache-Control', 'no-store')
+        self.send_header('X-Content-Type-Options', 'nosniff')
+        self.send_header('X-Frame-Options', 'DENY')
         super().end_headers()
+
+    def _host_ok(self):
+        host = (self.headers.get('Host') or '').rsplit(':', 1)[0].lower()
+        return host in ALLOWED_HOSTNAMES
+
+    def _hidden_path(self):
+        path = self.path.split('?', 1)[0].split('#', 1)[0].replace('\\', '/')
+        return any(part.startswith('.') for part in path.split('/') if part)
+
+    def do_GET(self):
+        if not self._host_ok():
+            return self._reply(403, {'error': 'host não permitido'})
+        if self._hidden_path():
+            return self._reply(404, {'error': 'não encontrado'})
+        return super().do_GET()
+
+    def do_HEAD(self):
+        if not self._host_ok() or self._hidden_path():
+            self.send_response(404)
+            self.end_headers()
+            return
+        return super().do_HEAD()
 
     def _reply(self, status, payload):
         body = json.dumps(payload).encode('utf-8')
@@ -39,12 +69,17 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def do_POST(self):
         if self.path != '/api/overrides':
             return self._reply(404, {'error': 'rota desconhecida'})
-        origin = self.headers.get('Origin')
-        if origin and origin.split('://', 1)[-1] != self.headers.get('Host'):
+        if not self._host_ok():
+            return self._reply(403, {'error': 'host não permitido'})
+        origin = self.headers.get('Origin') or ''
+        if origin.split('://', 1)[-1] != self.headers.get('Host'):
             return self._reply(403, {'error': 'origem não permitida'})
         if not (self.headers.get('Content-Type') or '').startswith('application/json'):
             return self._reply(415, {'error': 'esperado application/json'})
-        length = int(self.headers.get('Content-Length') or 0)
+        try:
+            length = int(self.headers.get('Content-Length') or 0)
+        except ValueError:
+            return self._reply(400, {'error': 'Content-Length inválido'})
         if length <= 0 or length > MAX_BYTES:
             return self._reply(413, {'error': 'tamanho inválido'})
         try:

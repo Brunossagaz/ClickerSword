@@ -1350,7 +1350,11 @@ const UI = {
   showToast(title, msg){
     const div = document.createElement('div');
     div.className = 'toast';
-    div.innerHTML = `<span class="pixel">${title}</span>${msg}`;
+    // texto puro (nomes de item/quantidades vindas do state) — nunca innerHTML
+    const t = document.createElement('span');
+    t.className = 'pixel';
+    t.textContent = title;
+    div.append(t, String(msg));
     document.body.appendChild(div);
     setTimeout(()=>{ div.style.transition='opacity .5s'; div.style.opacity='0'; setTimeout(()=>div.remove(),500); }, 3800);
   }

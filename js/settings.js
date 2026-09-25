@@ -9,20 +9,34 @@
 --------------------------------------------------------------------- */
 const SettingsModule = {
   current: { audioEnabled:true, volume:70, language:'pt-BR' },
+  LANGUAGES: ['pt-BR', 'en-US'],
+  MAX_SAVE_FILE_BYTES: 2 * 1024 * 1024,
 
-  // Roda 1x no boot, antes de qualquer save ser escolhido.
+  // Roda 1x no boot, antes de qualquer save ser escolhido. Só copia campos
+  // conhecidos e do tipo certo (localStorage pode ter sido editado à mão).
   loadGlobalSettings(){
     try{
       const raw = localStorage.getItem(CONFIG.settingsKey);
-      if(raw) this.current = Object.assign({audioEnabled:true, volume:70, language:'pt-BR'}, JSON.parse(raw));
+      if(!raw) return;
+      const p = JSON.parse(raw);
+      if(!p || typeof p !== 'object') return;
+      if(typeof p.audioEnabled === 'boolean') this.current.audioEnabled = p.audioEnabled;
+      if(typeof p.volume === 'number' && isFinite(p.volume)) this.current.volume = Math.min(100, Math.max(0, p.volume));
+      if(this.LANGUAGES.includes(p.language)) this.current.language = p.language;
     }catch(e){ console.warn('Falha ao carregar configurações', e); }
   },
   saveGlobalSettings(){
     try{ localStorage.setItem(CONFIG.settingsKey, JSON.stringify(this.current)); }catch(e){}
   },
   setAudioEnabled(enabled){ this.current.audioEnabled = enabled; this.saveGlobalSettings(); },
-  setVolume(vol){ this.current.volume = vol; this.saveGlobalSettings(); },
-  setLanguage(lang){ this.current.language = lang; this.saveGlobalSettings(); },
+  setVolume(vol){
+    if(typeof vol !== 'number' || !isFinite(vol)) return;
+    this.current.volume = Math.min(100, Math.max(0, vol)); this.saveGlobalSettings();
+  },
+  setLanguage(lang){
+    if(!this.LANGUAGES.includes(lang)) return;
+    this.current.language = lang; this.saveGlobalSettings();
+  },
 
   downloadSave(){
     const json = JSON.stringify(state, null, 2);
@@ -43,6 +57,7 @@ const SettingsModule = {
   uploadSaveFromFile(file){
     return new Promise((resolve, reject)=>{
       if(!file){ reject('Nenhum arquivo selecionado.'); return; }
+      if(file.size > this.MAX_SAVE_FILE_BYTES){ reject('Arquivo grande demais para ser um save do Beyond the Gate.'); return; }
       const reader = new FileReader();
       reader.onload = ()=>{
         let loaded;

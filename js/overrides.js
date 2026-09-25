@@ -59,11 +59,26 @@ const ConfigOverrides = {
     // cima da lista final (minério novo/tipo trocado)
     t.MINERAL_DEFS.splice(0, t.MINERAL_DEFS.length, ...t.ITEM_DEFS.filter(d => d.type === 'mineral'));
   },
+  // Tipo esperado de cada campo editável — nome/desc/tipo/raridade acabam em
+  // innerHTML/atributos class na UI do jogo, então valor fora do formato é
+  // ignorado em vez de aplicado.
+  TEXT_FIELDS: ['name', 'desc'],
+  TOKEN_FIELDS: ['type', 'dungeon', 'rarity'],
+  STRUCT_FIELDS: ['drops', 'recipe', 'effects'],
+  TOKEN_RE: /^[a-zA-Z][a-zA-Z0-9_-]{0,39}$/,
+  _valid(f, v){
+    if(this.TEXT_FIELDS.includes(f)) return typeof v === 'string' && v.length <= 200 && !/[<>]/.test(v);
+    if(f === 'icon') return typeof v === 'string' && this.ICON_RE.test(v);
+    if(this.TOKEN_FIELDS.includes(f)) return typeof v === 'string' && this.TOKEN_RE.test(v);
+    if(this.STRUCT_FIELDS.includes(f)) return v !== null && typeof v === 'object';
+    return typeof v === 'number' && isFinite(v);
+  },
   _assign(entry, patch, fields){
     for(const f of fields){
-      if(!(f in patch)) continue;
+      if(!Object.prototype.hasOwnProperty.call(patch, f)) continue;
       if(patch[f] === null) delete entry[f];
-      else entry[f] = JSON.parse(JSON.stringify(patch[f]));
+      else if(this._valid(f, patch[f])) entry[f] = JSON.parse(JSON.stringify(patch[f]));
+      else console.warn(`Override ignorado: campo "${f}" com valor inválido`, patch[f]);
     }
   },
   keyTaken(t, key){
