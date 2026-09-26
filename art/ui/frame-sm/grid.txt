@@ -1,0 +1,16 @@
+K. K. K. K. K. K. K. K. K. K. K. K. K. K. K. K.
+K. K. K. K. K. SL SL SL SL SL SL K. K. K. K. K.
+K. K. G1 G1 K. S2 S2 S2 S2 S2 S2 K. G1 G1 K. K.
+K. K. G1 G1 K. S1 S2 S2 S2 S2 S3 K. G1 G1 K. K.
+K. K. K. K. K. G1 G1 G1 G1 G1 G1 K. K. K. K. K.
+K. SL S1 S3 G1 K. K. K. K. K. K. G3 S2 S2 S3 K.
+K. SL S3 S2 G1 K. F. F. F. F. K. G3 S2 S3 S3 K.
+K. SL S3 S2 G1 K. F. F. F. F. K. G3 S3 S2 S3 K.
+K. SL S1 S2 G1 K. F. F. F. F. K. G3 S3 S2 S3 K.
+K. SL S2 S2 G1 K. F. F. F. F. K. G3 S2 S2 S3 K.
+K. SL S2 S2 G1 K. K. K. K. K. K. G3 S3 S2 S3 K.
+K. K. K. K. K. G3 G3 G3 G3 G3 G3 K. K. K. K. K.
+K. K. G1 G1 K. S2 S2 S2 S3 S2 S1 K. G1 G1 K. K.
+K. K. G1 G1 K. S2 S2 S2 S2 S2 S2 K. G1 G1 K. K.
+K. K. K. K. K. S3 S3 S3 S3 S3 S3 K. K. K. K. K.
+K. K. K. K. K. K. K. K. K. K. K. K. K. K. K. K.

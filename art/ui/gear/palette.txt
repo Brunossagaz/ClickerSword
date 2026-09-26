@@ -1,0 +1,6 @@
+# gear - engrenagem de metal
+O=#0d0a12
+D=#4a4458
+B=#8a849c
+L=#bdb6d0
+H=#ece6f6

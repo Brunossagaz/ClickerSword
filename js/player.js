@@ -23,12 +23,13 @@ const PlayerModule = {
   // Intervalo atual do upgrade Clique Automático (ver UPGRADE_DEFS
   // battleAutoClick), em ms — começa em `autoClickIntervalMs` (1000) e cai
   // 25 pontos percentuais do valor BASE por upgrade de velocidade comprado
-  // (autoClickSpeed1/autoClickSpeed2), acumulando: 1000 → 750 → 500.
+  // (autoClickSpeed1/2/3), acumulando: 1000 → 750 → 500 → 250.
   autoClickIntervalMs(){
     const def = UPGRADE_DEFS.find(u=>u.key==='battleAutoClick');
     let interval = def.autoClickIntervalMs;
-    if(state.upgrades.autoClickSpeed1 > 0) interval -= def.autoClickIntervalMs * 0.25;
-    if(state.upgrades.autoClickSpeed2 > 0) interval -= def.autoClickIntervalMs * 0.25;
+    for(const key of ['autoClickSpeed1', 'autoClickSpeed2', 'autoClickSpeed3']){
+      if(state.upgrades[key] > 0) interval -= def.autoClickIntervalMs * 0.25;
+    }
     return interval;
   },
   // O Clique Automático só age dentro de uma Dungeon, com monstro ativo, E

@@ -619,11 +619,11 @@
   /* ---- Árvore de Upgrades (radial, com pan/zoom) ----
      .tree-wrap é a "janela" — tamanho FIXO, nunca cresce nem ganha barra de
      rolagem própria, não importa quantos upgrades existam. .tree-canvas é o
-     "mapa" de verdade, sempre do mesmo tamanho de .tree-wrap em repouso
-     (zoom 1, pan 0,0) — UI.initTreePanZoom aplica só um transform
-     (translate+scale) nele em resposta ao scroll/arrasto do mouse, então
-     nós fora da área visível a zoom 1 (ver UPGRADE_TREE, nós de Nível 2 mais
-     afastados do centro) ficam alcançáveis dando zoom out ou arrastando. */
+     "mapa" de verdade, com tamanho em px calculado pelo layout radial (ver
+     UI.layoutUpgradeTree, que define width/height inline) — UI.initTreePanZoom
+     aplica só um transform (translate+scale) nele em resposta ao
+     scroll/arrasto do mouse, então os anéis mais externos ficam alcançáveis
+     dando zoom out ou arrastando. */
   .tree-wrap{
     position:relative;
     width:100%;
@@ -658,11 +658,9 @@
     width:100%;
     height:100%;
     pointer-events:none;
-    /* SVG recorta por padrão qualquer coisa fora do viewBox (0-100) — sem
-       isso, as ligações dos nós de Nível 2 que ficam fora dessa área de
-       propósito (ver UPGRADE_TREE) eram cortadas quase inteiras, mesmo com
-       o resto do mapa visível via pan/zoom. O corte de verdade continua
-       acontecendo (só que na borda do .tree-wrap, que é o que queremos). */
+    /* viewBox em px do mesmo tamanho do .tree-canvas (ver
+       UI.renderUpgradeTree) — linhas e nós nas mesmas coordenadas. O corte
+       de verdade acontece na borda do .tree-wrap. */
     overflow:visible;
   }
   .tree-nodes{

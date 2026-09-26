@@ -1,0 +1,7 @@
+# btn-green - UI pedra + ouro
+K=#0d0a12
+G1=#8ff0e4
+G3=#0c3d38
+F=#1f7a70
+FL=#2fa597
+FD=#155750

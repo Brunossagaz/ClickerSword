@@ -1,0 +1,7 @@
+# btn-red - UI pedra + ouro
+K=#0d0a12
+G1=#ff9a86
+G3=#3d0f09
+F=#8e2a1e
+FL=#b8402f
+FD=#611a12

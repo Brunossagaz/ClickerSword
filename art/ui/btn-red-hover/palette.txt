@@ -1,0 +1,7 @@
+# btn-red-hover - UI pedra + ouro
+K=#0d0a12
+G1=#ffc2b6
+G3=#3d0f09
+F=#a9352a
+FL=#d4513e
+FD=#74221a

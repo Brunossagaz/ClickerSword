@@ -1,0 +1,295 @@
+/* ---------------------------------------------------------------------
+   UI SKIN "pedra + ouro" (ui-skin.css)
+   Carrega DEPOIS de style.css e só troca a aparência (molduras, botões,
+   barras, slots) por peças em pixel art de assets/ui/ — layout e regras
+   continuam em style.css. As peças são desenhadas no GridFab: fonte
+   editável em art/ui/<peça>/ (grid.txt + palette.txt), exportadas em 1x e
+   ampliadas 2x aqui via border-image (sempre múltiplo inteiro, pra não
+   borrar o pixel):
+     frame     24x24, borda 8  -> 16px   painéis, modais
+     frame-sm  16x16, borda 6  -> 12px   tooltips, avisos, caixas menores
+     btn*      12x12, borda 4  ->  8px   botões (normal/hover/press/disabled + cores)
+     slot*     12x12, borda 4  ->  8px   campos rebaixados (linhas, barras, slots)
+     close     14x14           -> 28px   botão de fechar
+     divider    8x4 (repete)   -> 16x8   divisória dourada de cabeçalho
+--------------------------------------------------------------------- */
+:root{
+  --ui-frame:url('../assets/ui/frame.png');
+  --ui-frame-sm:url('../assets/ui/frame-sm.png');
+  --ui-slot:url('../assets/ui/slot.png');
+  --ui-slot-active:url('../assets/ui/slot-active.png');
+  --ui-divider:url('../assets/ui/divider.png');
+  --icon-coin:url('../assets/icons/coin.png');
+}
+
+/* ---- Molduras grandes: painéis e modais ---- */
+.panel,
+.modal-box,
+.npc-side-panel{
+  border:16px solid transparent;
+  border-image:var(--ui-frame) 8 fill / 16px round;
+  border-radius:0;
+  background:none;
+  box-shadow:0 8px 24px rgba(0,0,0,0.55);
+  image-rendering:pixelated;
+}
+/* menu principal: sem caixa, só texto sobre a wallpaper (ver style.css) */
+body.screen-mainmenu .panel{ border:none; border-image:none; box-shadow:none; }
+.sidebar-inventory{
+  width:60px;
+  border:12px solid transparent;
+  border-image:var(--ui-frame-sm) 6 fill / 12px round;
+  border-radius:0;
+  background:none;
+  box-shadow:0 4px 12px rgba(0,0,0,0.45);
+  image-rendering:pixelated;
+}
+.sidebar-inventory.expanded{ width:262px; }
+.sidebar-toggle-btn{ background:none; }
+.sidebar-toggle-btn:hover{ background:rgba(255,213,74,0.08); }
+.sidebar-inventory.expanded .sidebar-toggle-btn{
+  border-bottom:none;
+  background:var(--ui-divider) left bottom / 16px 8px repeat-x;
+  padding-bottom:16px;
+}
+/* arena: moldura sem `fill` pra manter o fundo radial da dungeon */
+.arena-frame{
+  border:16px solid transparent;
+  border-image:var(--ui-frame) 8 / 16px round;
+  border-radius:0;
+  background-clip:padding-box;
+  image-rendering:pixelated;
+}
+
+/* ---- Divisórias douradas no lugar das linhas tracejadas ---- */
+.modal-header,
+.panel-title,
+.modal-tabs{
+  border-bottom:none;
+  background:var(--ui-divider) left bottom / 16px 8px repeat-x;
+  padding-bottom:14px;
+}
+.modal-header{ padding:6px 8px 14px; }
+
+/* ---- Botão de fechar ---- */
+.modal-close{
+  width:28px; height:28px;
+  border:none;
+  border-radius:0;
+  background:url('../assets/ui/close.png') 0 0 / 100% 100%;
+  image-rendering:pixelated;
+  color:transparent;
+  font-size:0;
+  overflow:hidden;
+}
+.modal-close:hover{ background-image:url('../assets/ui/close-hover.png'); }
+.modal-close:active{ transform:translateY(1px); }
+/* botão de ajuda "?" da Academia reaproveita .modal-close no HTML — aqui
+   vira botão de pedra comum com o "?" visível */
+#academiaHelpBtn{
+  box-sizing:border-box;
+  border:8px solid transparent;
+  border-image:url('../assets/ui/btn.png') 4 fill / 8px stretch;
+  background:none;
+  color:var(--gold-glow);
+  font-family:'Press Start 2P', monospace;
+  font-size:10px;
+  line-height:12px;
+  padding:0;
+  text-shadow:1px 1px 0 #000;
+}
+#academiaHelpBtn:hover{ border-image-source:url('../assets/ui/btn-hover.png'); background:none; }
+/* botões com conteúdo próprio (baú, escolha de arma) usam a fonte do jogo */
+.chest-btn, .weapon-choice-card{ font-family:'VT323', monospace; }
+
+/* ---- Botões ---- */
+.ascend-btn, .danger-btn, .buy-btn, .small-btn, .qty-btn, .modal-tab-btn,
+.menu-btn, .tree-reset-btn, .gear-btn, .chest-btn, .weapon-choice-card,
+.bag-filter{
+  border:8px solid transparent;
+  border-image:url('../assets/ui/btn.png') 4 fill / 8px stretch;
+  border-radius:0;
+  background:none;
+  box-shadow:none;
+  image-rendering:pixelated;
+  color:var(--parchment);
+  text-shadow:1px 1px 0 #000;
+  line-height:1.6;
+}
+:is(.ascend-btn, .danger-btn, .buy-btn, .small-btn, .qty-btn, .modal-tab-btn, .menu-btn, .tree-reset-btn, .gear-btn, .chest-btn, .weapon-choice-card, .bag-filter):hover:not(:disabled){
+  border-image-source:url('../assets/ui/btn-hover.png');
+  color:#fff;
+}
+:is(.ascend-btn, .danger-btn, .buy-btn, .small-btn, .qty-btn, .modal-tab-btn, .menu-btn, .tree-reset-btn, .gear-btn, .chest-btn, .weapon-choice-card, .bag-filter):active:not(:disabled){
+  border-image-source:url('../assets/ui/btn-press.png');
+  transform:translateY(1px);
+  box-shadow:none;
+}
+:is(.ascend-btn, .danger-btn, .buy-btn, .small-btn, .qty-btn, .modal-tab-btn, .menu-btn, .tree-reset-btn, .gear-btn, .chest-btn, .weapon-choice-card, .bag-filter):disabled{
+  border-image-source:url('../assets/ui/btn-disabled.png');
+  background:none;
+  color:#8a839a;
+  text-shadow:none;
+}
+/* cores: ação positiva (verde), saída/cancelar (vermelho), compra (laranja) */
+.ascend-btn{ border-image-source:url('../assets/ui/btn-green.png'); }
+.ascend-btn:hover:not(:disabled){ border-image-source:url('../assets/ui/btn-green-hover.png'); }
+.danger-btn{ border-image-source:url('../assets/ui/btn-red.png'); }
+.danger-btn:hover:not(:disabled){ border-image-source:url('../assets/ui/btn-red-hover.png'); }
+.buy-btn, .qty-btn{ border-image-source:url('../assets/ui/btn-orange.png'); }
+:is(.buy-btn, .qty-btn):hover:not(:disabled){ border-image-source:url('../assets/ui/btn-orange-hover.png'); }
+.modal-tab-btn.active, .bag-filter.active{
+  border-image-source:url('../assets/ui/btn-active.png');
+  color:var(--gold-glow);
+}
+.sell-selected-btn{ color:var(--gold-glow); }
+/* a borda de 8px já dá corpo ao botão — compensa no padding */
+.ascend-btn, .danger-btn{ padding:4px 8px; }
+.buy-btn{ padding:2px 6px; }
+.small-btn{ padding:0 4px; }
+.qty-btn{ width:30px; height:30px; padding:0; }
+.qty-stepper .sell-btn{ padding:2px 4px; }
+.modal-tab-btn{ padding:2px 6px; }
+.sidebar-content .modal-tab-btn{ padding:0 3px; }
+.menu-btn{ padding:8px; }
+.gear-btn{ width:48px; height:48px; padding:0; line-height:0; display:flex; align-items:center; justify-content:center; }
+/* engrenagem 16x16 (art/ui/gear) em 2x exato */
+.gear-btn .icon-gear{ width:32px; height:32px; }
+.gear-btn:hover{ transform:none; }
+.chest-btn{ padding:4px 6px; }
+.weapon-choice-card{ padding:6px; }
+/* menu principal mantém o texto com faixa vermelha no hover (style.css) */
+.main-menu-actions .menu-btn,
+.main-menu-actions .menu-btn:hover,
+.main-menu-actions .menu-btn:active{ border:none; border-image:none; }
+
+/* ---- Campos rebaixados: linhas de lista, caixas, entradas ---- */
+.shop-row, .settings-row, .slot-box, .drop-log, .qty-input, .settings-select{
+  border:8px solid transparent;
+  border-image:var(--ui-slot) 4 / 8px stretch;
+  border-radius:0;
+  background-color:#15111d;
+  background-clip:padding-box;
+  image-rendering:pixelated;
+}
+.shop-row{ padding:2px 4px; }
+.settings-row, .slot-box{ padding:4px 6px; }
+.drop-log{ padding:0 4px; }
+.qty-input, .settings-select{ padding:0 2px; }
+.shop-row.equipped{ border-image-source:var(--ui-slot-active); box-shadow:none; }
+
+/* ---- Caixas flutuantes: tooltips, ajuda, aviso ---- */
+.stat-tooltip, .node-tooltip, .help-popover, .toast{
+  border:12px solid transparent;
+  border-image:var(--ui-frame-sm) 6 fill / 12px round;
+  border-radius:0;
+  background:none;
+  image-rendering:pixelated;
+}
+.stat-tooltip, .help-popover{ padding:2px 4px; }
+.toast{ padding:4px 8px; }
+
+/* ---- Barras de vida/tempo: calha rebaixada + preenchimento com brilho ---- */
+.hp-wrap, .timer-wrap{
+  border:8px solid transparent;
+  border-image:var(--ui-slot) 4 / 8px stretch;
+  border-radius:0;
+  background:#0d0a12;
+  background-clip:padding-box;
+  image-rendering:pixelated;
+}
+.hp-wrap{ height:34px; }
+.timer-wrap{ height:26px; }
+.hp-fill, .timer-fill{ box-shadow:inset 0 3px 0 rgba(255,255,255,0.25), inset 0 -3px 0 rgba(0,0,0,0.3); }
+.hp-fill{ background:#c9432f; }
+.timer-fill{ background:#2fa597; }
+.dungeon-timer-fill{ background:#c8902c; }
+.timer-fill.urgent{ background:#c9432f; }
+
+/* controles nativos (checkbox, slider de volume) no dourado da UI */
+input[type=checkbox], input[type=range]{ accent-color:#c8902c; }
+
+/* ---- Barras de rolagem em pedra ---- */
+*{ scrollbar-width:thin; scrollbar-color:#524a6e #15111d; }
+::-webkit-scrollbar{ width:12px; height:12px; }
+::-webkit-scrollbar-track{ background:#15111d; box-shadow:inset 2px 2px 0 #0d0a12; }
+::-webkit-scrollbar-thumb{ background:#4a4560; border:2px solid #0d0a12; box-shadow:inset 2px 2px 0 #5d5876, inset -2px -2px 0 #231f33; }
+::-webkit-scrollbar-thumb:hover{ background:#5d5876; }
+
+/* ---- Mochila em slots (ver UI.renderInventoryBag) ---- */
+.bag-filters{ display:flex; gap:4px; flex-wrap:wrap; margin-bottom:8px; }
+.bag-filter{ font-family:'VT323', monospace; font-size:15px; padding:0 3px; cursor:pointer; }
+.bag-grid{
+  display:grid;
+  grid-template-columns:repeat(4, 48px);
+  gap:4px;
+  justify-content:center;
+}
+.bag-slot{
+  position:relative;
+  width:48px; height:48px;
+  padding:0;
+  border:8px solid transparent;
+  border-image:var(--ui-slot) 4 fill / 8px stretch;
+  background:none;
+  image-rendering:pixelated;
+  cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+.bag-slot.empty{ cursor:default; opacity:0.55; }
+.bag-slot:not(.empty):hover{ filter:brightness(1.3); }
+.bag-slot.selected{ border-image-source:var(--ui-slot-active); }
+.bag-slot .icon{ width:32px; height:32px; margin:0; flex:none; }
+.bag-qty{
+  position:absolute;
+  right:-6px; bottom:-7px;
+  font-family:'Press Start 2P', monospace;
+  font-size:8px;
+  color:#fff;
+  text-shadow:1px 0 0 #000, -1px 0 0 #000, 0 1px 0 #000, 0 -1px 0 #000;
+  pointer-events:none;
+}
+/* marca de raridade (minérios): quadradinho colorido no canto */
+.bag-slot[data-rarity]::after{
+  content:'';
+  position:absolute;
+  left:-5px; top:-5px;
+  width:6px; height:6px;
+  background:var(--rarity-color);
+  box-shadow:0 0 0 1px #0d0a12;
+}
+.bag-detail{
+  margin-top:8px;
+  border:8px solid transparent;
+  border-image:var(--ui-slot) 4 / 8px stretch;
+  background:#15111d;
+  background-clip:padding-box;
+  image-rendering:pixelated;
+  padding:2px 4px;
+  font-size:15px;
+  min-height:58px;
+}
+.bag-detail .bag-detail-head{ display:flex; align-items:center; gap:6px; color:var(--parchment); font-size:16px; }
+.bag-detail .bag-detail-head .icon{ width:32px; height:32px; flex:none; }
+.bag-detail .bag-detail-meta{ color:var(--parchment-dim); margin-top:2px; }
+.bag-detail .bag-detail-meta .icon{ width:14px; height:14px; vertical-align:-2px; }
+.bag-detail.empty{ color:var(--parchment-dim); display:flex; align-items:center; justify-content:center; text-align:center; }
+
+/* ---- Celular: molduras em 1x (continuam nítidas, só mais finas) e menos
+   folga, pra caber em ~390px sem rolagem lateral ---- */
+@media (max-width:600px){
+  body{ padding:8px; }
+  .panel, .modal-box, .npc-side-panel, .arena-frame{ border-width:8px; border-image-width:8px; }
+  .sidebar-inventory, .stat-tooltip, .node-tooltip, .help-popover, .toast{ border-width:6px; border-image-width:6px; }
+  .sidebar-inventory{ width:44px; }
+  .panel{ padding:8px; }
+  .game-shell{ gap:6px; }
+  .city-buildings{ grid-template-columns:repeat(auto-fit, minmax(96px, 1fr)); gap:6px; }
+  /* inventário em cima, cidade/dungeon embaixo, os dois na largura toda */
+  .game-shell{ flex-direction:column; align-items:stretch; }
+  .sidebar-inventory, .sidebar-inventory.expanded{ width:auto; align-self:stretch; }
+  .sidebar-inventory:not(.expanded) .sidebar-toggle-label{ writing-mode:horizontal-tb; }
+  .sidebar-toggle-btn{ flex-direction:row; padding:6px; }
+  .layout{ width:100%; }
+  .title-bar h1{ font-size:16px; padding-right:48px; }
+}

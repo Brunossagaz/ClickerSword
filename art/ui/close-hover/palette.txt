@@ -1,0 +1,9 @@
+# close-hover - UI pedra + ouro
+K=#0d0a12
+G1=#ffd54a
+G3=#8a5e1c
+F=#34304a
+FL=#4a4560
+FD=#231f33
+X=#fff3b0
+XD=#8a5e1c

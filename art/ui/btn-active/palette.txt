@@ -1,0 +1,7 @@
+# btn-active - UI pedra + ouro
+K=#0d0a12
+G1=#fff3b0
+G3=#8a5e1c
+F=#6a4a1a
+FL=#8e6424
+FD=#4a3312

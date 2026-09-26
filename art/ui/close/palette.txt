@@ -1,0 +1,9 @@
+# close - UI pedra + ouro
+K=#0d0a12
+G1=#e0a52a
+G3=#6e4a16
+F=#34304a
+FL=#4a4560
+FD=#231f33
+X=#ff8a78
+XD=#7a1e14

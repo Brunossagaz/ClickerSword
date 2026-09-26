@@ -4,7 +4,7 @@
 const UI = {
   canvas:null, ctx:null,
   // Pan/zoom da árvore de Upgrades (Academia de Combate) — só transform
-  // visual, não mexe nas coordenadas (%) dos nós em UPGRADE_TREE. Resetado
+  // visual, não mexe nas posições dos nós (ver layoutUpgradeTree). Resetado
   // toda vez que o modal é aberto (ver initTreePanZoom).
   treeView:{ x:0, y:0, scale:1 },
   init(){
@@ -228,9 +228,18 @@ const UI = {
     wrap.style.backgroundPosition = `${v.x}px ${v.y}px`;
     wrap.style.backgroundSize = `${64*v.scale}px ${64*v.scale}px`;
   },
+  // Centraliza na raiz com um zoom que mostra o 1º anel inteiro (ver
+  // layoutUpgradeTree). Roda no próximo frame porque, vindo do clique que
+  // abre a Academia, o modal ainda não tem tamanho medido.
   resetTreeView(){
-    this.treeView = { x:0, y:0, scale:1 };
-    this.applyTreeTransform();
+    requestAnimationFrame(()=>{
+      const wrap = document.getElementById('upgradeTreeWrap');
+      const layout = this.treeLayout || this.layoutUpgradeTree();
+      const w = wrap.clientWidth || 640, h = wrap.clientHeight || 520;
+      const scale = Math.max(0.3, Math.min(1, (Math.min(w, h) / 2 - 10) / (layout.ring + 95)));
+      this.treeView = { scale, x: w / 2 - layout.root.x * scale, y: h / 2 - layout.root.y * scale };
+      this.applyTreeTransform();
+    });
   },
   // Scroll do mouse = zoom (centrado no cursor, pra não "fugir" da posição
   // que o jogador está olhando); clique+arraste no espaço vazio (fora de
@@ -238,7 +247,7 @@ const UI = {
   // só o transform CSS do .tree-canvas (ver applyTreeTransform).
   initTreePanZoom(){
     const wrap = document.getElementById('upgradeTreeWrap');
-    const MIN_SCALE = 0.4, MAX_SCALE = 2.5;
+    const MIN_SCALE = 0.2, MAX_SCALE = 2.5;
 
     wrap.addEventListener('wheel', (e)=>{
       e.preventDefault();
@@ -828,18 +837,54 @@ const UI = {
     }
     UI.renderAll();
   },
-  // Mochila do Inventário: mesma lista de itens (vender continua exclusivo
-  // da Loja) — inclui armas brutas ainda não forjadas, minérios e drops
-  // comuns, tudo só visualização aqui.
+  // Mochila do Inventário em slots: cada item que o jogador possui ocupa um
+  // quadrado (ícone + quantidade, empilha sem limite), filtrável por tipo.
+  // Clicar num slot mostra o detalhe embaixo da grade. Só visualização —
+  // vender continua exclusivo da Loja. A grade sempre completa a última
+  // fileira (mínimo 4 fileiras) com slots vazios, pra ter cara de mochila.
+  BAG_FILTERS: [['all', 'Tudo'], ['material', 'Materiais'], ['brokenWeapon', 'Armas'], ['mineral', 'Minérios']],
+  bagFilter: 'all',
+  bagSelected: null,
   renderInventoryBag(){
     const el = document.getElementById('inventoryBagList');
-    el.innerHTML = '';
-    const owned = ITEM_DEFS.filter(d=>state.inventory[d.key] > 0);
-    if(owned.length === 0){
-      el.innerHTML = '<div class="footer-note">Sua mochila está vazia. Explore as Dungeons para coletar itens.</div>';
-      return;
+    const owned = ITEM_DEFS.filter(d => state.inventory[d.key] > 0);
+    const shown = owned.filter(d => this.bagFilter === 'all' || d.type === this.bagFilter);
+    if(!shown.some(d => d.key === this.bagSelected)) this.bagSelected = null;
+    const COLS = 4;
+    const slotCount = Math.max(COLS * 4, Math.ceil(shown.length / COLS) * COLS);
+    const filters = this.BAG_FILTERS.map(([key, label]) =>
+      `<button class="bag-filter${this.bagFilter === key ? ' active' : ''}" data-filter="${key}">${label}</button>`).join('');
+    const slots = [];
+    for(let i = 0; i < slotCount; i++){
+      const def = shown[i];
+      if(!def){ slots.push('<div class="bag-slot empty"></div>'); continue; }
+      const rarity = def.rarity && RARITY_DEFS[def.rarity];
+      slots.push(`<button class="bag-slot${this.bagSelected === def.key ? ' selected' : ''}" data-key="${def.key}" title="${def.name}"
+        ${rarity ? `data-rarity="${def.rarity}" style="--rarity-color:${rarity.color}"` : ''}>
+        <div class="icon icon-${def.icon}"></div><span class="bag-qty">${this.fmt(state.inventory[def.key])}</span></button>`);
     }
-    for(const def of owned) el.appendChild(this.buildItemRow(def, { showSellButton:false }));
+    let detail;
+    const sel = shown.find(d => d.key === this.bagSelected);
+    if(sel){
+      const typeLabel = { material:'Material', brokenWeapon:'Arma bruta (forje no Ferreiro)', mineral:'Minério' }[sel.type] || '';
+      const rarityHtml = sel.rarity ? ` <span class="rarity-tag rarity-${sel.rarity}">${RARITY_DEFS[sel.rarity].label}</span>` : '';
+      detail = `<div class="bag-detail">
+        <div class="bag-detail-head"><div class="icon icon-${sel.icon}"></div><span>${sel.name}${rarityHtml}</span></div>
+        <div class="bag-detail-meta">${typeLabel} · Possui ${this.fmt(state.inventory[sel.key])}</div>
+        <div class="bag-detail-meta">Vende por <div class="icon icon-coin" style="display:inline-block"></div> ${sel.sellPrice} cada</div>
+      </div>`;
+    } else {
+      detail = `<div class="bag-detail empty">${owned.length ? 'Clique num item para ver os detalhes.' : 'Sua mochila está vazia. Explore as Dungeons para coletar itens.'}</div>`;
+    }
+    el.innerHTML = `<div class="bag-filters">${filters}</div><div class="bag-grid">${slots.join('')}</div>${detail}`;
+    el.onclick = (e) => {
+      const f = e.target.closest('[data-filter]');
+      const s = e.target.closest('.bag-slot[data-key]');
+      if(f) this.bagFilter = f.dataset.filter;
+      else if(s) this.bagSelected = this.bagSelected === s.dataset.key ? null : s.dataset.key;
+      else return;
+      this.renderInventoryBag();
+    };
   },
   // Monta a lista de bônus de uma arma pra exibição (Escolha do Clérigo,
   // Ferreiro, Forjar, aba Armas) — só mostra os campos presentes, todos
@@ -1091,25 +1136,98 @@ const UI = {
   // só um rótulo decorativo — os outros brotam dela por linhas curvas, feito
   // raiz de planta. O desbloqueio real é decidido por ProgressionModule
   // (via `requires` em UPGRADE_DEFS) — esta função só posiciona os nós.
+  // Posições da árvore (em px do "mundo" da árvore), calculadas a partir da
+  // estrutura de UPGRADE_TREE — layout radial: raiz no centro, cada ramo
+  // numa fatia do círculo proporcional às folhas dele (mínimo 2, pra ramo
+  // pequeno não ficar espremido entre vizinhos), cada nível num anel mais
+  // afastado. O raio do anel é o menor que mantém QUALQUER par de nós
+  // vizinhos no mesmo anel a pelo menos TREE_SPACING px (centro a centro),
+  // então card nenhum sobrepõe outro; como cada subárvore fica dentro da
+  // própria fatia, as ligações também nunca cruzam outro ramo.
+  TREE_SPACING: 150,   // distância mínima entre centros de nós (card + custo + rótulo)
+  TREE_MIN_RING: 190,  // raio mínimo do 1º anel
+  TREE_PAD: 130,       // margem do mundo em volta do nó mais externo
+  layoutUpgradeTree(){
+    const toNode = (item, depth, branch) => ({
+      key: item.key, depth, branch,
+      children: (item.children || []).map(c => toNode(c, depth + 1, branch))
+    });
+    const root = { key: UPGRADE_TREE.root, depth: 0, branch: null,
+      children: UPGRADE_TREE.branches.map(b => ({ key: b.nodes[0].key, depth: 1, branch: b,
+        children: (b.children || []).map(c => toNode(c, 2, b)) })) };
+    const leaves = n => n.children.length ? n.children.reduce((s, c) => s + leaves(c), 0) : 1;
+    const weight = n => n.depth === 1 ? Math.max(2, leaves(n)) : leaves(n);
+
+    // ângulos: cada nó no meio da própria fatia; filhos dividem a fatia do
+    // pai pelas folhas (centralizados quando o pai tem fatia maior que as folhas)
+    const assign = (n, a0, a1) => {
+      n.angle = (a0 + a1) / 2;
+      if(!n.children.length) return;
+      const total = n.children.reduce((s, c) => s + leaves(c), 0);
+      const span = (a1 - a0) * (n.depth === 1 ? total / weight(n) : 1);
+      let a = n.angle - span / 2;
+      for(const c of n.children){
+        const w = span * leaves(c) / total;
+        assign(c, a, a + w);
+        a += w;
+      }
+    };
+    const total = root.children.reduce((s, c) => s + weight(c), 0);
+    let a = -Math.PI / 2 - Math.PI * weight(root.children[0]) / total; // 1º ramo centrado no topo
+    for(const c of root.children){
+      const w = 2 * Math.PI * weight(c) / total;
+      assign(c, a, a + w);
+      a += w;
+    }
+
+    const all = [];
+    const walk = (n, parent) => { n.parent = parent; all.push(n); n.children.forEach(c => walk(c, n)); };
+    walk(root, null);
+
+    // menor raio de anel que respeita TREE_SPACING em todo anel
+    let ring = this.TREE_MIN_RING;
+    const maxDepth = Math.max(...all.map(n => n.depth));
+    for(let d = 1; d <= maxDepth; d++){
+      const angles = all.filter(n => n.depth === d).map(n => n.angle).sort((x, y) => x - y);
+      for(let i = 0; i < angles.length; i++){
+        const next = i + 1 < angles.length ? angles[i + 1] : (d === 1 ? angles[0] + 2 * Math.PI : null);
+        if(next == null) continue;
+        const gap = next - angles[i];
+        if(gap <= 0) continue;
+        ring = Math.max(ring, this.TREE_SPACING / (2 * d * Math.sin(Math.min(gap, Math.PI) / 2)));
+      }
+    }
+
+    for(const n of all){
+      n.x = Math.cos(n.angle || 0) * n.depth * ring;
+      n.y = Math.sin(n.angle || 0) * n.depth * ring;
+    }
+    const minX = Math.min(...all.map(n => n.x)), minY = Math.min(...all.map(n => n.y));
+    for(const n of all){ n.x = Math.round(n.x - minX + this.TREE_PAD); n.y = Math.round(n.y - minY + this.TREE_PAD); }
+    const width = Math.max(...all.map(n => n.x)) + this.TREE_PAD;
+    const height = Math.max(...all.map(n => n.y)) + this.TREE_PAD;
+    return { root, nodes: all, width, height, ring };
+  },
   renderUpgradeTree(){
     const linesEl = document.getElementById('upgradeTreeLines');
     const nodesEl = document.getElementById('upgradeTreeNodes');
+    const canvasEl = document.getElementById('upgradeTreeCanvas');
     linesEl.innerHTML = '';
     nodesEl.innerHTML = '';
 
-    const hub = UPGRADE_TREE.hub;
+    // mundo da árvore em px: canvas e SVG do mesmo tamanho, viewBox 1:1 —
+    // linhas e nós usam exatamente as mesmas coordenadas, sem distorção
+    const layout = this.treeLayout = this.layoutUpgradeTree();
+    canvasEl.style.width = layout.width + 'px';
+    canvasEl.style.height = layout.height + 'px';
+    linesEl.setAttribute('viewBox', `0 0 ${layout.width} ${layout.height}`);
 
-    // Ligação em degrau (só trechos horizontais/verticais), estilo pixel
-    // art: sai na direção dominante até o meio do caminho, dobra 90° e
-    // chega no nó. O SVG usa viewBox 0-100 (ver index.html), então as
-    // mesmas coordenadas dos nós (%) valem aqui. Traço desenhado 2x — um
-    // escuro mais grosso por baixo (contorno) e o da cor do ramo por cima —
-    // com espessura fixa em px (vector-effect), já que o viewBox é esticado
-    // de forma diferente em X e Y (preserveAspectRatio="none").
+    // Ligação reta de centro a centro (fica dentro da fatia do ramo, ver
+    // layoutUpgradeTree). Traço desenhado 2x — um escuro mais grosso por
+    // baixo (contorno) e o da cor do ramo por cima — com espessura fixa em
+    // px mesmo com zoom (vector-effect).
     const rootPath = (x1,y1,x2,y2,color)=>{
-      const d = Math.abs(x2-x1) >= Math.abs(y2-y1)
-        ? `M ${x1} ${y1} H ${(x1+x2)/2} V ${y2} H ${x2}`
-        : `M ${x1} ${y1} V ${(y1+y2)/2} H ${x2} V ${y2}`;
+      const d = `M ${x1} ${y1} L ${x2} ${y2}`;
       for(const [stroke, width] of [['#0e0a14', 10], [color, 4]]){
         const path = document.createElementNS('http://www.w3.org/2000/svg','path');
         path.setAttribute('d', d);
@@ -1133,8 +1251,8 @@ const UI = {
       const def = UPGRADE_DEFS.find(u=>u.key===key);
       const el = document.createElement('div');
       el.className = 'tree-node'+(isRoot ? ' root-node' : '');
-      el.style.left = x+'%';
-      el.style.top = y+'%';
+      el.style.left = x+'px';
+      el.style.top = y+'px';
       if(!isRoot) el.style.setProperty('--branch-color', color);
 
       if(!ProgressionModule.isUnlocked('upgrade', key)){
@@ -1171,30 +1289,27 @@ const UI = {
     };
 
     // Desenha recursivamente os descendentes de um nó (Nível 2, 3, ...) —
-    // suporta tanto "3 filhos irmãos do mesmo pai" (Crítico/Dano%/Dano
-    // Crítico%) quanto uma CADEIA aninhada (Automação: autoClickSpeed2
-    // dentro de `children` de autoClickSpeed1). Cada filho revela seu
-    // próprio pré-requisito (`requires` em UPGRADE_DEFS) em vez de assumir
-    // que é sempre `parent` — é o que permite a cadeia funcionar igual aos
-    // ramos de irmãos, sem código separado pra cada formato. De propósito
-    // ficam fora da área 0-100 visível a zoom 1 (ver posições em
-    // UPGRADE_TREE), então só aparecem dando zoom out ou arrastando o mapa.
-    const renderDescendants = (parentNode, children, color, icon)=>{
-      for(const child of (children || [])){
+    // irmãos ou cadeia, tanto faz (ver UPGRADE_TREE). Cada filho só aparece
+    // depois que o próprio pré-requisito (`requires` em UPGRADE_DEFS) tem
+    // ao menos 1 nível; as posições já vêm calculadas (layoutUpgradeTree),
+    // então esconder um nó não mexe no lugar dos outros.
+    const renderDescendants = (parentNode, color, icon)=>{
+      for(const child of parentNode.children){
         const childDef = UPGRADE_DEFS.find(u=>u.key===child.key);
-        if(state.upgrades[childDef.requires] <= 0) continue;
+        if(!childDef || state.upgrades[childDef.requires] <= 0) continue;
         rootPath(parentNode.x, parentNode.y, child.x, child.y, color);
         buildNode(child.key, child.x, child.y, color, false, icon);
-        renderDescendants(child, child.children, color, icon);
+        renderDescendants(child, color, icon);
       }
     };
 
     // raiz no centro, primeiro (fica embaixo das raízes na ordem do DOM,
     // mas ambos têm z-index próprio via CSS então não faz diferença visual)
-    buildNode(UPGRADE_TREE.root, hub.x, hub.y, null, true, UPGRADE_TREE.rootIcon);
+    const hub = layout.root;
+    buildNode(hub.key, hub.x, hub.y, null, true, UPGRADE_TREE.rootIcon);
 
-    for(const branch of UPGRADE_TREE.branches){
-      const node = branch.nodes[0];
+    for(const node of hub.children){
+      const branch = node.branch;
       // Nó/linha de Nível 1 só aparecem depois que a raiz foi comprada pela
       // 1ª vez (nível >= 1) — antes disso nem o cadeado é mostrado, o ramo
       // inteiro fica reservado/invisível (rótulo incluso).
@@ -1208,7 +1323,7 @@ const UI = {
       label.style.color = branch.color;
       label.textContent = branch.label;
       nodeEl.appendChild(label);
-      renderDescendants(node, branch.children, branch.color, branch.icon);
+      renderDescendants(node, branch.color, branch.icon);
     }
   },
   renderPrestigeTab(){

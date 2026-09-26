@@ -1,0 +1,7 @@
+# coin - UI pedra + ouro
+O=#3a2408
+D=#9a6414
+S=#c07f1a
+B=#e0a52a
+L=#ffd54a
+H=#fff3b0

@@ -20,7 +20,7 @@ const CONFIG = {
   offlineEfficiency: 0.5,
   goldenChancePerTick: 0.0025, // per 200ms tick
   goldenDurationMs: 8000,
-  goldenRewardMult: 20,
+  goldenRewardMult: 3,
   // mín. de mortes NESTE run pra poder ascender. Cresce um pouco a cada
   // ascensão já feita (ver PrestigeModule.currentAscendThreshold): a 1ª
   // ascensão pede ascendKillThresholdBase, a 2ª pede +ascendKillThresholdGrowth,
@@ -73,21 +73,21 @@ const CONFIG = {
 const MONSTER_TYPES = [
   // --- Mapa 1: Pântano dos Slimes (ciclos 1-5) ---
   {
-    key: 'slime', name: 'SLIME', image: 'assets/sprites/slime.png', frameW: 128, frameH: 128, blinkCapable: true,
+    key: 'slime', name: 'SLIME', image: 'assets/sprites/slime.png', frameW: 128, frameH: 128, spriteScale: 0.6, blinkCapable: true,
     drops: [
       { item: 'slimeGel', qtyMin: 1, qtyMax: 1 },
       { item: 'slimeCompound', chance: 0.75, qtyMin: 1, qtyMax: 3 },
     ]
   },
   {
-    key: 'slimeBlue', name: 'SLIME AZUL', image: 'assets/sprites/slime_blue.png', frameW: 128, frameH: 128, spriteScale: 0.7, hpMult: 1.5, blinkCapable: true,
+    key: 'slimeBlue', name: 'SLIME AZUL', image: 'assets/sprites/slime_blue.png', frameW: 128, frameH: 128, spriteScale: 0.46, hpMult: 1.5, blinkCapable: true,
     drops: [
       { item: 'slimeGel', qtyMin: 3, qtyMax: 3 },
       { item: 'slimeCompound', chance: 0.75, qtyMin: 1, qtyMax: 3 }
     ]
   },
   {
-    key: 'slimeGreenWarrior', name: 'SLIME VERDE GUERREIRO', image: 'assets/sprites/slime_green_warrior.png', frameW: 128, frameH: 128, hpMult: 2.25, blinkCapable: true,
+    key: 'slimeGreenWarrior', name: 'SLIME VERDE GUERREIRO', image: 'assets/sprites/slime_green_warrior.png', frameW: 128, frameH: 128, spriteScale: 0.64, hpMult: 2.25, blinkCapable: true,
     drops: [
       { item: 'slimeGel', qtyMin: 5, qtyMax: 8 },
       { item: 'slimeCompound', chance: 0.75, qtyMin: 1, qtyMax: 1 },
@@ -95,14 +95,14 @@ const MONSTER_TYPES = [
     ]
   },
   {
-    key: 'slimeRed', name: 'SLIME VERMELHO', image: 'assets/sprites/slime_red.png', frameW: 128, frameH: 128, hpMult: 3.38, blinkCapable: true,
+    key: 'slimeRed', name: 'SLIME VERMELHO', image: 'assets/sprites/slime_red.png', frameW: 128, frameH: 128, spriteScale: 0.6, hpMult: 3.38, blinkCapable: true,
     drops: [
       { item: 'slimeGel', qtyMin: 5, qtyMax: 5 },
       { item: 'slimeCompound', chance: 0.75, qtyMin: 1, qtyMax: 3 }
     ]
   },
   {
-    key: 'slimeBlueBarbarian', name: 'SLIME AZUL BÁRBARO', image: 'assets/sprites/slime_blue_barbarian.png', frameW: 128, frameH: 128, hpMult: 5.06, blinkCapable: true,
+    key: 'slimeBlueBarbarian', name: 'SLIME AZUL BÁRBARO', image: 'assets/sprites/slime_blue_barbarian.png', frameW: 128, frameH: 128, spriteScale: 0.68, hpMult: 5.06, blinkCapable: true,
     drops: [
       { item: 'slimeGel', qtyMin: 10, qtyMax: 14 },
       { item: 'slimeCompound', chance: 0.75, qtyMin: 4, qtyMax: 6 },
@@ -110,7 +110,7 @@ const MONSTER_TYPES = [
     ]
   },
   {
-    key: 'slimeRedKing', name: 'SLIME REI VERMELHO', image: 'assets/sprites/slime_red_king.png', frameW: 128, frameH: 128, hpMult: 7.59, blinkCapable: true,
+    key: 'slimeRedKing', name: 'SLIME REI VERMELHO', image: 'assets/sprites/slime_red_king.png', frameW: 128, frameH: 128, spriteScale: 0.75, hpMult: 7.59, blinkCapable: true,
     drops: [
       { item: 'slimeGel', qtyMin: 8, qtyMax: 8 },
       { item: 'slimeCompound', chance: 0.75, qtyMin: 10, qtyMax: 12 },
@@ -888,124 +888,63 @@ for(const def of UPGRADE_DEFS){
   };
 }
 
-// Layout visual da árvore de Upgrades (Academia de Combate): `root` fica no
-// centro (`hub`) e os 3 de Nível 1 brotam dele (ver UI.renderUpgradeTree —
-// as linhas são caminhos em degrau, estilo pixel art). Cada branch tem também
-// `children`: os 3 upgrades de Nível 2 daquele ramo, brotando do nó de
-// Nível 1 (não do hub) — de propósito posicionados FORA da área 0-100
-// visível a zoom 1, então só aparecem se o jogador der zoom out ou
-// arrastar o mapa (ver .tree-wrap/UI.initTreePanZoom). `icon`/`rootIcon`
-// são classes .icon-* (pixel art, ver style.css) — um ícone por ramo,
-// repetido em todos os nós dele. O desbloqueio real
-// vem de `requires` em UPGRADE_DEFS, não daqui — isto é só o layout.
+// Layout da árvore de Upgrades (Academia de Combate): só a ESTRUTURA — quem
+// brota de quem e em que ordem. As posições na tela são calculadas por
+// UI.layoutUpgradeTree (layout radial): `root` no centro, cada ramo ganha
+// uma fatia do círculo proporcional ao nº de folhas dele (ramo pequeno tem
+// fatia mínima de 2), na ordem desta lista em sentido HORÁRIO a partir do
+// topo, e cada nível fica num anel mais afastado. O raio dos anéis é
+// calculado pra que dois nós nunca fiquem mais perto que o tamanho do card
+// — por isso nenhum nó sobrepõe outro e as ligações nunca atravessam outro
+// ramo, não importa quantos upgrades existam.
+// `children` pode ser irmãos (Crítico: 3 filhos do mesmo pai) ou cadeia
+// (Automação: cada velocidade aninhada na anterior). `icon`/`rootIcon` são
+// classes .icon-* (pixel art) — um ícone por ramo. O desbloqueio real vem de
+// `requires` em UPGRADE_DEFS; um upgrade só aparece na árvore se também
+// estiver aqui.
 const UPGRADE_TREE = {
   root: 'battleClickDmg',
   rootIcon: 'tree-root',
-  hub: { x: 50, y: 50 },
   branches: [
     {
-      label: 'Crítico', color: '#4fd1c5', icon: 'tree-crit', nodes: [
-        { key: 'battleCritChance', x: 50, y: 15 },
-      ], children: [
-        { key: 'critChance2A', x: 35, y: -17 },
-        { key: 'critChance2B', x: 50, y: -20 },
-        { key: 'critChance2C', x: 65, y: -17 },
+      label: 'Crítico', color: '#4fd1c5', icon: 'tree-crit',
+      nodes: [{ key: 'battleCritChance' }],
+      children: [{ key: 'critChance2A' }, { key: 'critChance2B' }, { key: 'critChance2C' }]
+    },
+    {
+      label: 'Automação', color: '#8fd9c4', icon: 'tree-auto',
+      nodes: [{ key: 'battleAutoClick' }],
+      children: [{ key: 'autoClickSpeed1', children: [{ key: 'autoClickSpeed2', children: [{ key: 'autoClickSpeed3' }] }] }]
+    },
+    {
+      label: 'Tempo', color: '#e0b14a', icon: 'tree-time',
+      nodes: [{ key: 'dungeonTime' }],
+      children: [{ key: 'dungeonTime2' }]
+    },
+    {
+      // Nível 3 e 4 encadeados: cada dmgPercentNX é filho do SEU dmgPercent(N-1)X
+      label: 'Dano %', color: '#c9432f', icon: 'tree-dmg',
+      nodes: [{ key: 'battleDmgPercent' }],
+      children: [
+        { key: 'dmgPercent2A', children: [{ key: 'dmgPercent3A', children: [{ key: 'dmgPercent4A' }] }] },
+        { key: 'dmgPercent2B', children: [{ key: 'dmgPercent3B', children: [{ key: 'dmgPercent4B' }] }] },
+        { key: 'dmgPercent2C', children: [{ key: 'dmgPercent3C', children: [{ key: 'dmgPercent4C' }] }] },
       ]
     },
     {
-      label: 'Dano %', color: '#c9432f', icon: 'tree-dmg', nodes: [
-        { key: 'battleDmgPercent', x: 81, y: 80 },
-      ], children: [
-        // Nível 3 encadeado (não irmão): cada dmgPercent3X é filho do SEU
-        // dmgPercent2X, continuando pra fora na mesma direção radial a
-        // partir do hub — mesmo esquema de corrente do ramo Automação.
-        { key: 'dmgPercent2A', x: 114, y: 91, children: [
-          { key: 'dmgPercent3A', x: 144, y: 110, children: [
-            { key: 'dmgPercent4A', x: 174, y: 129 },
-          ] },
-        ] },
-        { key: 'dmgPercent2B', x: 106, y: 104, children: [
-          { key: 'dmgPercent3B', x: 132, y: 129, children: [
-            { key: 'dmgPercent4B', x: 158, y: 154 },
-          ] },
-        ] },
-        { key: 'dmgPercent2C', x: 94, y: 113, children: [
-          { key: 'dmgPercent3C', x: 115, y: 143, children: [
-            { key: 'dmgPercent4C', x: 136, y: 173 },
-          ] },
-        ] },
-      ]
+      label: 'Monstro Dourado', color: '#ffab00', icon: 'golden',
+      nodes: [{ key: 'battleGoldenChance' }],
+      children: [{ key: 'goldenChance2A' }, { key: 'goldenChance2B' }, { key: 'goldenChance2C' }]
     },
     {
-      label: 'Dano Crítico %', color: '#ffd54a', icon: 'tree-critdmg', nodes: [
-        { key: 'battleCritDmgPercent', x: 19, y: 80 },
-      ], children: [
-        { key: 'critDmgPercent2A', x: 6, y: 113 },
-        { key: 'critDmgPercent2B', x: -6, y: 104 },
-        { key: 'critDmgPercent2C', x: -14, y: 91 },
-      ]
+      label: 'Dano Crítico %', color: '#ffd54a', icon: 'tree-critdmg',
+      nodes: [{ key: 'battleCritDmgPercent' }],
+      children: [{ key: 'critDmgPercent2A' }, { key: 'critDmgPercent2B' }, { key: 'critDmgPercent2C' }]
     },
-    // Automação: diferente dos outros 3 ramos (3 filhos irmãos do mesmo
-    // pai), aqui os upgrades de velocidade são uma CADEIA (autoClickSpeed2
-    // aninhado dentro de `children` de autoClickSpeed1, autoClickSpeed3
-    // dentro de `children` de autoClickSpeed2, não direto de
-    // battleAutoClick) — UI.renderUpgradeTree percorre isso recursivamente,
-    // então funciona também pra qualquer profundidade sem precisar de código
-    // novo. IMPORTANTE: um upgrade em UPGRADE_DEFS só aparece na árvore se
-    // também tiver uma posição aqui em UPGRADE_TREE — as duas listas são
-    // independentes de propósito (UPGRADE_DEFS é a regra, UPGRADE_TREE é só
-    // o layout visual).
     {
-      label: 'Automação', color: '#8fd9c4', icon: 'tree-auto', nodes: [
-        { key: 'battleAutoClick', x: 82, y: 20 },
-      ], children: [
-        {
-          key: 'autoClickSpeed1', x: 100, y: 5, children: [
-            { key: 'autoClickSpeed2', x: 118, y: -10, children: [
-              { key: 'autoClickSpeed3', x: 136, y: -25 },
-            ] },
-          ]
-        },
-      ]
-    },
-    // Tempo: único lado ainda livre em volta do hub (direita, na altura
-    // dele). x:75, não mais pra fora: o rótulo vai 13pts além do nó e é
-    // limitado a x<=88 (UI.renderUpgradeTree) — com o nó em 88 o texto
-    // cairia em cima do círculo. O nó encadeado continua reto pra fora, entre os filhos de
-    // Automação (y<=5) e de Dano % (y>=91).
-    {
-      label: 'Tempo', color: '#e0b14a', icon: 'tree-time', nodes: [
-        { key: 'dungeonTime', x: 75, y: 50 },
-      ], children: [
-        { key: 'dungeonTime2', x: 110, y: 50 },
-      ]
-    },
-    // Sorte (drops raros): espelha a posição de Automação, do outro lado do
-    // hub (x negativo em vez de >100).
-    {
-      label: 'Sorte', color: '#9b5de5', icon: 'tree-luck', nodes: [
-        { key: 'battleDropChance', x: 18, y: 20 },
-      ], children: [
-        { key: 'dropChance2A', x: -15, y: 5 },
-        { key: 'dropChance2B', x: -18, y: 20 },
-        { key: 'dropChance2C', x: -15, y: 35 },
-      ]
-    },
-    // Monstro Dourado: mesmo y dos outros 2 ramos "de canto" (Dano %/Dano
-    // Crítico %, ambos y:80), só que centralizado — os 3 formam uma fileira
-    // só embaixo do hub. y:80 (não mais fundo) de propósito: o rótulo da
-    // branch (UI.renderUpgradeTree label*) empurra 13pts na direção do nó a
-    // partir do hub, e pra nó "reto pra baixo" (dx=0) isso esbarra rápido no
-    // clamp de 94 do eixo Y — acima de y:81 o texto do rótulo já invade o
-    // próprio card do nó.
-    {
-      label: 'Monstro Dourado', color: '#ffab00', icon: 'golden', nodes: [
-        { key: 'battleGoldenChance', x: 50, y: 80 },
-      ], children: [
-        { key: 'goldenChance2A', x: 35, y: 122 },
-        { key: 'goldenChance2B', x: 50, y: 128 },
-        { key: 'goldenChance2C', x: 65, y: 122 },
-      ]
+      label: 'Sorte', color: '#9b5de5', icon: 'tree-luck',
+      nodes: [{ key: 'battleDropChance' }],
+      children: [{ key: 'dropChance2A' }, { key: 'dropChance2B' }, { key: 'dropChance2C' }]
     },
   ]
 };

@@ -1,0 +1,7 @@
+# btn-disabled - UI pedra + ouro
+K=#0d0a12
+G1=#5a5566
+G3=#34303e
+F=#2a2733
+FL=#353140
+FD=#1f1c27

@@ -1,0 +1,7 @@
+# btn-orange - UI pedra + ouro
+K=#0d0a12
+G1=#ffd54a
+G3=#4a2a0a
+F=#a85a1e
+FL=#d27a30
+FD=#733c12

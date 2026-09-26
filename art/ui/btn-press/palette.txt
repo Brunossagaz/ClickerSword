@@ -1,0 +1,7 @@
+# btn-press - UI pedra + ouro
+K=#0d0a12
+G1=#e0a52a
+G3=#6e4a16
+F=#2c2640
+FL=#3c3556
+FD=#1c1828

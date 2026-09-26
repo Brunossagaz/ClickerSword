@@ -1,0 +1,4 @@
+# divider - UI pedra + ouro
+G1=#ffd54a
+G2=#c8902c
+G3=#7a5218

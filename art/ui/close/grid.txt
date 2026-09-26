@@ -1,0 +1,14 @@
+.. K. K. K. K. K. K. K. K. K. K. K. K. ..
+K. G1 G1 G1 G1 G1 G1 G1 G1 G1 G1 G1 G1 K.
+K. G1 FL FL FL FL FL FL FL FL FL FL G3 K.
+K. G1 FL F. F. F. F. F. F. F. F. FD G3 K.
+K. G1 FL F. X. F. F. F. F. X. F. FD G3 K.
+K. G1 FL F. XD X. F. F. X. XD F. FD G3 K.
+K. G1 FL F. F. XD X. X. XD F. F. FD G3 K.
+K. G1 FL F. F. F. X. X. F. F. F. FD G3 K.
+K. G1 FL F. F. X. XD XD X. F. F. FD G3 K.
+K. G1 FL F. X. XD F. F. XD X. F. FD G3 K.
+K. G1 FL F. F. F. F. F. F. F. F. FD G3 K.
+K. G1 FL FD FD FD FD FD FD FD FD FD G3 K.
+K. G1 G3 G3 G3 G3 G3 G3 G3 G3 G3 G3 G3 K.
+.. K. K. K. K. K. K. K. K. K. K. K. K. ..

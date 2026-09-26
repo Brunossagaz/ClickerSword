@@ -1,0 +1,10 @@
+# frame-sm - UI pedra + ouro
+K=#0d0a12
+SL=#5d5876
+S1=#4a4560
+S2=#34304a
+S3=#231f33
+G1=#ffd54a
+G2=#c8902c
+G3=#7a5218
+F=#1f1a2a
