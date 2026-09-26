@@ -53,6 +53,11 @@ function freshState(){
     // tempo já gasto (contra CONFIG.dungeonTimeLimitMs) e loot somado por
     // item, mostrado no resumo quando o tempo da Dungeon acaba.
     dungeonRun:{ elapsedMs:0, loot:{} },
+    // total de moedas já jogadas na fonte da praça (ver CityMapModule.deposit)
+    // e conquistas desbloqueadas (ver ACHIEVEMENT_DEFS) — as duas são
+    // vitalícias, sobrevivem à Ascensão (ver PrestigeModule.ascend)
+    fountainCoins:0,
+    achievements: Object.fromEntries(ACHIEVEMENT_DEFS.map(d => [d.key, false])),
     isBoss:false,
     isGolden:false,
     goldenExpiresAt:0,

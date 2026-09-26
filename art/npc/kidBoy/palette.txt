@@ -1,0 +1,13 @@
+# kidBoy - NPC andando (3 direcoes x 3 frames de 16x24)
+O=#120c10
+SK=#eaa878
+KD=#c47a52
+EY=#1a1210
+HR=#b8581e
+RD=#8a3e12
+C1=#3a6ab0
+1D=#284c82
+ST=#6a4424
+LG=#eaa878
+GD=#c47a52
+SH=#4a2e18

@@ -530,6 +530,80 @@ const ANSELMO_LINES = [
   'Obrigado pela ajuda',
 ];
 
+// Mapa da cidade (ver CityMapModule, js/citymap.js): a própria arte da vila
+// vira a tela da Cidade. Todas as coordenadas são em px da IMAGEM ORIGINAL
+// (width x height) — o módulo converte pro tamanho em que ela aparece.
+// `signs`: placa de cada prédio (id do <button> no index.html), presa pela
+// ponta de baixo no ponto (x, y). `npcs`: personagens andando — `sprite` é
+// uma folha 48x72 de GridFab (art/npc/<nome>, 3 direções x 3 frames de
+// 16x24), desenhada `spriteScale` px de imagem por pixel de arte; `path` é
+// uma trilha FECHADA de pontos (pés do NPC; o último liga no primeiro) — ele
+// só anda entre pontos vizinhos, então basta que cada trecho vizinho não
+// passe por obstáculo pra ele nunca atravessar a fonte/prédios.
+const CITY_MAP = {
+  image: 'assets/backgrounds/dungeon-wallpaper.png',
+  width: 1672, height: 941,
+  spriteScale: 4,
+  walkSpeed: 38, // px da imagem por segundo
+  signs: [
+    { btn: 'openAcademiaBtn', x: 160, y: 300 },
+    { btn: 'openLojaBtn',     x: 176, y: 548 },
+    { btn: 'openIgrejaBtn',   x: 478, y: 452 },
+    { btn: 'openGuildaBtn',   x: 782, y: 392 },
+    { btn: 'openDungeonBtn',  x: 1008, y: 470 },
+    { btn: 'openCavernaBtn',  x: 1166, y: 206 },
+    { btn: 'openFerreiroBtn', x: 1330, y: 470 },
+  ],
+  npcs: [
+    { key: 'anselmo', name: 'Irmão Anselmo', sprite: 'assets/sprites/npc-anselmo.png', lines: ANSELMO_LINES,
+      path: [[430, 760], [470, 690], [560, 665], [640, 700], [700, 770], [560, 760]] },
+    { key: 'barnabe', name: 'Barnabé', sprite: 'assets/sprites/npc-barnabe.png', lines: BARNABE_LINES,
+      path: [[300, 742], [262, 700], [350, 680], [432, 720], [390, 768]] },
+    { key: 'creiton', name: 'Creiton', sprite: 'assets/sprites/npc-creiton.png', lines: CREITON_LINES,
+      path: [[1150, 722], [1100, 782], [1222, 800], [1332, 772], [1252, 734]] },
+    // --- moradores de ambiente (sem papel na história por enquanto) ---
+    // `schedule`: 'day' só aparece de dia, 'night' só de noite, omitido = sempre.
+    // `speed` (opcional) substitui walkSpeed.
+    { key: 'kidBoy', name: 'Pedrinho', sprite: 'assets/sprites/npc-kid-boy.png', schedule: 'day', speed: 62,
+      lines: ['Pega-pega! Tá com você!', 'Um dia vou ser herói igual você!', 'Minha mãe disse que a dungeon é perigosa...'],
+      path: [[660, 722], [700, 800], [860, 845], [1020, 805], [1062, 722], [1020, 812], [860, 852], [700, 808]] },
+    { key: 'kidGirl', name: 'Aninha', sprite: 'assets/sprites/npc-kid-girl.png', schedule: 'day', speed: 58,
+      lines: ['Você viu um gatinho por aí?', 'Joguei uma moeda na fonte e fiz um pedido!', 'Tchau! Preciso correr!'],
+      path: [[1062, 722], [1020, 812], [860, 852], [700, 808], [660, 722], [700, 800], [860, 845], [1020, 805]] },
+    { key: 'woman', name: 'Dona Clara', sprite: 'assets/sprites/npc-woman.png', schedule: 'day',
+      lines: ['Que dia bonito, não?', 'O pão da padaria acabou de novo...', 'Cuidado lá fora, aventureiro.'],
+      path: [[520, 822], [620, 852], [712, 862], [600, 782]] },
+    { key: 'oldWoman', name: 'Vó Zefa', sprite: 'assets/sprites/npc-old-woman.png', schedule: 'day', speed: 18,
+      lines: ['No meu tempo essa praça vivia cheia.', 'Leve um casaco, a noite esfria.', 'Você está comendo direito, menino?'],
+      path: [[560, 722], [622, 736], [684, 722]] },
+    { key: 'oldMan', name: 'Seu Tonico', sprite: 'assets/sprites/npc-old-man.png', schedule: 'day', speed: 18,
+      lines: ['Ah, minhas costas...', 'Já fui aventureiro, sabia? Até levar uma flechada no joelho.', 'Essa bengala já viu muita coisa.'],
+      path: [[1080, 842], [1180, 862], [1282, 852], [1180, 822]] },
+    { key: 'warrior', name: 'Sir Rodrigo', sprite: 'assets/sprites/npc-warrior.png', speed: 34,
+      lines: ['Mantenha a guarda alta.', 'Os monstros estão mais agitados esta noite.', 'Treine na Academia, faz diferença.'],
+      path: [[460, 884], [860, 902], [1300, 892], [860, 880]] },
+    { key: 'witch', name: 'Madame Morgana', sprite: 'assets/sprites/npc-witch.png', schedule: 'night', speed: 26,
+      lines: ['Hehehe... a lua está perfeita.', 'Poções? Hoje não, querido.', 'A fonte guarda mais segredos do que você imagina...'],
+      path: [[962, 602], [1012, 562], [1062, 602], [1002, 632]] },
+  ],
+  // Fonte da praça: clicar nela (ou na placa) abre o modal de depositar
+  // moedas (ver CityMapModule.openFountain). (x, y) = centro da bacia,
+  // rx/ry = raio da área clicável.
+  fountain: { x: 862, y: 712, rx: 128, ry: 62, signY: 560, minCoins: 1, maxCoins: 999 },
+  // Ciclo de dia e noite (ver CityMapModule.applyDaylight): duração de um
+  // dia inteiro e em que fração dele cada fase termina (0 = meia-noite). A
+  // arte original é noturna — o dia é a mesma imagem clareada e colorida.
+  dayLengthMs: 8 * 60 * 1000,
+  dayPhases: { dawnStart: 0.20, dayStart: 0.30, duskStart: 0.70, nightStart: 0.80 },
+  startTime: 0.12, // hora em que a cidade abre (fração do dia) — noite, perto do amanhecer
+};
+
+// Conquistas (ver AchievementsModule, js/achievements.js). `secret: true`
+// esconde nome/descrição ("???") até desbloquear.
+const ACHIEVEMENT_DEFS = [
+  { key: 'meioBesta', name: 'Meio Besta', desc: 'Jogou exatamente 333 moedas na fonte de uma vez só.', secret: true },
+];
+
 // Armas — a 1ª é escolhida de graça na conversa com o Clérigo (ver
 // OnboardingModule); as outras duas ficam à venda no Ferreiro por
 // `buyCost` moeda (ver UI.renderFerreiroWeapons). `state.weapons[key]` é 0 ou 1.

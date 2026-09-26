@@ -1,0 +1,13 @@
+# kidGirl - NPC andando (3 direcoes x 3 frames de 16x24)
+O=#120c10
+SK=#eaa878
+KD=#c47a52
+EY=#1a1210
+HR=#f0c850
+RD=#c89a30
+C1=#c83a3a
+1D=#8e2626
+C2=#f4e8d0
+LG=#eaa878
+GD=#c47a52
+SH=#8e2626

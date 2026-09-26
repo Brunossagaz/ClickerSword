@@ -1,0 +1,14 @@
+# woman - NPC andando (3 direcoes x 3 frames de 16x24)
+O=#120c10
+SK=#eaa878
+KD=#c47a52
+EY=#1a1210
+HR=#6a3a1a
+RD=#4a2610
+C1=#3e7a4a
+1D=#2a5634
+C2=#f0e6d0
+2D=#c8b890
+SH=#4a2e18
+LG=#3e7a4a
+GD=#2a5634

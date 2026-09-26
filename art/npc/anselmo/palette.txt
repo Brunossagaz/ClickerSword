@@ -1,0 +1,16 @@
+# anselmo - NPC andando (3 direcoes x 3 frames de 16x24)
+O=#120c18
+SK=#e8a878
+KD=#c07850
+EY=#1a1216
+HR=#b8b4ae
+RD=#8a8680
+BD=#ece8e0
+BE=#bcb4a8
+C1=#3e2e62
+1D=#281d42
+C2=#ece4d0
+2D=#c4b89c
+AC=#e0a830
+SH=#6a4424
+HD=#4a2e18

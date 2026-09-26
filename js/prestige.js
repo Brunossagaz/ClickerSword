@@ -42,7 +42,9 @@ const PrestigeModule = {
       academiaAnnounced: state.academiaAnnounced,
       dungeonEntriesCount: state.dungeonEntriesCount,
       firstCycleEverCompleted: state.firstCycleEverCompleted,
-      totalCyclesCompleted: state.totalCyclesCompleted
+      totalCyclesCompleted: state.totalCyclesCompleted,
+      fountainCoins: state.fountainCoins,
+      achievements: state.achievements
     };
 
     state = freshState();

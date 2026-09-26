@@ -85,15 +85,35 @@
   </div>
 </div>
 
+<!-- Fonte da praça (ver CityMapModule.openFountain/deposit): joga de 1 a 999
+     moedas por vez. Valor validado no JS (inteiro, faixa e saldo). -->
+<div class="modal-overlay" id="fountainModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="pixel">FONTE DOS DESEJOS</span>
+      <button class="modal-close" id="fountainCloseBtn">✕</button>
+    </div>
+    <div class="modal-body" style="text-align:center;">
+      <div style="margin-bottom:10px;">A água brilha sob a luz. Dizem que quem joga moedas aqui tem seus pedidos ouvidos...</div>
+      <div class="qty-stepper" style="justify-content:center; margin-bottom:8px;">
+        <button class="qty-btn" id="fountainMinusBtn" aria-label="Menos">−</button>
+        <input class="qty-input" id="fountainInput" type="number" min="1" max="999" step="1" value="1" inputmode="numeric" aria-label="Moedas">
+        <button class="qty-btn" id="fountainPlusBtn" aria-label="Mais">+</button>
+      </div>
+      <div class="footer-note" id="fountainInfo" style="margin-top:0;"></div>
+      <button class="buy-btn" id="fountainDepositBtn" style="margin-top:10px;"><div class="icon icon-coin" style="display:inline-block;"></div> Jogar moedas</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="achievementsModal">
   <div class="modal-box">
     <div class="modal-header">
       <span class="pixel">CONQUISTAS</span>
       <button class="modal-close" id="achievementsCloseBtn">✕</button>
     </div>
-    <div class="modal-body" style="text-align:center; padding:10px 6px 16px;">
-      <div class="icon icon-trophy" style="margin:0 auto 10px;"></div>
-      <div>Em breve! Suas conquistas vão aparecer aqui conforme forem lançadas.</div>
+    <div class="modal-body" style="padding:10px 10px 16px;">
+      <div id="achievementsList"></div>
     </div>
   </div>
 </div>
@@ -566,17 +586,32 @@
 
     <div class="view-content" id="view-city">
       <div class="panel-title">Cidade Abandonada</div>
-      <div class="city-buildings">
-        <button class="building-card building-card-image building-ferreiro" id="openFerreiroBtn" aria-label="Ferreiro - Compre armas"></button>
-        <button class="building-card building-card-image building-guilda" id="openGuildaBtn" aria-label="Guilda - Tropas automáticas"></button>
-        <button class="building-card building-card-image building-caverna" id="openCavernaBtn" aria-label="Caverna - Minere minérios"></button>
-        <button class="building-card building-card-image building-loja" id="openLojaBtn" aria-label="Loja - Venda itens"></button>
-        <button class="building-card building-card-image building-igreja" id="openIgrejaBtn" aria-label="Igreja - Ascensão"></button>
-        <button class="building-card building-card-image building-dungeon" id="openDungeonBtn" aria-label="Dungeons - Batalhe monstros"></button>
-        <button class="building-card building-card-image building-academia" id="openAcademiaBtn" aria-label="Academia - Upgrades de combate">
+      <!-- Mapa da cidade (ver CityMapModule/CITY_MAP): arte da vila + placas
+           dos prédios (posicionadas pelo JS a partir de CITY_MAP.signs) + NPCs
+           andando no canvas. -->
+      <div class="city-map-scroll">
+      <div class="city-map" id="cityMap">
+        <img class="city-map-bg" id="cityMapBg" src="assets/backgrounds/dungeon-wallpaper.png" alt="Praça da cidade" draggable="false">
+        <!-- luz do ciclo de dia e noite (ver CityMapModule.applyDaylight) -->
+        <div class="city-map-sky" id="cityMapSky"></div>
+        <div class="city-map-tint" id="cityMapTint"></div>
+        <canvas class="city-map-npcs" id="cityMapCanvas"></canvas>
+        <div class="city-map-clock" id="cityMapClock"></div>
+        <button class="building-card map-sign map-sign-fountain" id="openFountainBtn" aria-label="Fonte - Jogue moedas"><span class="map-sign-name">Fonte</span></button>
+        <button class="building-card map-sign building-ferreiro" id="openFerreiroBtn" aria-label="Ferreiro - Compre armas"><span class="map-sign-name">Ferreiro</span></button>
+        <button class="building-card map-sign building-guilda" id="openGuildaBtn" aria-label="Guilda - Tropas automáticas"><span class="map-sign-name">Guilda</span></button>
+        <button class="building-card map-sign building-caverna" id="openCavernaBtn" aria-label="Caverna - Minere minérios"><span class="map-sign-name">Caverna</span></button>
+        <button class="building-card map-sign building-loja" id="openLojaBtn" aria-label="Loja - Venda itens"><span class="map-sign-name">Loja</span></button>
+        <button class="building-card map-sign building-igreja" id="openIgrejaBtn" aria-label="Igreja - Ascensão"><span class="map-sign-name">Igreja</span></button>
+        <button class="building-card map-sign building-dungeon" id="openDungeonBtn" aria-label="Dungeons - Batalhe monstros"><span class="map-sign-name">Dungeon</span></button>
+        <button class="building-card map-sign building-academia" id="openAcademiaBtn" aria-label="Academia - Upgrades de combate">
+          <span class="map-sign-name">Academia</span>
           <div class="building-progress" id="academiaProgress"></div>
         </button>
+        <div class="city-map-bubble" id="cityMapBubble"></div>
       </div>
+      </div>
+      <div class="footer-note">Clique numa placa para entrar no prédio, na fonte para jogar moedas, ou num morador para ouvir o que ele tem a dizer.</div>
     </div>
 
     <div class="view-content" id="view-dungeon">
@@ -631,6 +666,8 @@
 <script src="js/upgrades.js"></script>
 <script src="js/prestige.js"></script>
 <script src="js/settings.js"></script>
+<script src="js/achievements.js"></script>
+<script src="js/citymap.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/mainmenu.js"></script>
 <script src="js/main.js"></script>

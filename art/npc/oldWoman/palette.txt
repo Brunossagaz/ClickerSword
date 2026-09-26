@@ -1,0 +1,12 @@
+# oldWoman - NPC andando (3 direcoes x 3 frames de 16x24)
+O=#120c10
+SK=#e0a07a
+KD=#b8764e
+EY=#1a1210
+HR=#d8d4d0
+RD=#a8a4a0
+C1=#3a3448
+1D=#26222f
+SW=#8a6a9a
+WX=#644a72
+SH=#2a1c14

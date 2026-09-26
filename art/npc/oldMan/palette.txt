@@ -1,0 +1,13 @@
+# oldMan - NPC andando (3 direcoes x 3 frames de 16x24)
+O=#120c10
+SK=#e0a07a
+KD=#b8764e
+EY=#1a1210
+HR=#e0dcd6
+RD=#aca8a2
+C1=#6a4a2e
+1D=#4a321e
+LG=#4a4a52
+GD=#34343a
+SH=#2a1c14
+CN=#8a5a2a

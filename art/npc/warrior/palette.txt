@@ -1,0 +1,16 @@
+# warrior - NPC andando (3 direcoes x 3 frames de 16x24)
+O=#100c10
+SK=#eaa878
+KD=#c47a52
+EY=#1a1210
+MT=#9a9aa8
+TX=#62626e
+C1=#7a7a88
+1D=#52525e
+TB=#a82e2e
+BX=#741c1c
+AC=#e0a830
+LG=#4a3a2e
+GD=#32261e
+SH=#3a2616
+BD=#6a3a1a

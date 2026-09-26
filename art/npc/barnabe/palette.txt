@@ -1,0 +1,18 @@
+# barnabe - NPC andando (3 direcoes x 3 frames de 16x24)
+O=#120c10
+SK=#eaa878
+KD=#c47a52
+EY=#1a1210
+HR=#2a2220
+RD=#1a1414
+HT=#9a5a2a
+TD=#6a3a18
+C1=#7a4a24
+1D=#54301a
+C2=#ecdcb4
+2D=#c8b48a
+AC=#e0a830
+BL=#2e2018
+LG=#4a3424
+GD=#34241a
+SH=#2a1c14

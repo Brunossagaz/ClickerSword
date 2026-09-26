@@ -11,6 +11,7 @@ const UI = {
     this.canvas = document.getElementById('monsterCanvas');
     this.ctx = this.canvas.getContext('2d');
     this.canvas.parentElement.addEventListener('click', (e)=>PlayerModule.handleClick(e));
+    CityMapModule.init();
     this.initModalBodyLock();
 
     document.getElementById('ascendBtn').addEventListener('click', ()=>PrestigeModule.ascend());
@@ -325,6 +326,10 @@ const UI = {
     // body.screen-mainmenu em style.css) — já existe o botão CONFIGURAÇÕES
     // ali dentro, a engrenagem só volta a aparecer nas outras telas.
     document.body.classList.toggle('screen-mainmenu', id==='view-mainmenu');
+    // Cidade vira mapa largo com NPCs animados (ver CityMapModule) — a
+    // animação só roda enquanto essa tela está visível
+    document.body.classList.toggle('screen-city', id==='view-city');
+    CityMapModule.setActive(id==='view-city');
   },
   showMainMenu(){ this.showScreen('view-mainmenu'); },
   showSlotPicker(){ MainMenuModule.renderSlotPicker(); this.showScreen('view-slotpicker'); },
@@ -402,6 +407,7 @@ const UI = {
 
     document.getElementById('achievementsBtn').addEventListener('click', ()=>{
       closeModal(settingsModal);
+      AchievementsModule.render();
       openModal(achievementsModal);
     });
     document.getElementById('achievementsCloseBtn').addEventListener('click', ()=>closeModal(achievementsModal));

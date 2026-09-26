@@ -131,6 +131,8 @@ const SaveModule = {
       if(isObj(raw[k])) out[k] = numMap(raw[k], Object.keys(fresh[k]));
     }
     if(isObj(raw.quests)) out.quests = boolMap(raw.quests, Object.keys(fresh.quests));
+    // só as conquistas que existem em ACHIEVEMENT_DEFS, só true/false
+    if(isObj(raw.achievements)) out.achievements = boolMap(raw.achievements, Object.keys(fresh.achievements));
 
     if(isObj(raw.guild)){
       const g = raw.guild;
@@ -199,6 +201,7 @@ const SaveModule = {
     state.equippedWeapon = typeof loaded.equippedWeapon === 'string' ? loaded.equippedWeapon
       : (Object.keys(state.weapons).find(k => state.weapons[k] > 0) || null);
     state.quests = Object.assign(Object.fromEntries(QUEST_DEFS.map(d => [d.key, false])), loaded.quests||{});
+    state.achievements = Object.assign(Object.fromEntries(ACHIEVEMENT_DEFS.map(d => [d.key, false])), loaded.achievements||{});
     state.prestige = Object.assign({pClick:0,pDps:0,pOreRate:0,pCrit:0}, loaded.prestige||{});
     state.guild = Object.assign({active:false,cycleKey:null,startedAt:0,durationMs:0}, loaded.guild||{});
     state.dungeonRun = Object.assign({elapsedMs:0}, loaded.dungeonRun||{});

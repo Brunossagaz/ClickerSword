@@ -1,0 +1,14 @@
+# witch - NPC andando (3 direcoes x 3 frames de 16x24)
+O=#100a12
+SK=#d8b894
+KD=#a8866a
+EY=#1a1210
+HT=#1e1826
+TD=#120e18
+HR=#1c1c22
+RD=#101014
+C1=#4a2a5e
+1D=#321c40
+GR=#5aa04a
+SH=#1c1420
+AC=#c8a0e0

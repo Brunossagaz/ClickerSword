@@ -63,6 +63,23 @@ detalhados no roadmap do `README.md` são referenciados, não duplicados.
       Salva só a diferença em `js/overrides-data.js` (aplicada por
       `js/overrides.js` por cima do `config.js`) via `tools/dev_server.py`.
       Efeitos dos upgrades viraram dados (`effects` + `UPGRADE_STATS`).
+- [x] **Cidade como mapa (plano A)** — a arte da vila virou a tela da
+      Cidade (`CityMapModule`, `js/citymap.js`; dados em `CITY_MAP`): placas
+      dos prédios em cima de cada construção (os mesmos botões de antes) e
+      Anselmo, Barnabé e Creiton andando pela praça com animação de 3
+      direções; clicar num morador mostra uma fala dele. Sprites de corpo
+      inteiro desenhados no GridFab (`art/npc/`, `assets/sprites/npc-*.png`).
+      Congela durante conversas e só anima com a Cidade visível. No celular o
+      mapa rola na horizontal.
+- [x] **Cidade viva** — fonte da praça interativa (deposita de 1 a 999
+      moedas, total em `state.fountainCoins`), 7 moradores de ambiente
+      (2 crianças, mulher, idosa, idoso, guerreiro, bruxa) com falas e card no
+      Compêndio, e ciclo de dia e noite (`CITY_MAP.dayLengthMs`/`dayPhases`)
+      com moradores que só aparecem de dia ou de noite. A arte base é noturna:
+      o dia é ela clareada — uma versão diurna desenhada ficaria melhor.
+- [ ] **Mapa explorável (plano B)** — personagem do jogador andando
+      (teclado/clique), colisão, câmera e NPCs com rotina; exige tileset,
+      prédios vistos de cima e sprite do jogador. A Dungeon fica como está.
 - [x] **UI em pixel art "pedra + ouro"** — `css/ui-skin.css` por cima do
       `style.css`: molduras, botões (normal/hover/press/disabled + verde/
       vermelho/laranja), abas, fechar, divisórias, barras, slots, tooltips,
@@ -88,8 +105,11 @@ detalhados no roadmap do `README.md` são referenciados, não duplicados.
 
 ## Fase 3 — Sistemas novos maiores
 
-- [ ] **Conquistas (Achievements)** — só existe a casca do modal. Definir
-      lista + hooks nos eventos (kills, ascensão, missões...) + recompensas.
+- [ ] **Conquistas (Achievements)** — sistema pronto (`ACHIEVEMENT_DEFS`,
+      `AchievementsModule.unlock`, lista no modal, secretas com "???",
+      sobrevivem à Ascensão). Só existe "Meio Besta" (333 moedas na fonte de
+      uma vez). Falta: mais conquistas + hooks nos eventos (kills, ascensão,
+      missões...) + recompensas.
 - [ ] **Liberar sprite de personagem** — não existe sprite jogável (só
       monstros). Estender a pipeline de arte + condição de desbloqueio.
 
