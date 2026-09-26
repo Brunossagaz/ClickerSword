@@ -619,24 +619,10 @@ MONSTERS = {
     'slime_red': make_slime_red,
     'slime_blue_barbarian': make_slime_blue_barbarian,
     'slime_red_king': make_slime_red_king,
-    # Mapa 2: Reino Goblin (ciclos 4-6)
-    'goblin_green': make_goblin_green,
-    'goblin_red': make_goblin_red,
-    'goblin_mage': make_goblin_mage,
-    'goblin_warrior': make_goblin_warrior,
-    'goblin_priest': make_goblin_priest,
-    'goblin_master': make_goblin_master,
-    'goblin_greater': make_goblin_greater,
-    # Mapa 3: Terras Selvagens (ciclo 7 em diante)
-    'orc': make_orc,
-    'troll': make_troll,
-    # Mapa 4: Andar do Dragão
-    'fire_lizard': make_fire_lizard,
-    'dragon': make_dragon,
-    # Mapa 5: Andar do Demônio
-    'shadow': make_shadow,
-    'mini_servo': make_mini_servo,
-    'demon': make_demon,
+    # Goblins, Orc, Troll, Lagarto de Fogo, Dragão, Sombra, Mini Servo e
+    # Demônio agora vêm de tools/gen_monsters.py (arte 64x64). As funções
+    # make_* antigas deles continuam acima só como referência — não entram
+    # aqui, senão rodar este script sobrescreveria as artes novas.
 }
 
 if __name__ == '__main__':

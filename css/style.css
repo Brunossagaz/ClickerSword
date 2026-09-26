@@ -377,11 +377,14 @@
     -webkit-user-select:none;
     touch-action:manipulation;
   }
+  /* 288px = quadro de 128px em 2.25x. Os monstros de arte 64x64 (ver
+     tools/gen_monsters.py) ocupam o quadro todo; os slimes são desenhados
+     menores via spriteScale (MONSTER_TYPES). */
   #monsterCanvas{
     image-rendering:pixelated;
     image-rendering:-moz-crisp-edges;
-    width:224px;
-    height:224px;
+    width:288px;
+    height:288px;
     filter:drop-shadow(0 6px 6px rgba(0,0,0,0.6));
     transition:transform .06s ease-out;
   }

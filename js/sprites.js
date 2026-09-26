@@ -22,7 +22,10 @@ const Sprites = {
   },
 
   // Todo monstro é um spritesheet horizontal (3 frames: idle, piscando, dano).
-  // spriteScale (<1) desenha o monstro menor, centralizado no canvas 128x128.
+  // spriteScale (<1) desenha o monstro menor (hoje só os slimes), centrado
+  // na horizontal e apoiado na base do canvas 128x128 — assim fica no mesmo
+  // "chão" dos monstros de tamanho cheio. Suavização desligada: a redução
+  // é fracionária e borraria o pixel art.
   draw(ctx, monsterType, big, tintGold){
     this.clear(ctx);
     const img = this.loadImage(monsterType.image);
@@ -30,9 +33,11 @@ const Sprites = {
     const frameW = monsterType.frameW, frameH = monsterType.frameH;
     const frameIndex = this.blinking ? 1 : 0;
     const scale = monsterType.spriteScale || 1;
-    const destSize = 128 * scale;
-    const destOffset = (128 - destSize) / 2;
-    ctx.drawImage(img, frameIndex*frameW, 0, frameW, frameH, destOffset, destOffset, destSize, destSize);
+    const destSize = Math.round(128 * scale);
+    const destX = Math.round((128 - destSize) / 2);
+    const destY = 128 - destSize;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(img, frameIndex*frameW, 0, frameW, frameH, destX, destY, destSize, destSize);
     if(tintGold){
       ctx.save();
       ctx.globalCompositeOperation = 'source-atop';
