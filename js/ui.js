@@ -31,6 +31,10 @@ const UI = {
     });
     document.getElementById('leaveConfirmYesBtn').addEventListener('click', ()=>{
       document.getElementById('leaveConfirmModal').classList.remove('open');
+      // guarda o loot e o nome da Dungeon antes de sair (leaveToCity zera currentDungeon)
+      const leftKey = state.currentDungeon;
+      const leftLoot = Object.assign({}, state.dungeonRun.loot);
+      setTimeout(()=>UI.showLootSummaryModal(`SAIU DA DUNGEON — ${MAPS[leftKey].name}`, 'Total obtido nesta entrada:', leftLoot), 0);
       MonsterModule.abandonCycle();
       DungeonModule.leaveToCity();
     });
@@ -332,6 +336,7 @@ const UI = {
     // body.screen-mainmenu em style.css) — já existe o botão CONFIGURAÇÕES
     // ali dentro, a engrenagem só volta a aparecer nas outras telas.
     document.body.classList.toggle('screen-mainmenu', id==='view-mainmenu');
+    document.body.classList.toggle('screen-slotpicker', id==='view-slotpicker');
     // Cidade vira mapa largo com NPCs animados (ver CityMapModule) — a
     // animação só roda enquanto essa tela está visível
     document.body.classList.toggle('screen-city', id==='view-city');
@@ -489,34 +494,24 @@ const UI = {
     document.getElementById('hpFill').style.width = pct+'%';
     document.getElementById('hpText').textContent = `${Math.max(0,Math.ceil(state.monsterHp))} / ${state.monsterMaxHp}`;
   },
-  // Registro de drops da dungeon atual — reseta a cada entrada nova (ver
-  // DungeonModule._enterAt) e ganha uma entrada por morte que dropou algo
-  // (ver MonsterModule.onDeath). Mais recente no topo; capado pra não crescer
-  // sem limite numa sessão AFK longa.
-  _dropLog:[],
-  resetDropLog(){
-    this._dropLog = [];
-    this.renderDropLog();
-  },
-  logDrops(slotPos, drops){
-    if(!drops.length) return;
-    this._dropLog.unshift({ slotPos, drops });
-    if(this._dropLog.length > 30) this._dropLog.length = 30;
-    this.renderDropLog();
-  },
-  renderDropLog(){
-    const el = document.getElementById('dropLog');
-    if(!this._dropLog.length){
-      el.innerHTML = '<div class="footer-note" style="margin:0;">Nenhum item dropado ainda nesse ciclo.</div>';
+  // Itens obtidos na entrada atual da Dungeon (state.dungeonRun.loot, somado
+  // em MonsterModule.onDeath) — grade de ícones + quantidade ao lado da arena.
+  resetDropLog(){ this.renderLootPanel(); },
+  logDrops(){ this.renderLootPanel(); },
+  renderLootPanel(){
+    const el = document.getElementById('lootGrid');
+    if(!el) return;
+    const loot = (state.dungeonRun && state.dungeonRun.loot) || {};
+    const items = ITEM_DEFS.filter(d => loot[d.key] > 0);
+    if(!items.length){
+      el.innerHTML = '<div class="footer-note" style="margin:0;">Nada ainda. Derrote monstros para coletar itens.</div>';
       return;
     }
-    el.innerHTML = this._dropLog.map(entry => {
-      const items = entry.drops.map(d => {
-        const itemDef = ITEM_DEFS.find(i => i.key === d.item);
-        return `<div class="drop-log-item">Dropou ${d.qty}x ${itemDef.name}</div>`;
-      }).join('');
-      return `<div class="drop-log-entry"><div class="drop-log-monster">Monstro ${entry.slotPos}</div>${items}</div>`;
-    }).join('');
+    el.innerHTML = items.map(d => `<div class="bag-slot" data-key="${d.key}" tabindex="0"><div class="icon icon-${d.icon}"></div><span class="bag-qty">${this.fmt(loot[d.key])}</span></div>`).join('');
+    this.bindGridTooltip(el, key => {
+      const d = ITEM_DEFS.find(x => x.key === key);
+      return { title: d.name, rarity: d.rarity, lines: [`Obtido nesta entrada: ${this.fmt(loot[key])}`, `Vende por ${d.sellPrice} moeda(s) cada`] };
+    });
   },
   renderTimer(){
     if(!MonsterModule.current) return;
@@ -550,7 +545,7 @@ const UI = {
   // Aba Estatísticas da sidebar do Inventário — substitui o antigo statBar
   // (que só tinha 4 valores) por um resumo mais completo do personagem.
   renderStats(){
-    document.getElementById('invStatGold').textContent = this.fmt(state.gold);
+    document.getElementById('hudGold').textContent = this.fmt(state.gold);
     document.getElementById('invStatClickDmg').textContent = this.fmt(PlayerModule.clickDamage());
     document.getElementById('invStatClickDmgTooltip').innerHTML = this.clickDamageBreakdownHtml();
     document.getElementById('invStatDps').textContent = this.fmt(TroopsModule.totalDps());
@@ -852,21 +847,19 @@ const UI = {
     }
     UI.renderAll();
   },
-  // Mochila do Inventário em slots: cada item que o jogador possui ocupa um
+  // Mochila do Perfil do jogador: cada item que o jogador possui ocupa um
   // quadrado (ícone + quantidade, empilha sem limite), filtrável por tipo.
-  // Clicar num slot mostra o detalhe embaixo da grade. Só visualização —
-  // vender continua exclusivo da Loja. A grade sempre completa a última
-  // fileira (mínimo 4 fileiras) com slots vazios, pra ter cara de mochila.
-  BAG_FILTERS: [['all', 'Tudo'], ['material', 'Materiais'], ['brokenWeapon', 'Armas'], ['mineral', 'Minérios']],
+  // Passar o mouse mostra os detalhes (ver showGridTooltip). Só
+  // visualização — vender continua exclusivo da Loja. A grade completa a
+  // última fileira (mínimo 3 fileiras) com slots vazios, pra ter cara de mochila.
+  BAG_FILTERS: [['all', 'Tudo'], ['material', 'Materiais'], ['brokenWeapon', 'Armas brutas'], ['mineral', 'Minérios']],
+  BAG_COLS: 8,
   bagFilter: 'all',
-  bagSelected: null,
   renderInventoryBag(){
     const el = document.getElementById('inventoryBagList');
     const owned = ITEM_DEFS.filter(d => state.inventory[d.key] > 0);
     const shown = owned.filter(d => this.bagFilter === 'all' || d.type === this.bagFilter);
-    if(!shown.some(d => d.key === this.bagSelected)) this.bagSelected = null;
-    const COLS = 4;
-    const slotCount = Math.max(COLS * 4, Math.ceil(shown.length / COLS) * COLS);
+    const slotCount = Math.max(this.BAG_COLS * 3, Math.ceil(shown.length / this.BAG_COLS) * this.BAG_COLS);
     const filters = this.BAG_FILTERS.map(([key, label]) =>
       `<button class="bag-filter${this.bagFilter === key ? ' active' : ''}" data-filter="${key}">${label}</button>`).join('');
     const slots = [];
@@ -874,32 +867,72 @@ const UI = {
       const def = shown[i];
       if(!def){ slots.push('<div class="bag-slot empty"></div>'); continue; }
       const rarity = def.rarity && RARITY_DEFS[def.rarity];
-      slots.push(`<button class="bag-slot${this.bagSelected === def.key ? ' selected' : ''}" data-key="${def.key}" title="${def.name}"
+      slots.push(`<div class="bag-slot" data-key="${def.key}" tabindex="0"
         ${rarity ? `data-rarity="${def.rarity}" style="--rarity-color:${rarity.color}"` : ''}>
-        <div class="icon icon-${def.icon}"></div><span class="bag-qty">${this.fmt(state.inventory[def.key])}</span></button>`);
+        <div class="icon icon-${def.icon}"></div><span class="bag-qty">${this.fmt(state.inventory[def.key])}</span></div>`);
     }
-    let detail;
-    const sel = shown.find(d => d.key === this.bagSelected);
-    if(sel){
-      const typeLabel = { material:'Material', brokenWeapon:'Arma bruta (forje no Ferreiro)', mineral:'Minério' }[sel.type] || '';
-      const rarityHtml = sel.rarity ? ` <span class="rarity-tag rarity-${sel.rarity}">${RARITY_DEFS[sel.rarity].label}</span>` : '';
-      detail = `<div class="bag-detail">
-        <div class="bag-detail-head"><div class="icon icon-${sel.icon}"></div><span>${sel.name}${rarityHtml}</span></div>
-        <div class="bag-detail-meta">${typeLabel} · Possui ${this.fmt(state.inventory[sel.key])}</div>
-        <div class="bag-detail-meta">Vende por <div class="icon icon-coin" style="display:inline-block"></div> ${sel.sellPrice} cada</div>
-      </div>`;
-    } else {
-      detail = `<div class="bag-detail empty">${owned.length ? 'Clique num item para ver os detalhes.' : 'Sua mochila está vazia. Explore as Dungeons para coletar itens.'}</div>`;
-    }
-    el.innerHTML = `<div class="bag-filters">${filters}</div><div class="bag-grid">${slots.join('')}</div>${detail}`;
+    const empty = owned.length ? '' : '<div class="footer-note">Sua mochila está vazia. Explore as Dungeons para coletar itens.</div>';
+    el.innerHTML = `<div class="bag-filters">${filters}</div><div class="bag-grid">${slots.join('')}</div>${empty}`;
     el.onclick = (e) => {
       const f = e.target.closest('[data-filter]');
-      const s = e.target.closest('.bag-slot[data-key]');
-      if(f) this.bagFilter = f.dataset.filter;
-      else if(s) this.bagSelected = this.bagSelected === s.dataset.key ? null : s.dataset.key;
-      else return;
+      if(!f) return;
+      this.bagFilter = f.dataset.filter;
       this.renderInventoryBag();
     };
+    this.bindGridTooltip(el, key => {
+      const d = ITEM_DEFS.find(x => x.key === key);
+      const typeLabel = { material:'Material', brokenWeapon:'Arma bruta (forje no Ferreiro)', mineral:'Minério' }[d.type] || '';
+      return { title: d.name, rarity: d.rarity, lines: [typeLabel, `Possui: ${this.fmt(state.inventory[key])}`, `Vende por ${d.sellPrice} moeda(s) cada`] };
+    });
+  },
+  // Tooltip único das grades (Mochila/Armas/Itens obtidos): segue o mouse e é
+  // montado só com textContent. `info(key)` devolve { title, rarity?, lines[], hint? }.
+  gridTooltipEl(){
+    let t = document.getElementById('gridTooltip');
+    if(!t){ t = document.createElement('div'); t.id = 'gridTooltip'; t.className = 'grid-tooltip'; document.body.appendChild(t); }
+    return t;
+  },
+  bindGridTooltip(root, info){
+    const tip = this.gridTooltipEl();
+    const show = (slot, x, y) => {
+      const data = info(slot.dataset.key);
+      if(!data) return;
+      tip.replaceChildren();
+      const h = document.createElement('div');
+      h.className = 'tt-title';
+      h.textContent = data.title;
+      if(data.rarity && RARITY_DEFS[data.rarity]){
+        const r = document.createElement('span');
+        r.className = 'rarity-tag rarity-' + data.rarity;
+        r.textContent = RARITY_DEFS[data.rarity].label;
+        h.append(' ', r);
+      }
+      tip.appendChild(h);
+      for(const line of data.lines.filter(Boolean)){ const d = document.createElement('div'); d.textContent = line; tip.appendChild(d); }
+      if(data.hint){ const d = document.createElement('div'); d.className = 'tt-hint'; d.textContent = data.hint; tip.appendChild(d); }
+      tip.classList.add('open');
+      this.placeGridTooltip(x, y);
+    };
+    root.onmousemove = (e) => {
+      const slot = e.target.closest('[data-key]');
+      if(!slot){ tip.classList.remove('open'); return; }
+      if(tip.dataset.key !== slot.dataset.key || !tip.classList.contains('open')){ tip.dataset.key = slot.dataset.key; show(slot, e.clientX, e.clientY); }
+      else this.placeGridTooltip(e.clientX, e.clientY);
+    };
+    root.onmouseleave = () => { tip.classList.remove('open'); tip.dataset.key = ''; };
+    root.onfocusin = (e) => {
+      const slot = e.target.closest('[data-key]');
+      if(slot){ const r = slot.getBoundingClientRect(); tip.dataset.key = slot.dataset.key; show(slot, r.right, r.top); }
+    };
+    root.onfocusout = () => tip.classList.remove('open');
+  },
+  placeGridTooltip(x, y){
+    const tip = this.gridTooltipEl();
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    const left = x + 18 + w > window.innerWidth ? x - w - 12 : x + 18;
+    const top = Math.min(window.innerHeight - h - 8, Math.max(8, y - 10));
+    tip.style.left = Math.max(8, left) + 'px';
+    tip.style.top = top + 'px';
   },
   // Monta a lista de bônus de uma arma pra exibição (Escolha do Clérigo,
   // Ferreiro, Forjar, aba Armas) — só mostra os campos presentes, todos
@@ -924,27 +957,32 @@ const UI = {
   // PlayerModule.clickDamage/TroopsModule.totalDps.
   renderWeaponsList(){
     const el = document.getElementById('weaponsList');
-    el.innerHTML = '';
     const owned = [...WEAPON_DEFS, ...FORGED_WEAPON_DEFS].filter(d=>state.weapons[d.key] > 0);
     if(owned.length === 0){
       el.innerHTML = '<div class="footer-note">Nenhuma arma ainda. Escolha uma com o Clérigo ou compre/forje no Ferreiro.</div>';
+      el.onclick = null;
       return;
     }
-    for(const def of owned){
-      const isEquipped = state.equippedWeapon === def.key;
-      const row = document.createElement('div');
-      row.className = 'shop-row'+(isEquipped ? ' equipped' : '');
-      row.innerHTML = `
-        <div class="shop-info">
-          <div class="name"><div class="icon icon-${def.icon}"></div>${def.name}</div>
-          <div class="desc">${this.weaponBonusText(def)}</div>
-        </div>
-        ${isEquipped ? '<div class="owned">Equipada</div>' : '<button class="buy-btn equip-btn">Equipar</button>'}`;
-      if(!isEquipped){
-        row.querySelector('.equip-btn').addEventListener('click', ()=>PlayerModule.equipWeapon(def.key));
-      }
-      el.appendChild(row);
+    const slotCount = Math.max(this.BAG_COLS * 2, Math.ceil(owned.length / this.BAG_COLS) * this.BAG_COLS);
+    const slots = [];
+    for(let i = 0; i < slotCount; i++){
+      const def = owned[i];
+      if(!def){ slots.push('<div class="bag-slot empty"></div>'); continue; }
+      const eq = state.equippedWeapon === def.key;
+      slots.push(`<div class="bag-slot weapon-slot${eq ? ' selected' : ''}" data-key="${def.key}" tabindex="0" role="button">
+        <div class="icon icon-${def.icon}"></div>${eq ? '<span class="bag-qty">E</span>' : ''}</div>`);
     }
+    el.innerHTML = `<div class="footer-note" style="margin:0 0 8px;">Clique numa arma para equipá-la. Passe o mouse para ver os bônus.</div><div class="bag-grid">${slots.join('')}</div>`;
+    el.onclick = (e) => {
+      const slot = e.target.closest('.weapon-slot[data-key]');
+      if(slot && state.equippedWeapon !== slot.dataset.key) PlayerModule.equipWeapon(slot.dataset.key);
+    };
+    el.onkeydown = (e) => { if(e.key === 'Enter' || e.key === ' '){ const s = e.target.closest('.weapon-slot'); if(s){ e.preventDefault(); s.click(); } } };
+    this.bindGridTooltip(el, key => {
+      const d = [...WEAPON_DEFS, ...FORGED_WEAPON_DEFS].find(x => x.key === key);
+      const eq = state.equippedWeapon === key;
+      return { title: d.name, lines: this.weaponBonusText(d).split(' · '), hint: eq ? 'Equipada' : 'Clique para equipar' };
+    });
   },
   // Loja de armas do Ferreiro — vende as armas que o jogador ainda não tem
   // (a 1ª já veio de graça do Clérigo). Comprar só dá posse (state.weapons)
@@ -1398,6 +1436,7 @@ const UI = {
     this.renderShop();
     this.renderInventoryBag();
     this.renderWeaponsList();
+    this.renderLootPanel();
     this.renderFerreiroWeapons();
     this.renderForgeList();
     this.renderCityBuildingLocks();

@@ -631,3 +631,234 @@ body.screen-dungeon #view-dungeon{ max-width:720px; margin:0 auto; padding:74px 
   .sidebar-inventory{ top:62px; }
   body.screen-dungeon #view-dungeon{ padding-top:62px; }
 }
+
+/* =====================================================================
+   LEITURA DENTRO DAS LOJAS E LOCAIS (modais) + ÍCONES MAIORES
+   Ícones de item são 16x16 ampliados 4x (64 px): 48 px = 3x exato.
+   ===================================================================== */
+.modal-box{ max-width:620px; }
+.modal-box.modal-wide{ max-width:920px; }
+.modal-group .modal-box{ flex-basis:620px; }
+.modal-body{ font-size:24px; line-height:1.25; }
+.modal-header .pixel{ font-size:17px; }
+.modal-close{ width:32px; height:32px; }
+
+.shop-info .name{ font-size:24px; display:flex; align-items:center; flex-wrap:wrap; gap:4px; }
+.shop-info .name .icon{ width:48px; height:48px; margin-right:10px; flex:none; }
+.shop-info .desc, .shop-info .owned, .recipe-material, .rarity-tag{ font-size:20px; }
+.shop-row{ padding:6px 8px; }
+.modal-body .footer-note{ font-size:20px; }
+.modal-body .icon-coin{ width:32px; height:32px; vertical-align:-8px; }
+.npc-speech{ font-size:24px; }
+.cleric-text{ font-size:24px; }
+.quest-banner-text{ font-size:22px; }
+.quest-objective{ font-size:20px; }
+.settings-label, .settings-toggle, .settings-select{ font-size:21px; }
+.chest-btn-text{ font-size:22px; }
+.chest-btn-hint{ font-size:18px; }
+.chest-breakdown-row{ font-size:20px; }
+.weapon-choice-card .weapon-icon{ width:48px; height:48px; }
+.weapon-choice-card .weapon-name{ font-size:14px; }
+.weapon-choice-card .weapon-desc{ font-size:20px; }
+.achievement-row .icon{ width:48px; height:48px; }
+
+.buy-btn, .ascend-btn, .danger-btn{ font-size:15px; }
+.modal-tab-btn{ font-size:14px; padding:4px 8px; }
+.small-btn{ font-size:21px; }
+.qty-btn{ width:36px; height:36px; font-size:16px; }
+.qty-value, .qty-input{ font-size:16px; }
+.qty-input{ width:70px; }
+.qty-all-btn{ font-size:14px; }
+.qty-stepper .sell-btn{ font-size:13px; }
+
+/* inventário (gaveta) */
+.sidebar-inventory, .sidebar-inventory.expanded{ width:min(380px, calc(100vw - 20px)); }
+.stat-row .label{ font-size:19px; }
+.stat-row .value{ font-size:17px; }
+.sidebar-content .modal-tab-btn{ font-size:12px; }
+.bag-grid{ grid-template-columns:repeat(4, 64px); gap:6px; }
+.bag-slot{ width:64px; height:64px; }
+.bag-slot .icon{ width:48px; height:48px; }
+.bag-qty{ font-size:10px; right:-7px; bottom:-8px; }
+.bag-filter{ font-size:20px; }
+.bag-detail, .bag-detail .bag-detail-head{ font-size:21px; }
+.bag-detail .bag-detail-head .icon{ width:48px; height:48px; }
+
+/* botões do canto e placas do mapa */
+.hud-btn{ width:64px; height:64px; }
+.hud-icon, .hud-corner .gear-btn .icon-gear{ width:48px; height:48px; }
+.sidebar-inventory{ top:84px; }
+.map-sign-name{ font-size:14px; padding:4px 8px; }
+.city-map .map-sign-fountain .map-sign-name{ font-size:13px; }
+.city-map-bubble{ font-size:24px; max-width:320px; }
+.city-map-bubble b{ font-size:12px; }
+body.screen-dungeon #view-dungeon{ padding-top:88px; }
+
+/* retrato do NPC nos diálogos: personagem recortado (fundo transparente,
+   ver tools/clean_portraits.py) sobre um fundo de luz quente, na moldura
+   de pedra/ouro — sem a borda laranja e o pontilhado azul antigos */
+.npc-side-panel{ flex-basis:280px; }
+.npc-portrait,
+.npc-side-panel .npc-portrait{
+  display:block;
+  width:100%; height:auto;
+  aspect-ratio:3 / 4;
+  object-fit:contain; object-position:50% 100%;
+  box-sizing:border-box;
+  border:10px solid transparent;
+  border-image:var(--ui-frame-sm) 6 / 10px round;
+  border-radius:0;
+  background:radial-gradient(ellipse at 50% 30%, #5a4130 0%, #2e2030 55%, #171020 100%) padding-box;
+  image-rendering:pixelated;
+}
+
+@media (max-width:600px){
+  .hud-btn{ width:48px; height:48px; }
+  .hud-icon, .hud-corner .gear-btn .icon-gear{ width:32px; height:32px; }
+  .sidebar-inventory{ top:66px; }
+  body.screen-dungeon #view-dungeon{ padding-top:66px; }
+  .modal-body{ font-size:21px; }
+  .map-sign-name{ font-size:11px; }
+}
+/* VT323 tem altura-x pequena: 24px dela lê como ~16px de fonte comum */
+.modal-body{ font-size:26px; }
+.shop-info .name{ font-size:28px; }
+.shop-info .desc, .shop-info .owned, .recipe-material, .rarity-tag, .modal-body .footer-note{ font-size:22px; }
+.npc-speech, .cleric-text{ font-size:26px; }
+.buy-btn, .ascend-btn, .danger-btn{ font-size:16px; }
+.modal-tab-btn{ font-size:15px; }
+.small-btn{ font-size:23px; }
+.stat-row .label{ font-size:21px; }
+.bag-detail, .bag-detail .bag-detail-head{ font-size:23px; }
+.city-map-bubble{ font-size:26px; }
+@media (max-width:600px){ .modal-body{ font-size:22px; } .shop-info .name{ font-size:23px; } }
+/* ícone e nome sempre lado a lado (nome longo quebra ao lado do ícone) */
+.shop-info .name{ flex-wrap:nowrap; }
+.shop-info{ min-width:0; }
+
+/* =====================================================================
+   V2: moldura ornamentada, logotipo, menu centralizado, perfil e dungeon
+   ===================================================================== */
+:root{ --ui-frame-lg:url('../assets/ui/frame-lg.png'); }
+
+/* moldura grande (art/ui/frame-lg, 40x40 borda 12) em 2x = 24 px:
+   aro de ferro com rebites, faixa de tijolos, friso dourado, cantos com pedra */
+.panel, .modal-box, .npc-side-panel{
+  border:24px solid transparent;
+  border-image:var(--ui-frame-lg) 12 fill / 24px round;
+}
+body.screen-mainmenu .panel{ border:none; border-image:none; }
+/* título do modal numa placa vermelha com friso dourado (art/ui/title-plate) */
+.modal-header{ background:none; padding:0 0 10px; justify-content:space-between; }
+.modal-header .pixel{
+  display:inline-block;
+  border:12px solid transparent;
+  border-image:url('../assets/ui/title-plate.png') 6 fill / 12px stretch;
+  image-rendering:pixelated;
+  padding:0 8px;
+  margin:-6px 0 0 -6px;
+  color:var(--gold-glow);
+  text-shadow:2px 2px 0 #1a0608;
+}
+.modal-body{ padding:8px 4px 4px; }
+
+/* logotipo em pixel art (art/ui/logo, 131x16) ampliado sem borrar */
+.game-logo{ display:block; margin:0 auto; image-rendering:pixelated; width:min(655px, 92vw); height:auto; }
+.pre-splash__title .game-logo{ width:min(786px, 94vw); }
+.title-bar h1{ margin:0; font-size:0; line-height:0; }
+.title-bar .game-logo{ width:min(524px, 88vw); }
+
+/* menu principal e seletor de saves: tudo no meio da tela */
+body.screen-mainmenu, body.screen-slotpicker{
+  display:flex; flex-direction:column; justify-content:center; align-items:center;
+  min-height:100vh; padding:16px;
+}
+body.screen-mainmenu .title-bar, body.screen-slotpicker .title-bar{ margin-bottom:28px; }
+body.screen-mainmenu .game-shell, body.screen-slotpicker .game-shell{ width:100%; max-width:720px; }
+body.screen-mainmenu .main-menu-actions{ align-items:center; gap:16px; }
+body.screen-mainmenu .main-menu-actions .menu-btn{ font-size:18px; padding:14px 34px; }
+body.screen-slotpicker .layout{ max-width:680px; }
+
+/* ---- moedas no canto, ao lado do perfil ---- */
+.hud-corner{ align-items:center; }
+.hud-coins{
+  display:flex; align-items:center; gap:8px;
+  height:64px; padding:0 14px 0 10px;
+  border:8px solid transparent;
+  border-image:var(--ui-slot) 4 fill / 8px stretch;
+  image-rendering:pixelated;
+  font-family:'Press Start 2P', monospace; font-size:16px; color:var(--gold-glow);
+  text-shadow:2px 2px 0 #000;
+  filter:drop-shadow(0 3px 3px rgba(0,0,0,0.55));
+}
+.hud-coins .icon-coin{ width:32px; height:32px; flex:none; }
+body:not(.screen-city):not(.screen-dungeon) .hud-coins{ display:none; }
+
+/* ---- Perfil do jogador: janela no meio da tela ---- */
+.profile-backdrop{ display:none; position:fixed; inset:0; z-index:840; background:rgba(8,6,12,0.7); }
+.profile-backdrop.open{ display:block; }
+.sidebar-inventory, .sidebar-inventory.expanded{
+  top:50%; left:50%; right:auto;
+  transform:translate(-50%, -50%);
+  width:min(760px, calc(100vw - 24px));
+  max-height:calc(100vh - 40px);
+  border:24px solid transparent;
+  border-image:var(--ui-frame-lg) 12 fill / 24px round;
+}
+.sidebar-content{ max-height:calc(100vh - 100px); padding:0 4px 4px; }
+.sidebar-content .modal-tabs{ flex-wrap:nowrap; gap:8px; }
+.sidebar-content .modal-tab-btn{ font-size:14px; padding:4px 12px; }
+.profile-header .modal-close{ flex:none; }
+.bag-grid{ grid-template-columns:repeat(8, 64px); justify-content:center; }
+.bag-slot:focus-visible{ outline:2px solid var(--gold-glow); outline-offset:2px; }
+.weapon-slot{ cursor:pointer; }
+.weapon-slot.selected .bag-qty{ color:var(--gold-glow); }
+
+/* tooltip das grades (UI.bindGridTooltip) */
+.grid-tooltip{
+  position:fixed; z-index:6000; display:none; pointer-events:none;
+  max-width:300px;
+  border:12px solid transparent;
+  border-image:var(--ui-frame-sm) 6 fill / 12px round;
+  image-rendering:pixelated;
+  padding:2px 6px;
+  font-family:'VT323', monospace; font-size:22px; line-height:1.15; color:var(--parchment);
+  box-shadow:0 6px 16px rgba(0,0,0,0.6);
+}
+.grid-tooltip.open{ display:block; }
+.grid-tooltip .tt-title{ font-size:24px; color:var(--gold-glow); margin-bottom:2px; }
+.grid-tooltip .tt-hint{ color:var(--arcane); margin-top:4px; }
+
+/* ---- Dungeon: fundo de tijolos (igual à Academia), itens obtidos ao lado ---- */
+body.screen-dungeon{ background:#150f1e url('../assets/icons/tree-bg-tile.png') 0 0 / 64px 64px repeat; image-rendering:pixelated; }
+body.screen-dungeon .bg-scene{ display:none; }
+body.screen-dungeon #view-dungeon{ max-width:1120px; }
+.dungeon-layout{ display:flex; gap:18px; align-items:flex-start; justify-content:center; }
+.dungeon-main{ flex:1 1 640px; min-width:0; max-width:720px; }
+.dungeon-side{
+  flex:0 0 330px;
+  border:24px solid transparent;
+  border-image:var(--ui-frame-lg) 12 fill / 24px round;
+  image-rendering:pixelated;
+  display:flex; flex-direction:column; gap:12px;
+}
+.loot-grid{ display:grid; grid-template-columns:repeat(4, 64px); gap:6px; justify-content:center; min-height:64px; }
+.dungeon-side #leaveDungeonBtn{ align-self:stretch; margin:4px 0 0; }
+body.screen-dungeon .footer-note{ color:var(--parchment); text-shadow:2px 2px 0 #000; }
+
+@media (max-width:900px){
+  .dungeon-layout{ flex-direction:column; align-items:stretch; }
+  .dungeon-side{ flex:none; }
+  .bag-grid{ grid-template-columns:repeat(5, 56px); }
+  .bag-slot{ width:56px; height:56px; }
+}
+@media (max-width:600px){
+  .panel, .modal-box, .npc-side-panel, .sidebar-inventory, .dungeon-side{ border-width:12px; border-image-width:12px; }
+  .hud-coins{ height:48px; font-size:12px; padding:0 8px 0 6px; }
+  .hud-coins .icon-coin{ width:24px; height:24px; }
+  .bag-grid{ grid-template-columns:repeat(4, 56px); }
+  .sidebar-content .modal-tab-btn{ font-size:11px; padding:2px 6px; }
+}
+/* arena da dungeon com a moldura ornamentada (sem fill: mantém o fundo radial) */
+.arena-frame{ border:24px solid transparent; border-image:var(--ui-frame-lg) 12 / 24px round; background-clip:padding-box; }
+@media (max-width:600px){ .arena-frame{ border-width:12px; border-image-width:12px; } }

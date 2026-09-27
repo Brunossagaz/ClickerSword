@@ -1,0 +1,18 @@
+# frame-lg
+K=#0b0810
+IL=#6e6a84
+IM=#46425a
+ID=#2a2638
+RV=#b8b4cc
+BL=#5e5874
+BM=#48435c
+BD=#332f44
+MO=#1c1826
+G1=#ffd54a
+G2=#c8902c
+G3=#7a5218
+IN=#120e1a
+F1=#1e1828
+F2=#221c2e
+GE=#d8304a
+GH=#ff9aa8

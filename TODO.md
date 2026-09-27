@@ -114,6 +114,15 @@ detalhados no roadmap do `README.md` são referenciados, não duplicados.
       Compêndio se o dano disponível em cada fase alcança o "DPS mín." A vida
       cresce muito nos andares finais (Demônio passa de 1 quatrilhão).
 
+- [ ] **Baú de ouro na Dungeon (novo nó da árvore)** — habilidade nova na
+      Academia, custa 2000 moedas: dá chance de, no lugar de um monstro,
+      aparecer um **baú** que dropa 300 moedas (a recompensa sobe com o nível
+      do upgrade / andar). Porém existe a chance de o baú ser um **mímico**: só
+      dropa ouro se for derrotado (vira um "monstro" com vida e tempo), e aí
+      dropa o **dobro** do ouro do baú normal daquele nível. A decidir: chance
+      por nível, vida do mímico (sugestão: mesma curva do monstro da posição),
+      se o baú conta como abate do ciclo, e sprites de baú/mímico (GridFab).
+
 ## Fase 3 — Sistemas novos maiores
 
 - [ ] **Conquistas (Achievements)** — sistema pronto (`ACHIEVEMENT_DEFS`,

@@ -1,0 +1,7 @@
+# title-plate
+K=#0b0810
+G1=#ffd54a
+G3=#7a5218
+PL=#8e2a2a
+PM=#6a1c22
+PD=#48121a

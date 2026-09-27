@@ -1,7 +1,8 @@
 /* ---------------------------------------------------------------------
    HUD MODULE (hud.js)
    Controles de tela do jogo:
-   - Botão da mochila: abre/fecha o inventário (gaveta no canto da tela).
+   - Botão da mochila: abre/fecha o Perfil do jogador (Mochila/Armas/
+     Estatísticas) no meio da tela, com fundo escurecido.
    - Tela cheia: botão no canto + entra sozinho ao clicar em "COMECE A
      JOGAR" (precisa de clique do jogador, regra do navegador). Em tela
      cheia, trava a tecla ESC pro jogo (Keyboard Lock, onde existir) — senão
@@ -16,6 +17,8 @@ const HudModule = {
     this.sidebar = document.getElementById('sidebarInventory');
     this.fsBtn = document.getElementById('fullscreenBtn');
     document.getElementById('inventoryToggleBtn').addEventListener('click', () => this.toggleInventory());
+    document.getElementById('profileCloseBtn').addEventListener('click', () => this.toggleInventory(false));
+    document.getElementById('profileBackdrop').addEventListener('click', () => this.toggleInventory(false));
     this.fsBtn.addEventListener('click', () => this.toggleFullscreen());
     document.addEventListener('fullscreenchange', () => this.onFullscreenChange());
     document.addEventListener('keydown', (e) => { if(e.key === 'Escape') this.onEscape(e); });
@@ -26,6 +29,8 @@ const HudModule = {
   toggleInventory(force){
     const open = force !== undefined ? force : !this.sidebar.classList.contains('expanded');
     this.sidebar.classList.toggle('expanded', open);
+    document.getElementById('profileBackdrop').classList.toggle('open', open);
+    if(!open){ const tip = document.getElementById('gridTooltip'); if(tip) tip.classList.remove('open'); }
     document.getElementById('inventoryToggleBtn').classList.toggle('active', open);
   },
 

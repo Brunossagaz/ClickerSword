@@ -30,20 +30,21 @@
 </div>
 
 <div class="pre-splash" id="preSplash">
-  <h1 class="pre-splash__title">BEYOND THE GATE</h1>
+  <h1 class="pre-splash__title"><img class="game-logo" src="assets/ui/logo.png" alt="Beyond the Gate" draggable="false"></h1>
   <button class="pre-splash__cta" id="preSplashStartBtn">COMECE A JOGAR</button>
 </div>
 
 <!-- Botões fixos no canto da tela durante o jogo: mochila (inventário), tela
      cheia e configurações. -->
 <div class="hud-corner" id="hudCorner">
-  <button class="hud-btn" id="inventoryToggleBtn" title="Inventário" aria-label="Inventário"><span class="hud-icon hud-icon-backpack"></span></button>
+  <div class="hud-coins" id="hudCoins" title="Moedas"><span class="icon icon-coin"></span><span id="hudGold">0</span></div>
+  <button class="hud-btn" id="inventoryToggleBtn" title="Perfil do jogador" aria-label="Perfil do jogador"><span class="hud-icon hud-icon-backpack"></span></button>
   <button class="hud-btn" id="fullscreenBtn" title="Tela cheia" aria-label="Tela cheia"><span class="hud-icon hud-icon-fullscreen"></span></button>
   <button class="gear-btn hud-btn" id="settingsGearBtn" title="Configurações" aria-label="Configurações"><div class="icon icon-gear"></div></button>
 </div>
 
 <div class="title-bar">
-  <h1>BEYOND THE GATE</h1>
+  <h1><img class="game-logo" src="assets/ui/logo.png" alt="Beyond the Gate" draggable="false"></h1>
   <div class="player-name-tag" id="playerNameTag" style="display:none;"></div>
 </div>
 
@@ -550,20 +551,23 @@
 </div>
 
 <div class="game-shell" id="gameShell">
-  <aside class="sidebar-inventory" id="sidebarInventory">
+  <div class="profile-backdrop" id="profileBackdrop"></div>
+  <aside class="sidebar-inventory" id="sidebarInventory" role="dialog" aria-label="Perfil do jogador">
     <button class="sidebar-toggle-btn" id="sidebarToggleBtn" title="Mostrar/esconder inventário">
       <div class="icon icon-inventario"></div>
       <span class="sidebar-toggle-label">Inventário</span>
     </button>
     <div class="sidebar-content">
-      <div class="sidebar-title">Inventário</div>
-      <div class="modal-tabs">
-        <button class="modal-tab-btn active" data-tab="invTabStats">Estatísticas</button>
-        <button class="modal-tab-btn" data-tab="invTabBag">Mochila</button>
-        <button class="modal-tab-btn" data-tab="invTabWeapons">Armas</button>
+      <div class="modal-header profile-header">
+        <span class="pixel">PERFIL DO JOGADOR</span>
+        <button class="modal-close" id="profileCloseBtn" aria-label="Fechar">✕</button>
       </div>
-      <div class="modal-tab-content active" id="invTabStats">
-        <div class="stat-row"><div class="label">Ouro</div><div class="value" id="invStatGold">0</div></div>
+      <div class="modal-tabs">
+        <button class="modal-tab-btn active" data-tab="invTabBag">Mochila</button>
+        <button class="modal-tab-btn" data-tab="invTabWeapons">Armas</button>
+        <button class="modal-tab-btn" data-tab="invTabStats">Estatísticas</button>
+      </div>
+      <div class="modal-tab-content" id="invTabStats">
         <div class="stat-row has-tooltip">
           <div class="label">Dano por Clique</div><div class="value" id="invStatClickDmg">1</div>
           <div class="stat-tooltip" id="invStatClickDmgTooltip"></div>
@@ -575,7 +579,7 @@
         <div class="stat-row"><div class="label">Mortes Totais</div><div class="value" id="invStatKills">0</div></div>
         <div class="stat-row"><div class="label">Clique Automático</div><div class="value" id="invStatAutoClick">—</div></div>
       </div>
-      <div class="modal-tab-content" id="invTabBag">
+      <div class="modal-tab-content active" id="invTabBag">
         <div id="inventoryBagList"></div>
       </div>
       <div class="modal-tab-content" id="invTabWeapons">
@@ -634,7 +638,8 @@
     </div>
 
     <div class="view-content" id="view-dungeon">
-      <button class="danger-btn" id="leaveDungeonBtn" style="margin-top:0; margin-bottom:10px;">Voltar pra cidade</button>
+      <div class="dungeon-layout">
+      <div class="dungeon-main">
       <div class="arena-frame">
         <div class="tier-label" id="tierLabel">CICLO I · MONSTRO 1</div>
         <div class="double-monster-badge" id="doubleMonsterBadge" style="display:none;"></div>
@@ -658,8 +663,14 @@
       </div>
       <div class="footer-note">Clique no monstro para atacar manualmente.</div>
       <div class="footer-note" id="autoClickNote" style="display:none;"></div>
-      <div class="panel-title" style="margin-top:14px;">Registro de Drops</div>
-      <div class="drop-log" id="dropLog"></div>
+      </div>
+      <!-- Itens obtidos nesta entrada (state.dungeonRun.loot, ver UI.renderLootPanel) -->
+      <aside class="dungeon-side">
+        <div class="modal-header"><span class="pixel">ITENS OBTIDOS</span></div>
+        <div class="loot-grid" id="lootGrid"></div>
+        <button class="danger-btn" id="leaveDungeonBtn">Voltar pra cidade</button>
+      </aside>
+      </div>
     </div>
   </div>
   </div>

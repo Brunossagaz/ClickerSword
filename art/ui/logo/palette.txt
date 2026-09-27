@@ -1,0 +1,10 @@
+# logo - BEYOND THE GATE
+HI=#fff8d0
+L1=#ffe98a
+L2=#ffd54a
+L3=#f5a93a
+L4=#e07a2a
+L5=#c45a1e
+L6=#8e3a14
+O=#2a1206
+S=#0c0608
