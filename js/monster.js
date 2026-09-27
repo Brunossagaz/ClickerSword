@@ -299,6 +299,7 @@ const MonsterModule = {
     const doubleSubKill = this.current.doubleSubKill;
     const groupSize = this.current.groupSize || 1;
     const slotPos = this.current.slotIdx + 1; // posição no ciclo (1-based), ver UI.renderMonsterInfo
+    const typeKey = this.current.type.key;
     const drops = this.rollDrops();
 
     if(wasDouble && doubleSubKill > 0){
@@ -340,6 +341,8 @@ const MonsterModule = {
 
     d.killCount += 1;
     state.totalKillsAll += 1; // continua vitalício e global, alimenta a Ascensão
+    state.monsterKills[typeKey] = (state.monsterKills[typeKey] || 0) + 1; // Bestiário (vitalício)
+    AchievementsModule.checkAll();
 
     if(wasBoss){
       state.totalCyclesCompleted += 1; // vitalício, ver OnboardingModule/QuestModule

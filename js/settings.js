@@ -80,6 +80,7 @@ const SettingsModule = {
         }
         UI.renderPlayerName();
         UI.renderAll();
+        AchievementsModule.checkAll();
         resolve();
       };
       reader.onerror = ()=> reject('Falha ao ler o arquivo.');

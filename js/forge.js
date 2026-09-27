@@ -18,6 +18,7 @@ const ForgeModule = {
     state.gold -= (def.recipe.coinCost||0);
     for(const m of def.recipe.materials) state.inventory[m.itemKey] -= m.qty;
     state.weapons[key] = 1;
+    AchievementsModule.checkAll();
     SaveModule.save();
     UI.renderAll();
     UI.showToast('ARMA FORJADA', `${def.name} está pronta! Equipe-a no Inventário.`);

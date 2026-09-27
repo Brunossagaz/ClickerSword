@@ -31,7 +31,8 @@ const GuildModule = {
     return Math.round(CONFIG.guildItemsPerHourPerPower * this.troopPower() * def.hours * def.rateMult);
   },
   canStart(cycleKey){
-    return OnboardingModule.isBuildingUnlocked('guilda')
+    return CONFIG.guildExpeditionsEnabled
+      && OnboardingModule.isBuildingUnlocked('guilda')
       && !state.guild.active
       && this.troopPower() > 0
       && !!this.expeditionDef(cycleKey);

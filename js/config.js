@@ -43,7 +43,12 @@ const CONFIG = {
   // rendidos por ponto de "poder de tropa" (soma de dps*quantidade das
   // TROOP_DEFS já compradas). Valor pequeno de propósito — é o 1º número a
   // ajustar se o ritmo de itens ficar rápido/lento demais.
-  guildItemsPerHourPerPower: 0.05
+  guildItemsPerHourPerPower: 0.05,
+  // Expedições da Guilda escondidas por enquanto (sistema em pausa): o painel
+  // some do modal da Guilda e não dá pra começar expedição nova. Uma que já
+  // estava em andamento num save antigo ainda termina e entrega os itens
+  // (ver GuildModule.resolveIfDone). Volte pra true pra reativar.
+  guildExpeditionsEnabled: false
 };
 
 // Todo monstro é um spritesheet PNG (3 frames de 128x128: idle, piscando,
@@ -57,6 +62,11 @@ const CONFIG = {
 // Slimes seguem um padrão fixo agora: cada tier tem exatamente 1.5x o hpMult
 // do anterior (1.0 → 1.5 → 2.25 → 3.375 → 5.0625 → 7.59375, arredondado a 2
 // casas).
+//
+// `desc`: texto do Bestiário (ver BestiaryModule). `boss: true` marca as
+// criaturas que são CHEFES (só aparecem fechando ciclo) — ganham a etiqueta
+// "Chefe" no Bestiário e ficam de fora das conquistas de 100 abates por
+// espécie (ver ACHIEVEMENT_DEFS no fim deste arquivo).
 //
 // `drops`: lista de possíveis recompensas de item por morte desse tipo de
 // monstro (ver MonsterModule.rollDrops/onDeath) — TODO monstro do jogo dropa
@@ -73,21 +83,27 @@ const CONFIG = {
 const MONSTER_TYPES = [
   // --- Mapa 1: Pântano dos Slimes (ciclos 1-5) ---
   {
-    key: 'slime', name: 'SLIME', image: 'assets/sprites/slime.png', frameW: 128, frameH: 128, spriteScale: 0.6, blinkCapable: true,
+    key: 'slime', name: 'SLIME',
+    desc: 'Uma bolha verde e grudenta que devora tudo o que encontra no pântano. Sozinho é inofensivo — o problema é que nunca está sozinho.',
+    image: 'assets/sprites/slime.png', frameW: 128, frameH: 128, spriteScale: 0.6, blinkCapable: true,
     drops: [
       { item: 'slimeGel', qtyMin: 1, qtyMax: 1 },
       { item: 'slimeCompound', chance: 0.75, qtyMin: 1, qtyMax: 3 },
     ]
   },
   {
-    key: 'slimeBlue', name: 'SLIME AZUL', image: 'assets/sprites/slime_blue.png', frameW: 128, frameH: 128, spriteScale: 0.46, hpMult: 1.5, blinkCapable: true,
+    key: 'slimeBlue', name: 'SLIME AZUL',
+    desc: 'Mais denso que o primo verde, guarda água gelada do fundo do pântano. Dizem que absorve os golpes antes de senti-los.',
+    image: 'assets/sprites/slime_blue.png', frameW: 128, frameH: 128, spriteScale: 0.46, hpMult: 1.5, blinkCapable: true,
     drops: [
       { item: 'slimeGel', qtyMin: 3, qtyMax: 3 },
       { item: 'slimeCompound', chance: 0.75, qtyMin: 1, qtyMax: 3 }
     ]
   },
   {
-    key: 'slimeGreenWarrior', name: 'SLIME VERDE GUERREIRO', image: 'assets/sprites/slime_green_warrior.png', frameW: 128, frameH: 128, spriteScale: 0.64, hpMult: 2.25, blinkCapable: true,
+    key: 'slimeGreenWarrior', name: 'SLIME VERDE GUERREIRO', boss: true,
+    desc: 'Um slime que engoliu a espada de um aventureiro e aprendeu a usá-la. Guarda os caminhos do pântano com orgulho.',
+    image: 'assets/sprites/slime_green_warrior.png', frameW: 128, frameH: 128, spriteScale: 0.64, hpMult: 2.25, blinkCapable: true,
     drops: [
       { item: 'slimeGel', qtyMin: 5, qtyMax: 8 },
       { item: 'slimeCompound', chance: 0.75, qtyMin: 1, qtyMax: 1 },
@@ -95,14 +111,18 @@ const MONSTER_TYPES = [
     ]
   },
   {
-    key: 'slimeRed', name: 'SLIME VERMELHO', image: 'assets/sprites/slime_red.png', frameW: 128, frameH: 128, spriteScale: 0.6, hpMult: 3.38, blinkCapable: true,
+    key: 'slimeRed', name: 'SLIME VERMELHO',
+    desc: 'Quente ao toque e de pavio curto. Sua geleia arde como brasa e derrete botas desavisadas.',
+    image: 'assets/sprites/slime_red.png', frameW: 128, frameH: 128, spriteScale: 0.6, hpMult: 3.38, blinkCapable: true,
     drops: [
       { item: 'slimeGel', qtyMin: 5, qtyMax: 5 },
       { item: 'slimeCompound', chance: 0.75, qtyMin: 1, qtyMax: 3 }
     ]
   },
   {
-    key: 'slimeBlueBarbarian', name: 'SLIME AZUL BÁRBARO', image: 'assets/sprites/slime_blue_barbarian.png', frameW: 128, frameH: 128, spriteScale: 0.68, hpMult: 5.06, blinkCapable: true,
+    key: 'slimeBlueBarbarian', name: 'SLIME AZUL BÁRBARO', boss: true,
+    desc: 'Enorme e furioso, carrega um machado roubado e não recua diante de nada. Os outros slimes o seguem sem questionar.',
+    image: 'assets/sprites/slime_blue_barbarian.png', frameW: 128, frameH: 128, spriteScale: 0.68, hpMult: 5.06, blinkCapable: true,
     drops: [
       { item: 'slimeGel', qtyMin: 10, qtyMax: 14 },
       { item: 'slimeCompound', chance: 0.75, qtyMin: 4, qtyMax: 6 },
@@ -110,7 +130,9 @@ const MONSTER_TYPES = [
     ]
   },
   {
-    key: 'slimeRedKing', name: 'SLIME REI VERMELHO', image: 'assets/sprites/slime_red_king.png', frameW: 128, frameH: 128, spriteScale: 0.75, hpMult: 7.59, blinkCapable: true,
+    key: 'slimeRedKing', name: 'SLIME REI VERMELHO', boss: true,
+    desc: 'O soberano do pântano. Sua coroa foi forjada com o ferro de cem armas engolidas, e seu machado ancestral ainda brilha.',
+    image: 'assets/sprites/slime_red_king.png', frameW: 128, frameH: 128, spriteScale: 0.75, hpMult: 7.59, blinkCapable: true,
     drops: [
       { item: 'slimeGel', qtyMin: 8, qtyMax: 8 },
       { item: 'slimeCompound', chance: 0.75, qtyMin: 10, qtyMax: 12 },
@@ -119,66 +141,94 @@ const MONSTER_TYPES = [
   },
   // --- Mapa 2: Reino Goblin (ciclos 4-6) ---
   {
-    key: 'goblinGreen', name: 'GOBLIN VERDE', image: 'assets/sprites/goblin_green.png', frameW: 128, frameH: 128, blinkCapable: true,
+    key: 'goblinGreen', name: 'GOBLIN VERDE',
+    desc: 'Pequeno, rápido e covarde. Ataca em bando e foge ao primeiro sinal de perigo — levando o que conseguir carregar.',
+    image: 'assets/sprites/goblin_green.png', frameW: 128, frameH: 128, blinkCapable: true,
     drops: [{ item: 'goblinEar', qtyMin: 1, qtyMax: 1 }]
   },
   {
-    key: 'goblinRed', name: 'GOBLIN VERMELHO', image: 'assets/sprites/goblin_red.png', frameW: 128, frameH: 128, hpMult: 1.6, blinkCapable: true,
+    key: 'goblinRed', name: 'GOBLIN VERMELHO',
+    desc: 'Mais agressivo que os verdes, afia os próprios dentes pra parecer mais assustador. Funciona.',
+    image: 'assets/sprites/goblin_red.png', frameW: 128, frameH: 128, hpMult: 1.6, blinkCapable: true,
     drops: [{ item: 'goblinFang', qtyMin: 2, qtyMax: 2 }]
   },
   {
-    key: 'goblinMage', name: 'GOBLIN MAGO', image: 'assets/sprites/goblin_mage.png', frameW: 128, frameH: 128, hpMult: 2.2, blinkCapable: true,
+    key: 'goblinMage', name: 'GOBLIN MAGO',
+    desc: 'Aprendeu três feitiços e esqueceu dois. O que sobrou costuma explodir — às vezes nele mesmo.',
+    image: 'assets/sprites/goblin_mage.png', frameW: 128, frameH: 128, hpMult: 2.2, blinkCapable: true,
     drops: [{ item: 'goblinShard', qtyMin: 2, qtyMax: 2 }]
   },
   {
-    key: 'goblinWarrior', name: 'GOBLIN GUERREIRO', image: 'assets/sprites/goblin_warrior.png', frameW: 128, frameH: 128, hpMult: 2.8, blinkCapable: true,
+    key: 'goblinWarrior', name: 'GOBLIN GUERREIRO',
+    desc: 'Veste escamas costuradas em couro velho e bate primeiro, pergunta nunca. A linha de frente do Reino Goblin.',
+    image: 'assets/sprites/goblin_warrior.png', frameW: 128, frameH: 128, hpMult: 2.8, blinkCapable: true,
     drops: [{ item: 'goblinScale', qtyMin: 3, qtyMax: 3 }]
   },
   {
-    key: 'goblinPriest', name: 'GOBLIN SACERDOTE', image: 'assets/sprites/goblin_priest.png', frameW: 128, frameH: 128, hpMult: 3.6, blinkCapable: true,
+    key: 'goblinPriest', name: 'GOBLIN SACERDOTE',
+    desc: 'Entoa cânticos a deuses esquecidos e carrega amuletos que zumbem à noite. Os outros goblins o temem.',
+    image: 'assets/sprites/goblin_priest.png', frameW: 128, frameH: 128, hpMult: 3.6, blinkCapable: true,
     drops: [{ item: 'goblinAmulet', qtyMin: 3, qtyMax: 3 }]
   },
   {
-    key: 'goblinMaster', name: 'GOBLIN MESTRE', image: 'assets/sprites/goblin_master.png', frameW: 128, frameH: 128, hpMult: 4.8, blinkCapable: true,
+    key: 'goblinMaster', name: 'GOBLIN MESTRE',
+    desc: 'Veterano de mil saques, comanda os bandos com um selo de cera que ninguém ousa desobedecer.',
+    image: 'assets/sprites/goblin_master.png', frameW: 128, frameH: 128, hpMult: 4.8, blinkCapable: true,
     drops: [{ item: 'goblinSeal', qtyMin: 4, qtyMax: 4 }]
   },
   {
-    key: 'goblinGreater', name: 'GOBLIN MAIOR', image: 'assets/sprites/goblin_greater.png', frameW: 128, frameH: 128, hpMult: 6.5, blinkCapable: true,
+    key: 'goblinGreater', name: 'GOBLIN MAIOR', boss: true,
+    desc: 'Maior, mais velho e mais cruel que qualquer outro goblin. Usa uma coroa torta e se diz rei de tudo que vê.',
+    image: 'assets/sprites/goblin_greater.png', frameW: 128, frameH: 128, hpMult: 6.5, blinkCapable: true,
     drops: [{ item: 'goblinCrown', qtyMin: 5, qtyMax: 5 }]
   },
   // --- Mapa 3: Terras Selvagens (ciclo 7 em diante) ---
   {
-    key: 'orc', name: 'ORC', image: 'assets/sprites/orc.png', frameW: 128, frameH: 128, blinkCapable: true,
+    key: 'orc', name: 'ORC',
+    desc: 'Montanha de músculos das Terras Selvagens. Não é esperto, mas raramente precisa ser.',
+    image: 'assets/sprites/orc.png', frameW: 128, frameH: 128, blinkCapable: true,
     drops: [{ item: 'orcTusk', qtyMin: 2, qtyMax: 2 }]
   },
   {
-    key: 'troll', name: 'TROLL', image: 'assets/sprites/troll.png', frameW: 128, frameH: 128, blinkCapable: true,
+    key: 'troll', name: 'TROLL',
+    desc: 'Couro grosso como casca de árvore e um apetite sem fim. Feridas pequenas fecham antes de você piscar.',
+    image: 'assets/sprites/troll.png', frameW: 128, frameH: 128, blinkCapable: true,
     drops: [{ item: 'trollHide', qtyMin: 2, qtyMax: 2 }]
   },
   {
-    key: 'dragon', name: 'DRAGÃO', image: 'assets/sprites/dragon.png', frameW: 128, frameH: 128, blinkCapable: true,
+    key: 'dragon', name: 'DRAGÃO',
+    desc: 'Senhor do andar em chamas. Cada escama vale uma fortuna — se você sobreviver pra arrancá-la.',
+    image: 'assets/sprites/dragon.png', frameW: 128, frameH: 128, blinkCapable: true,
     drops: [{ item: 'dragonScale', qtyMin: 3, qtyMax: 3 }]
   },
   {
-    key: 'demon', name: 'DEMÔNIO', image: 'assets/sprites/demon.png', frameW: 128, frameH: 128, blinkCapable: true,
+    key: 'demon', name: 'DEMÔNIO',
+    desc: 'Veio de além do portão. Seus chifres crepitam com uma energia que faz o ar tremer.',
+    image: 'assets/sprites/demon.png', frameW: 128, frameH: 128, blinkCapable: true,
     drops: [{ item: 'demonHorn', qtyMin: 3, qtyMax: 3 }]
   },
   // --- Mapa 4: Andar do Dragão --- 1 espécie nova (Lagarto de Fogo) +
   // 'dragon' (já existia, agora exclusivo deste andar em vez de dividir
   // com Selvagens — ver MAPS.dragons/ITEM_DEFS.dragonScale).
   {
-    key: 'fireLizard', name: 'LAGARTO DE FOGO', image: 'assets/sprites/fire_lizard.png', frameW: 128, frameH: 128, blinkCapable: true,
+    key: 'fireLizard', name: 'LAGARTO DE FOGO',
+    desc: 'Lagarto das cavernas vulcânicas que cospe faíscas quando se irrita. Dizem que são filhotes de dragão — ninguém confirmou.',
+    image: 'assets/sprites/fire_lizard.png', frameW: 128, frameH: 128, blinkCapable: true,
     drops: [{ item: 'fireLizardScale', qtyMin: 2, qtyMax: 2 }]
   },
   // --- Mapa 5: Andar do Demônio --- 2 espécies novas (Sombra, Mini Servo)
   // + 'demon' (já existia, agora exclusivo deste andar — ver MAPS.demons/
   // ITEM_DEFS.demonHorn).
   {
-    key: 'shadow', name: 'SOMBRA', image: 'assets/sprites/shadow.png', frameW: 128, frameH: 128, blinkCapable: true,
+    key: 'shadow', name: 'SOMBRA',
+    desc: 'Uma silhueta sem dono que se move contra a luz. Some quando você pisca e reaparece nas suas costas.',
+    image: 'assets/sprites/shadow.png', frameW: 128, frameH: 128, blinkCapable: true,
     drops: [{ item: 'shadowEssence', qtyMin: 3, qtyMax: 3 }]
   },
   {
-    key: 'miniServo', name: 'MINI SERVO', image: 'assets/sprites/mini_servo.png', frameW: 128, frameH: 128, blinkCapable: true,
+    key: 'miniServo', name: 'MINI SERVO',
+    desc: 'Pequeno servo dos demônios, cheio de garras e maldade. O que falta em tamanho sobra em teimosia.',
+    image: 'assets/sprites/mini_servo.png', frameW: 128, frameH: 128, blinkCapable: true,
     drops: [{ item: 'miniServoClaw', qtyMin: 2, qtyMax: 2 }]
   },
 ];
@@ -598,6 +648,12 @@ const CITY_MAP = {
   // moedas (ver CityMapModule.openFountain). (x, y) = centro da bacia,
   // rx/ry = raio da área clicável.
   fountain: { x: 862, y: 712, rx: 128, ry: 62, signY: 560, minCoins: 1, maxCoins: 999 },
+  // Pontos secretos da arte (conquistas, ver CityMapModule.onClick): a
+  // cachoeira atrás do Ferreiro (clicar 3x seguidas, com no máximo `gapMs`
+  // entre um clique e outro) e a lua (só vale de Noite). Mesmo formato de
+  // elipse da fonte.
+  waterfall: { x: 1433, y: 298, rx: 20, ry: 62, gapMs: 1500 },
+  moon: { x: 584, y: 34, rx: 26, ry: 26 },
   // Ciclo de dia e noite (ver CityMapModule.applyDaylight): duração de um
   // dia inteiro e em que fração dele cada fase termina (0 = meia-noite). A
   // arte original é noturna — o dia é a mesma imagem clareada e colorida.
@@ -605,12 +661,6 @@ const CITY_MAP = {
   dayPhases: { dawnStart: 0.20, dayStart: 0.30, duskStart: 0.70, nightStart: 0.80 },
   startTime: 0.12, // hora em que a cidade abre (fração do dia) — noite, perto do amanhecer
 };
-
-// Conquistas (ver AchievementsModule, js/achievements.js). `secret: true`
-// esconde nome/descrição ("???") até desbloquear.
-const ACHIEVEMENT_DEFS = [
-  { key: 'meioBesta', name: 'Meio Besta', desc: 'Jogou exatamente 333 moedas na fonte de uma vez só.', secret: true },
-];
 
 // Armas — a 1ª é escolhida de graça na conversa com o Clérigo (ver
 // OnboardingModule); as outras duas ficam à venda no Ferreiro por
@@ -1036,4 +1086,32 @@ const PRESTIGE_UPGRADE_DEFS = [
   { key: 'pDps', name: 'Pacto das Tropas', desc: '+15% DPS das tropas (permanente)', baseCost: 1, costGrowth: 1.8, apply: s => s.pDpsMult += 0.15 },
   { key: 'pOreRate', name: 'Toque de Midas', desc: '+15% velocidade de mineração de minério (permanente)', baseCost: 1, costGrowth: 1.8, apply: s => s.pOreRateMult += 0.15 },
   { key: 'pCrit', name: 'Fúria Ancestral', desc: '+5% chance de crítico (permanente)', baseCost: 2, costGrowth: 2.0, apply: s => s.pCritChance += 0.05 },
+];
+
+// Conquistas (ver AchievementsModule, js/achievements.js) — no fim do
+// arquivo porque as geradas dependem de TROOP_DEFS/MONSTER_TYPES/CITY_MAP.
+// `secret: true` esconde nome/descrição ("???") até desbloquear.
+// `type` diz como a conquista é conferida (ver AchievementsModule.isMet):
+//   totalKills    — state.totalKillsAll >= count
+//   monsterKills  — state.monsterKills[monster] >= count (nome/descrição
+//                   montados na hora a partir do monstro, ver labelOf)
+//   troop         — já recrutou ao menos 1 da tropa `troop`
+//   basicWeapons  — possui todas as WEAPON_DEFS (as armas simples)
+//   forge         — possui alguma FORGED_WEAPON_DEFS
+//   npcsMet       — conversou com todos os moradores de CITY_MAP.npcs
+// Sem `type` = conquista de evento, desbloqueada direto por
+// AchievementsModule.unlock no lugar onde acontece (fonte, cachoeira, lua).
+const ACHIEVEMENT_KILLS_PER_SPECIES = 100;
+const ACHIEVEMENT_DEFS = [
+  { key: 'npcsMet', type: 'npcsMet', name: 'Rosto Conhecido', desc: 'Conversou com todos os moradores da cidade ao menos uma vez.' },
+  { key: 'kills1000', type: 'totalKills', count: 1000, name: 'Mil Abates', desc: 'Derrotou 1000 monstros.' },
+  { key: 'basicWeapons', type: 'basicWeapons', name: 'Arsenal Completo', desc: 'Possui todas as armas simples.' },
+  { key: 'firstForge', type: 'forge', name: 'Obra-Prima', desc: 'Forjou uma arma no Ferreiro.' },
+  // 1 por tipo de tropa da Guilda, ao recrutar a 1ª
+  ...TROOP_DEFS.map(t => ({ key: 'troop_' + t.key, type: 'troop', troop: t.key })),
+  // 1 por espécie de monstro (menos chefes), a cada ACHIEVEMENT_KILLS_PER_SPECIES abates
+  ...MONSTER_TYPES.filter(m => !m.boss).map(m => ({ key: 'kills_' + m.key, type: 'monsterKills', monster: m.key, count: ACHIEVEMENT_KILLS_PER_SPECIES })),
+  { key: 'waterfall', name: 'Respingos', desc: 'Clicou três vezes seguidas na cachoeira.', secret: true },
+  { key: 'moon', name: 'Lunático', desc: 'Tocou a lua numa noite da cidade.', secret: true },
+  { key: 'meioBesta', name: 'Meio Besta', desc: 'Jogou exatamente 333 moedas na fonte de uma vez só.', secret: true },
 ];

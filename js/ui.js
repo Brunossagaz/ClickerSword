@@ -13,6 +13,7 @@ const UI = {
     this.canvas.parentElement.addEventListener('click', (e)=>PlayerModule.handleClick(e));
     CityMapModule.init();
     HudModule.init();
+    BestiaryModule.init();
     this.initModalBodyLock();
 
     document.getElementById('ascendBtn').addEventListener('click', ()=>PrestigeModule.ascend());
@@ -1015,6 +1016,7 @@ const UI = {
           row.querySelector('button').addEventListener('click', ()=>{
             state.gold -= def.buyCost;
             state.weapons[def.key] = 1;
+            AchievementsModule.checkAll(); // Arsenal Completo
             UI.renderAll();
           });
         }
@@ -1156,6 +1158,9 @@ const UI = {
   renderGuildExpedition(){
     const el = document.getElementById('guildExpeditionPanel');
     if(!el) return;
+    // sistema em pausa (ver CONFIG.guildExpeditionsEnabled): seção escondida
+    document.getElementById('guildExpeditionSection').style.display = CONFIG.guildExpeditionsEnabled ? '' : 'none';
+    if(!CONFIG.guildExpeditionsEnabled) return;
     if(GuildModule.troopPower() <= 0 && !state.guild.active){
       el.innerHTML = `<div class="footer-note" style="margin:0;">Compre ao menos 1 tropa abaixo pra habilitar expedições.</div>`;
       return;

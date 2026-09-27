@@ -555,7 +555,8 @@ body{ font-size:22px; }
 }
 body:not(.game-started) .hud-corner{ display:none; }
 body.screen-mainmenu .hud-corner #settingsGearBtn{ display:none; } /* menu já tem Configurações */
-body:not(.screen-city):not(.screen-dungeon) #inventoryToggleBtn{ display:none; }
+body:not(.screen-city):not(.screen-dungeon) #inventoryToggleBtn,
+body:not(.screen-city):not(.screen-dungeon) #bestiaryBtn{ display:none; }
 .hud-corner .gear-btn{ position:static; }
 .hud-btn{
   width:52px; height:52px; padding:0;
@@ -571,6 +572,7 @@ body:not(.screen-city):not(.screen-dungeon) #inventoryToggleBtn{ display:none; }
 .hud-btn.active{ border-image-source:url('../assets/ui/btn-active.png'); }
 .hud-icon{ display:block; width:32px; height:32px; background:center / 100% 100% no-repeat; image-rendering:pixelated; }
 .hud-icon-backpack{ background-image:url('../assets/ui/backpack.png'); }
+.hud-icon-bestiary{ background-image:url('../assets/ui/bestiary.png'); }
 .hud-icon-fullscreen{ background-image:url('../assets/ui/fullscreen-on.png'); }
 #fullscreenBtn.on .hud-icon-fullscreen{ background-image:url('../assets/ui/fullscreen-off.png'); }
 .hud-corner .gear-btn .icon-gear{ width:32px; height:32px; }
@@ -862,3 +864,38 @@ body.screen-dungeon .footer-note{ color:var(--parchment); text-shadow:2px 2px 0 
 /* arena da dungeon com a moldura ornamentada (sem fill: mantém o fundo radial) */
 .arena-frame{ border:24px solid transparent; border-image:var(--ui-frame-lg) 12 / 24px round; background-clip:padding-box; }
 @media (max-width:600px){ .arena-frame{ border-width:12px; border-image-width:12px; } }
+
+/* ---- Bestiário (BestiaryModule, js/bestiary.js) ---- */
+.bestiary-list{ display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:6px; }
+.bestiary-card{
+  display:flex; gap:10px; align-items:flex-start;
+  padding:4px 6px;
+  border:8px solid transparent;
+  border-image:var(--ui-slot) 4 / 8px stretch;
+  background-color:#15111d;
+  background-clip:padding-box;
+  image-rendering:pixelated;
+}
+/* 1º frame do spritesheet de 3 frames (128x128 cada) */
+.bestiary-art{
+  flex:none; width:80px; height:80px;
+  background:0 0 / 300% 100% no-repeat;
+  image-rendering:pixelated;
+}
+.bestiary-card.unknown .bestiary-art{ filter:brightness(0) opacity(0.55); }
+.bestiary-info{ flex:1; min-width:0; }
+.bestiary-name{ font-family:'Press Start 2P', monospace; font-size:11px; color:var(--gold-glow); line-height:1.5; }
+.bestiary-card.unknown .bestiary-name{ color:var(--parchment-dim); }
+.bestiary-tag{
+  display:inline-block; margin-left:6px; padding:1px 4px;
+  font-size:8px; vertical-align:middle;
+  color:#fff; background:var(--blood);
+}
+.bestiary-where{ font-size:16px; color:var(--arcane); line-height:1.1; margin-top:2px; }
+.bestiary-desc{ font-size:18px; line-height:1.1; margin-top:4px; }
+.bestiary-card.unknown .bestiary-desc{ color:var(--parchment-dim); font-style:italic; }
+.bestiary-kills{ font-size:18px; color:var(--ember); margin-top:4px; }
+@media (max-width: 520px){
+  .bestiary-list{ grid-template-columns:1fr; }
+  .bestiary-art{ width:56px; height:56px; }
+}

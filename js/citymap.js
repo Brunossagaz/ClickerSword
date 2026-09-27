@@ -5,7 +5,8 @@
    progresso continuam em ui.js/onboarding.js), os moradores de
    CITY_MAP.npcs andando pela praça num <canvas>, a fonte clicável (depósito
    de moedas) e um ciclo de dia e noite. Clicar num morador mostra um balão
-   com uma fala dele. Só anima enquanto a Cidade está visível, e congela
+   com uma fala dele (e conta pra conquista de conhecer todos). A cachoeira
+   e a lua da arte têm conquistas secretas (ver onClick). Só anima enquanto a Cidade está visível, e congela
    junto com o resto do jogo durante conversas (ver PauseModule em main.js).
    Todo texto vindo de dados entra por textContent (nunca innerHTML).
 --------------------------------------------------------------------- */
@@ -21,7 +22,9 @@ const CityMapModule = {
   rafId: null,
   lastTs: 0,
   talking: null,         // { npc, until }
-  ripples: [],           // ondinhas na fonte depois de um depósito
+  ripples: [],           // ondinhas na fonte depois de um depósito (e respingos na cachoeira)
+  waterfallHits: 0,      // cliques seguidos na cachoeira (conquista secreta)
+  waterfallLastAt: 0,
   dayTime: 0,            // fração do dia (0 = meia-noite), avança só com o jogo rodando
   daylight: 0,           // 0 = noite, 1 = dia pleno
   lastDaylightKey: '',
@@ -257,7 +260,7 @@ const CityMapModule = {
       ctx.strokeStyle = `rgba(190,230,255,${(0.8 * (1 - k)).toFixed(3)})`;
       ctx.lineWidth = 2 * (window.devicePixelRatio || 1);
       ctx.beginPath(); ctx.ellipse(r.x * s, r.y * s, (8 + 60 * k) * s, (3 + 22 * k) * s, 0, 0, Math.PI * 2); ctx.stroke();
-      if(k < 0.4){
+      if(k < 0.4 && r.coin !== false){
         ctx.fillStyle = `rgba(255,213,74,${(1 - k / 0.4).toFixed(3)})`;
         ctx.fillRect(r.x * s - 3 * s, (r.y - 18 - 30 * k) * s, 6 * s, 6 * s);
       }
@@ -309,18 +312,36 @@ const CityMapModule = {
     const hits = this.npcs.filter(n => n.alpha >= 0.5 && Math.abs(p.x - n.x) <= hw && p.y <= n.y + 6 && p.y >= n.y - hh);
     return hits.sort((a, b) => b.y - a.y)[0] || null; // o da frente ganha
   },
-  inFountain(p){
-    const f = CITY_MAP.fountain;
-    const dx = (p.x - f.x) / f.rx, dy = (p.y - f.y) / f.ry;
+  // ponto dentro de uma elipse {x, y, rx, ry} de CITY_MAP (fonte, cachoeira, lua)
+  inEllipse(p, e){
+    const dx = (p.x - e.x) / e.rx, dy = (p.y - e.y) / e.ry;
     return dx * dx + dy * dy <= 1;
+  },
+  inFountain(p){
+    return this.inEllipse(p, CITY_MAP.fountain);
   },
   onClick(e){
     const p = this.pointOf(e);
     const n = this.npcAt(p);
     if(n) return this.say(n);
-    if(this.inFountain(p)) this.openFountain();
+    if(this.inFountain(p)) return this.openFountain();
+    if(this.inEllipse(p, CITY_MAP.waterfall)) return this.splashWaterfall(p);
+    // a lua só está no céu de noite (de dia a pintura do dia cobre ela)
+    if(this.inEllipse(p, CITY_MAP.moon) && this.phaseName(this.dayTime) === 'Noite') AchievementsModule.unlock('moon');
+  },
+  // 3 cliques seguidos (no máximo CITY_MAP.waterfall.gapMs entre eles)
+  splashWaterfall(p){
+    const w = CITY_MAP.waterfall, now = performance.now();
+    this.waterfallHits = (now - this.waterfallLastAt <= w.gapMs) ? this.waterfallHits + 1 : 1;
+    this.waterfallLastAt = now;
+    this.ripples.push({ x: p.x, y: p.y, age: 0, life: 700, coin: false });
+    if(this.waterfallHits >= 3) AchievementsModule.unlock('waterfall');
   },
   say(n){
+    if(!state.npcsMet[n.def.key]){
+      state.npcsMet[n.def.key] = true;
+      AchievementsModule.checkAll(); // Rosto Conhecido (todos os moradores)
+    }
     const lines = n.def.lines || [];
     const name = document.createElement('b');
     name.textContent = n.def.name;

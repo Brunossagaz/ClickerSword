@@ -58,6 +58,12 @@ function freshState(){
     // vitalícias, sobrevivem à Ascensão (ver PrestigeModule.ascend)
     fountainCoins:0,
     achievements: Object.fromEntries(ACHIEVEMENT_DEFS.map(d => [d.key, false])),
+    // abates por espécie (chave de MONSTER_TYPES), vitalício — mostrado no
+    // Bestiário e usado nas conquistas de abate por espécie
+    monsterKills: Object.fromEntries(MONSTER_TYPES.map(d => [d.key, 0])),
+    // moradores do mapa com quem o jogador já conversou (chave de
+    // CITY_MAP.npcs, ver CityMapModule.say) — conquista "Rosto Conhecido"
+    npcsMet: Object.fromEntries(CITY_MAP.npcs.map(n => [n.key, false])),
     isBoss:false,
     isGolden:false,
     goldenExpiresAt:0,

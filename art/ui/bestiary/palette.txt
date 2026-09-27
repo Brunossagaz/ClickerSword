@@ -1,0 +1,9 @@
+# bestiary - icone do HUD (livro do Bestiario)
+O=#160e1a
+R=#8a2e2e
+Rl=#b04a3a
+Rd=#5e1c1c
+P=#e8dcb8
+Pd=#b8a880
+G=#ffd54a
+Gd=#b8862a

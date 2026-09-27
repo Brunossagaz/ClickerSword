@@ -1,0 +1,16 @@
+.. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..
+.. .. O. O. O. O. O. O. O. O. O. O. O. .. .. ..
+.. O. Rd Rl Rl Rl Rl Rl Rl Rl Rl Rl R. O. .. ..
+.. O. Rd Rl R. R. R. R. R. R. R. R. R. O. .. ..
+.. O. Rd Rl R. R. Gd G. G. G. Gd R. R. O. .. ..
+.. O. Rd Rl R. G. G. G. G. G. G. G. R. O. .. ..
+.. O. Rd Rl R. G. O. O. G. O. O. G. R. O. .. ..
+.. O. Rd Rl R. G. O. O. G. O. O. G. R. O. .. ..
+.. O. Rd Rl R. Gd G. G. O. G. G. Gd R. O. .. ..
+.. O. Rd Rl R. R. G. G. G. G. G. R. R. O. .. ..
+.. O. Rd Rl R. R. Gd O. Gd O. Gd R. R. O. .. ..
+.. O. Rd Rl R. R. R. R. R. R. R. R. R. O. .. ..
+.. O. Rd O. O. O. O. O. O. O. O. O. O. O. .. ..
+.. O. Rd P. P. P. P. P. P. P. P. P. Pd O. .. ..
+.. .. O. O. O. O. O. O. O. O. O. O. O. O. .. ..
+.. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..

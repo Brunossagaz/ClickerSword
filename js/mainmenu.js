@@ -120,6 +120,7 @@ const MainMenuModule = {
       UI.showToast('BEM-VINDO DE VOLTA', `Suas tropas trabalharam por ${mins} min enquanto você estava fora e renderam: ${summary}.`);
     }
     GuildModule.resolveIfDone(); // expedição pode ter terminado enquanto o jogador estava fora
+    AchievementsModule.checkAll(); // save de antes de alguma conquista existir já pode cumpri-la
     UI.renderPlayerName();
     UI.renderAll();
   },

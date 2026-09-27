@@ -44,7 +44,10 @@ const PrestigeModule = {
       firstCycleEverCompleted: state.firstCycleEverCompleted,
       totalCyclesCompleted: state.totalCyclesCompleted,
       fountainCoins: state.fountainCoins,
-      achievements: state.achievements
+      achievements: state.achievements,
+      // Bestiário e moradores já conhecidos também são vitalícios
+      monsterKills: state.monsterKills,
+      npcsMet: state.npcsMet
     };
 
     state = freshState();

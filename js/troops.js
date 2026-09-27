@@ -13,6 +13,7 @@ const TroopsModule = {
     if(state.gold >= cost){
       state.gold -= cost;
       state.troops[key] += 1;
+      AchievementsModule.checkAll(); // 1º de cada tipo de tropa
       UI.renderAll();
     }
   },

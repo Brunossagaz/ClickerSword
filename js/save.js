@@ -133,6 +133,8 @@ const SaveModule = {
     if(isObj(raw.quests)) out.quests = boolMap(raw.quests, Object.keys(fresh.quests));
     // só as conquistas que existem em ACHIEVEMENT_DEFS, só true/false
     if(isObj(raw.achievements)) out.achievements = boolMap(raw.achievements, Object.keys(fresh.achievements));
+    if(isObj(raw.monsterKills)) out.monsterKills = numMap(raw.monsterKills, Object.keys(fresh.monsterKills));
+    if(isObj(raw.npcsMet)) out.npcsMet = boolMap(raw.npcsMet, Object.keys(fresh.npcsMet));
 
     if(isObj(raw.guild)){
       const g = raw.guild;
@@ -202,6 +204,8 @@ const SaveModule = {
       : (Object.keys(state.weapons).find(k => state.weapons[k] > 0) || null);
     state.quests = Object.assign(Object.fromEntries(QUEST_DEFS.map(d => [d.key, false])), loaded.quests||{});
     state.achievements = Object.assign(Object.fromEntries(ACHIEVEMENT_DEFS.map(d => [d.key, false])), loaded.achievements||{});
+    state.monsterKills = Object.assign(Object.fromEntries(MONSTER_TYPES.map(d => [d.key, 0])), loaded.monsterKills||{});
+    state.npcsMet = Object.assign(Object.fromEntries(CITY_MAP.npcs.map(n => [n.key, false])), loaded.npcsMet||{});
     state.prestige = Object.assign({pClick:0,pDps:0,pOreRate:0,pCrit:0}, loaded.prestige||{});
     state.guild = Object.assign({active:false,cycleKey:null,startedAt:0,durationMs:0}, loaded.guild||{});
     state.dungeonRun = Object.assign({elapsedMs:0}, loaded.dungeonRun||{});
