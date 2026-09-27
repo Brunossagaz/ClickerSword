@@ -321,6 +321,10 @@ const SaveModule = {
     if(loaded.totalCyclesCompleted === undefined){
       state.totalCyclesCompleted = Object.values(state.dungeons).reduce((sum,d)=>sum+(d.maxCycleCompleted||0), 0);
     }
+
+    // atributos de upgrade/prestígio: sempre recalculados dos níveis
+    // comprados (ver UpgradesModule.recalcStats) — nunca do valor salvo
+    UpgradesModule.recalcStats();
   },
 
   // Apaga só o slot ativo e volta pro menu principal (não há mais "save

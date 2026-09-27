@@ -63,12 +63,6 @@ const MonsterModule = {
     const lastIdx = schedule.length-1;
     return { slotIdx:lastIdx, subKill:0, slot:schedule[lastIdx], isLastSlot:true };
   },
-  hpFor(killIndexInRun, isBoss, hpMult){
-    let hp = CONFIG.baseHp * Math.pow(CONFIG.hpGrowth, killIndexInRun);
-    if(isBoss) hp *= CONFIG.bossHpMult;
-    hp *= hpMult || 1;
-    return Math.ceil(hp);
-  },
   // Só existe depois de desbloquear o ramo na Academia (Sorte Dourada nível
   // 1+, ver UPGRADE_DEFS battleGoldenChance) — antes disso a chance base de
   // CONFIG.goldenChancePerTick não vale.
@@ -209,37 +203,9 @@ const MonsterModule = {
     const type = MONSTER_TYPES.find(t=>t.key===monsterKey);
     this.current = { type, isBoss, isDouble, doubleSubKill: subKill, groupSize, slotIdx, totalSlots: schedule.length };
 
-    // killIdx (killCount da Dungeon ativa) reseta a cada ascensão, então a
-    // dificuldade dos monstros também reseta — sem isso o HP nunca voltaria
-    // ao nível 1.
-    //
-    // Ciclo 1 usa killIdx puro (sem ajuste). A partir do Ciclo 2, o 1º
-    // monstro do ciclo precisa ter a mesma vida do ÚLTIMO monstro ANTES do
-    // chefe do ciclo anterior (não continua subindo em cima do próprio
-    // chefe, que já tem CONFIG.bossHpMult à parte) — isso evita a sensação
-    // de "reset" de dificuldade ao virar de ciclo. Cada ciclo cheio soma
-    // `kpc` ao índice corrido, mas o monstro pré-chefe fica só `kpc-2`
-    // posições à frente do início do ciclo anterior — descontar 2 por ciclo
-    // já concluído reproduz exatamente esse alvo, pra qualquer `kpc`
-    // (cancela algebricamente, ver histórico do commit).
-    //
-    // Só esse "reaproveitamento" do índice deixaria o Ciclo 2+ um pouco MAIS
-    // FRACO do que a curva contínua de antes desta mudança (o índice para
-    // de crescer no fim do ciclo anterior em vez de continuar subindo em
-    // cima do chefe) — por pedido, todo Ciclo 2 em diante recebe +100% de
-    // vida (fator fixo, não acumula ciclo após ciclo) em cima disso, pra
-    // garantir que fique sempre mais difícil do que estava antes, sem
-    // explodir em runs longas dentro do mesmo Andar.
-    //
-    // map.hpKillOffset (ver config.js, calculado a partir de DUNGEON_ORDER)
-    // soma quantas mortes as Dungeons ANTERIORES somariam do Ciclo 1 ao
-    // último — sem isso, toda Dungeon nova voltava a usar killIdx=0 (mesmo
-    // HP inicial do jogo, trivial pra quem já teve que zerar a anterior).
-    // Com o offset, o 1º monstro de uma Dungeon nova continua a MESMA curva
-    // exponencial de onde a anterior parou, em vez de resetar.
-    const hpKillIndex = (map.hpKillOffset || 0) + killIdx - 2*(cycleNum-1);
-    const cycleDifficultyMult = cycleNum > 1 ? 2 : 1;
-    const hp = this.hpFor(hpKillIndex, isBoss, (type.hpMult||1) * extraHpMult) * cycleDifficultyMult;
+    // Vida: fórmula única em config.js (monsterHp — curva por andar, ciclo e
+    // posição no ciclo). killCount reseta a cada ascensão, então a vida também.
+    const hp = monsterHp(state.currentDungeon, cycleNum, killIdxInCycle, isBoss, (type.hpMult||1) * extraHpMult);
     state.monsterHp = hp;
     state.monsterMaxHp = hp;
     state.isBoss = isBoss;

@@ -17,7 +17,7 @@
 const WEAPON_BONUS_KEYS = ['clickDamageBonus', 'dpsBonus', 'critChanceBonus', 'critDamageBonus', 'extraDropChance', 'burnChance', 'burnDamagePercent'];
 const ConfigOverrides = {
   // só números simples de CONFIG — o resto (chaves de save, etc.) não é editável
-  CONFIG_KEYS: ['baseHp', 'hpGrowth', 'bossHpMult', 'monsterTimeLimitMs', 'bossTimeLimitMs', 'dungeonTimeLimitMs',
+  CONFIG_KEYS: ['baseHp', 'hpCycleGrowth', 'hpKillGrowth', 'bossHpMult', 'monsterTimeLimitMs', 'bossTimeLimitMs', 'dungeonTimeLimitMs',
     'goldenChancePerTick', 'goldenDurationMs', 'goldenRewardMult'],
   COLLECTIONS: {
     monsters:      { target: 'MONSTER_TYPES',      fields: ['name', 'hpMult', 'drops'], canAdd: false },

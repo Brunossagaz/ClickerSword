@@ -9,7 +9,8 @@ const CONFIG = {
   tickMs: 200,
   autosaveMs: 10000,
   baseHp: 18,
-  hpGrowth: 1.135,
+  hpCycleGrowth: 1.3,  // multiplicador de vida a cada ciclo do mesmo andar (ver monsterHp)
+  hpKillGrowth: 1.04,  // multiplicador a cada abate dentro do ciclo
   cycleLength: 10,          // monstros por ciclo; o último da fileira é sempre o chefe
   bossHpMult: 7,
   // Ciclo máximo de qualquer Dungeon — ao bater o chefe do Ciclo 5, o jogo
@@ -266,7 +267,7 @@ const MAPS = {
   // só o total de mortes precisa ser sempre igual (ver MonsterModule.
   // killsPerCycleFor, que lê só o Ciclo 1 pra saber esse total).
   slimes: {
-    name: 'Andar do Pântano dos Slimes',
+    name: 'Andar do Pântano dos Slimes', hpScale: 1.5,
     cycles: {
       // Ciclo 1: só slime verde, do início ao fim.
       1: ['slime', 'slime', 'slime', 'slime',
@@ -309,7 +310,7 @@ const MAPS = {
   // troca a dupla forte por uma TRIPLA — todo ciclo aqui soma exatamente 12
   // mortes (killsPerCycle), igual ao Ciclo 1 (ver comentário no topo de MAPS).
   goblins: {
-    name: 'Andar do Reino Goblin',
+    name: 'Andar do Reino Goblin', hpScale: 11,
     unlockRequirement: { dungeon: 'slimes', cycle: 5 },
     cycles: {
       // Ciclo 1: verde dominante, vermelho estreando.
@@ -350,7 +351,7 @@ const MAPS = {
   // Só Orc e Troll (Dragão e Demônio agora têm andar próprio — ver
   // MAPS.dragons/MAPS.demons). Todo ciclo soma 12 mortes, igual ao Ciclo 1.
   wilds: {
-    name: 'Andar das Terras Selvagens',
+    name: 'Andar das Terras Selvagens', hpScale: 1400,
     unlockRequirement: { dungeon: 'goblins', cycle: 5 },
     cycles: {
       // Ciclo 1: padrão básico, 2 duplas (posições 5 e 9).
@@ -391,7 +392,7 @@ const MAPS = {
   // Selvagens pra virar o destaque deste andar, ver ITEM_DEFS.dragonScale).
   // Só 3 ciclos: killsPerCycle = 5 (3 avulsos + 1 dupla), fixo nos 3.
   dragons: {
-    name: 'Andar do Dragão',
+    name: 'Andar do Dragão', hpScale: 5400,
     unlockRequirement: { dungeon: 'wilds', cycle: 5 },
     cycles: {
       // Ciclo 1: 3 Lagartos de Fogo avulsos + 1 DUPLA de Lagartos de Fogo
@@ -414,7 +415,7 @@ const MAPS = {
   // propósito — todo ciclo tem 10 posições únicas, igual ao Goblin/Slime
   // originais. É o andar mais avançado do jogo hoje.
   demons: {
-    name: 'Andar do Demônio',
+    name: 'Andar do Demônio', hpScale: 6200,
     unlockRequirement: { dungeon: 'dragons', cycle: 5 },
     cycles: {
       // Ciclo 1: só Mini Servo, do início ao fim.
@@ -430,30 +431,26 @@ const MAPS = {
   },
 };
 
-// Continuidade de dificuldade entre Dungeons (ver MonsterModule.spawn,
-// hpKillIndex): cada Dungeon nova recomeça seu próprio killCount do zero,
-// mas sem um offset o 1º monstro dela voltaria a ter o MESMO HP do 1º
-// monstro do jogo inteiro — trivial pra quem já tinha acabado de vencer a
-// Dungeon anterior. `hpKillOffset` soma quantas mortes as Dungeons
-// ANTERIORES (nesta ordem de progressão) somariam do Ciclo 1 até o Ciclo
-// MÁXIMO (CONFIG.maxCycleNum) — assim toda Dungeon nova continua a MESMA
-// curva exponencial de onde a anterior parou, em vez de resetar.
-// `_groupSizeFor`/`_kpcFor` duplicam de propósito a lógica de
-// MonsterModule.groupSize/killsPerCycle (não dá pra chamar MonsterModule
-// daqui, config.js carrega ANTES de monster.js) — são só 2 linhas, ver
-// monster.js pra versão "oficial" usada durante o jogo.
+// Vida dos monstros — ÚNICA fórmula do jogo, usada por MonsterModule.spawn,
+// pelo Compêndio (tools/compendio.html) e pelo simulador de balanceamento
+// (tools/balance_sim.js). Curva POR ANDAR (antes era uma exponencial única
+// somando os abates de todos os andares, que chegava a quatrilhões e travava
+// o jogo no 2º andar — ver balance_sim):
+//   vida = CONFIG.baseHp × MAPS[andar].hpScale
+//        × CONFIG.hpCycleGrowth^(ciclo-1)       (cada ciclo do andar fica mais duro)
+//        × CONFIG.hpKillGrowth^(abate no ciclo)  (sobe um pouco dentro do ciclo)
+//        × CONFIG.bossHpMult (chefe) × hpMult do monstro × 1.5 (grupo forte)
+// hpScale de cada andar foi calibrado com o simulador pra que o dano que o
+// jogador consegue comprar alcance a vida com um farm razoável.
 const DUNGEON_ORDER = ['slimes', 'goblins', 'wilds', 'dragons', 'demons'];
-(function assignHpKillOffsets(){
-  const _groupSizeFor = slot => (!slot || !slot.pairChoices) ? 1 : Math.max(...slot.pairChoices.map(o => o.length));
-  const _kpcFor = schedule => schedule.reduce((sum, slot) => sum + _groupSizeFor(slot), 0);
-  let offset = 0;
-  for(const key of DUNGEON_ORDER){
-    const map = MAPS[key];
-    if(!map) continue;
-    map.hpKillOffset = offset;
-    offset += _kpcFor(map.cycles[1]) * CONFIG.maxCycleNum;
-  }
-})();
+function monsterHp(dungeonKey, cycle, killIdxInCycle, isBoss, hpMult){
+  const map = MAPS[dungeonKey];
+  let hp = CONFIG.baseHp * ((map && map.hpScale) || 1)
+    * Math.pow(CONFIG.hpCycleGrowth, Math.max(0, cycle - 1))
+    * Math.pow(CONFIG.hpKillGrowth, Math.max(0, killIdxInCycle));
+  if(isBoss) hp *= CONFIG.bossHpMult;
+  return Math.max(1, Math.ceil(hp * (hpMult || 1)));
+}
 
 // Itens (todo drop de monstro vira item — ver `drops` em MONSTER_TYPES).
 // Preço fixo de venda na Loja da cidade. `type:'brokenWeapon'` (opcional):

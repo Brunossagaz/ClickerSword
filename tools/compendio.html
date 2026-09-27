@@ -145,7 +145,7 @@
   </section>
 
   <section id="vida">
-    <p class="hint">Os valores gerais abaixo valem para todos os monstros; o multiplicador de cada um fica na aba Monstros. A partir do ciclo 2 a vida é ×2 (fixo no código).</p>
+    <p class="hint">Os valores gerais abaixo valem para todos os monstros; o multiplicador de cada um fica na aba Monstros. Cada andar tem seu multiplicador de vida (hpScale em js/config.js).</p>
     <div class="stats" id="hpStats"></div>
     <div class="toolbar">
       <label>Dungeon <select id="hpDungeon"></select></label>
@@ -496,17 +496,10 @@ fetch('assets/icons/').then(r => r.ok ? r.text() : '').then(html => {
 }).catch(() => {});
 
 // ---------------------------------------------------------------------
-// Vida: mesma conta de MonsterModule.spawn/hpFor (js/monster.js). Se a
-// fórmula mudar lá, atualizar aqui também.
+// Vida: usa a MESMA função do jogo (monsterHp, js/config.js).
 // ---------------------------------------------------------------------
 const groupSize = slot => (!slot || !slot.pairChoices) ? 1 : Math.max(...slot.pairChoices.map(o => o.length));
 const kpcOf = schedule => schedule.reduce((s, slot) => s + groupSize(slot), 0);
-function hpFor(killIndex, isBoss, hpMult){
-  let hp = CONFIG.baseHp * Math.pow(CONFIG.hpGrowth, killIndex);
-  if(isBoss) hp *= CONFIG.bossHpMult;
-  hp *= hpMult || 1;
-  return Math.ceil(hp);
-}
 function buildHpRows(){
   const rows = [];
   for(const dKey of DUNGEON_ORDER){
@@ -527,8 +520,7 @@ function buildHpRows(){
             const isBoss = slot.pairChoices ? (isLastSlot && sub === size - 1) : isLastSlot;
             const extra = (slot.pairChoices && slot.strong) ? 1.5 : 1;
             const type = monDef(mKey);
-            const hpKillIndex = (map.hpKillOffset || 0) + killIdx - 2 * (cycle - 1);
-            const hp = hpFor(hpKillIndex, isBoss, (type.hpMult || 1) * extra) * (cycle > 1 ? 2 : 1);
+            const hp = monsterHp(dKey, cycle, killIdx % kpc, isBoss, (type.hpMult || 1) * extra);
             const limit = (isBoss ? CONFIG.bossTimeLimitMs : CONFIG.monsterTimeLimitMs) / 1000;
             let kind = 'Normal';
             if(slot.pairChoices) kind = (size === 2 ? 'Dupla' : size === 3 ? 'Tripla' : 'Grupo') + ` ${sub+1}/${size}` + (options.length > 1 ? ` · opção ${optIdx+1}` : '');
@@ -673,7 +665,8 @@ function renderHpStats(){
   const stat = (inputHtml, label, suffix = '') => `<div class="stat"><div class="v">${inputHtml}${suffix}</div><div class="l">${esc(label)}</div></div>`;
   document.getElementById('hpStats').innerHTML = [
     stat(field('config', '', 'baseHp', 'num'), 'Vida base'),
-    stat('×' + field('config', '', 'hpGrowth', 'num'), 'Crescimento por abate'),
+    stat('×' + field('config', '', 'hpCycleGrowth', 'num'), 'Crescimento por ciclo'),
+    stat('×' + field('config', '', 'hpKillGrowth', 'num'), 'Crescimento por abate no ciclo'),
     stat('×' + field('config', '', 'bossHpMult', 'num'), 'Vida do chefe'),
     stat(field('config', '', 'monsterTimeLimitMs', 'sec'), 'Tempo por monstro', 's'),
     stat(field('config', '', 'bossTimeLimitMs', 'sec'), 'Tempo do chefe', 's'),

@@ -110,9 +110,18 @@ detalhados no roadmap do `README.md` são referenciados, não duplicados.
       (tipo, raridade, preço de venda). Só visualização; vender continua na
       Loja.
 - [x] **Expandir loot pra outras Dungeons** — todo andar dropa item.
-- [ ] **Balancear com o tempo de Dungeon de 30s** — conferir na aba Vida do
-      Compêndio se o dano disponível em cada fase alcança o "DPS mín." A vida
-      cresce muito nos andares finais (Demônio passa de 1 quatrilhão).
+- [x] **Balancear com o tempo de Dungeon de 30s** — a vida era uma única
+      exponencial somando os abates de TODOS os andares (quatrilhões no
+      Demônio) e o simulador mostrou o jogo travado no Goblin ciclo 2. Agora
+      a vida é por andar (`monsterHp` em `config.js`, única fórmula usada pelo
+      jogo, Compêndio e simulador): `baseHp × hpScale do andar ×
+      hpCycleGrowth^(ciclo-1) × hpKillGrowth^(abate)`. `hpScale` calibrado com
+      `node tools/balance_sim.js --calibrar`: nenhum ciclo pede mais que
+      10/18/25/30/35 min de farm (por andar) e o 1º slime morre em 10s com o
+      dano inicial. Resultado (5 cliques/s): jogo completo em ~2,6h sem
+      Ascensão; 3 cliques/s ~6,5h; 8 cliques/s ~1,9h. Depois de mexer em
+      números (no config ou no Compêndio), rodar `node tools/balance_sim.js`
+      pra ver se algum ciclo trava.
 
 - [ ] **Afinidade de minério por minerador** — hoje todo minerador
       (`PROSPECTOR_DEFS`) só soma `orePerSec` num sorteio único por raridade
@@ -180,9 +189,10 @@ detalhados no roadmap do `README.md` são referenciados, não duplicados.
 - [ ] Compêndio: criar monstros e habilidades novas (hoje só edita; monstro
       precisa de sprite e lugar nos ciclos, habilidade precisa de posição em
       `UPGRADE_TREE`).
-- [ ] Efeito de upgrade editado não é retroativo — níveis já comprados num
-      save guardam o valor antigo nos stats de `state`. Se virar problema:
-      recalcular os stats a partir de `state.upgrades` ao carregar o save.
+- [x] Efeito de upgrade retroativo — atributos de upgrade/prestígio são
+      recalculados dos níveis comprados ao carregar o save e a cada compra
+      (`UpgradesModule.recalcStats`), então editar um efeito no Compêndio vale
+      na hora no próprio save.
 - [ ] Auto-upgrade/auto-buy (desbloqueável tarde).
 - [ ] 2ª camada de prestígio ("Transcendência", acima da Ascensão).
 - [ ] `js/audio.js` — efeitos sonoros de clique/morte/ascensão.
