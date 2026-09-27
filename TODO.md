@@ -75,8 +75,19 @@ detalhados no roadmap do `README.md` são referenciados, não duplicados.
       moedas, total em `state.fountainCoins`), 7 moradores de ambiente
       (2 crianças, mulher, idosa, idoso, guerreiro, bruxa) com falas e card no
       Compêndio, e ciclo de dia e noite (`CITY_MAP.dayLengthMs`/`dayPhases`)
-      com moradores que só aparecem de dia ou de noite. A arte base é noturna:
-      o dia é ela clareada — uma versão diurna desenhada ficaria melhor.
+      com moradores que só aparecem de dia ou de noite. Usa as pinturas de noite
+      (`dungeon-wallpaper.png`) e de dia (`dungeon-wallpaper2.png`); o
+      entardecer/amanhecer (`city-dusk.png`) é gerado da de dia por
+      `tools/gen_city_daylight.py` (degradê de cor, sem recorte). Relógio
+      pixel art no canto do mapa (`art/ui/clock-dial` + ponteiro no canvas).
+      NPCs refeitos em 24x32 com sombreamento automático.
+- [x] **Jogo em tela cheia** — cidade e dungeon sem moldura de página (a
+      pintura da cidade cobre a janela), botões no canto (mochila = inventário
+      em gaveta, tela cheia, configurações), entra em tela cheia ao clicar em
+      "COMECE A JOGAR" (`HudModule`, `js/hud.js`). ESC fecha o modal de cima
+      (em tela cheia a tecla é travada pro jogo via Keyboard Lock). Tela de
+      carregamento com slime pulando (`LoadingModule`, `js/loading.js`):
+      decodifica todas as imagens na abertura e cobre as trocas de tela do menu.
 - [ ] **Mapa explorável (plano B)** — personagem do jogador andando
       (teclado/clique), colisão, câmera e NPCs com rotina; exige tileset,
       prédios vistos de cima e sprite do jogador. A Dungeon fica como está.

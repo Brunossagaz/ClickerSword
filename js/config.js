@@ -535,15 +535,23 @@ const ANSELMO_LINES = [
 // (width x height) — o módulo converte pro tamanho em que ela aparece.
 // `signs`: placa de cada prédio (id do <button> no index.html), presa pela
 // ponta de baixo no ponto (x, y). `npcs`: personagens andando — `sprite` é
-// uma folha 48x72 de GridFab (art/npc/<nome>, 3 direções x 3 frames de
-// 16x24), desenhada `spriteScale` px de imagem por pixel de arte; `path` é
+// uma folha 72x96 de GridFab (art/npc/<nome>, 3 direções x 3 frames de
+// 24x32), desenhada `spriteScale` px de imagem por pixel de arte; `path` é
 // uma trilha FECHADA de pontos (pés do NPC; o último liga no primeiro) — ele
 // só anda entre pontos vizinhos, então basta que cada trecho vizinho não
 // passe por obstáculo pra ele nunca atravessar a fonte/prédios.
 const CITY_MAP = {
-  image: 'assets/backgrounds/dungeon-wallpaper.png',
+  // mesma cena pintada de noite e de dia; o entardecer/amanhecer é gerado da
+  // de dia por tools/gen_city_daylight.py. Trocadas pela hora (ver
+  // CityMapModule.applyDaylight).
+  images: {
+    night: 'assets/backgrounds/dungeon-wallpaper.png',
+    day: 'assets/backgrounds/dungeon-wallpaper2.png',
+    dusk: 'assets/backgrounds/city-dusk.png',
+  },
   width: 1672, height: 941,
-  spriteScale: 4,
+  frameW: 24, frameH: 32, // tamanho de cada frame das folhas dos NPCs (art/npc)
+  spriteScale: 3,         // px da imagem por pixel de arte (arredondado pra px inteiros na tela)
   walkSpeed: 38, // px da imagem por segundo
   signs: [
     { btn: 'openAcademiaBtn', x: 160, y: 300 },

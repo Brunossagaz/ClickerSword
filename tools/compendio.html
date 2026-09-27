@@ -57,7 +57,7 @@
   .card h3 input.ed{font-family:'Press Start 2P', monospace; font-size:11px; color:var(--ember);}
   .row{display:flex; gap:12px; align-items:flex-start;}
   .sprite{flex:none; width:96px; height:96px; background-repeat:no-repeat; background-size:300% 100%; background-position:0 0; image-rendering:pixelated; background-color:var(--stone-dark); border:2px solid var(--stone); border-radius:4px;}
-  .npc-sprite{flex:none; width:64px; height:96px; background-repeat:no-repeat; background-size:300% 300%; background-position:0 0; image-rendering:pixelated; background-color:var(--stone-dark); border:2px solid var(--stone); border-radius:4px;}
+  .npc-sprite{flex:none; width:72px; height:96px; background-repeat:no-repeat; background-size:300% 300%; background-position:0 0; image-rendering:pixelated; background-color:var(--stone-dark); border:2px solid var(--stone); border-radius:4px;}
   .portrait{flex:none; width:96px; height:136px; object-fit:cover; object-position:top; border:2px solid var(--stone); border-radius:4px; background:var(--stone-dark);}
   .meta{font-size:18px; color:var(--parchment-dim);}
   .meta b{color:var(--parchment); font-weight:normal;}
@@ -908,7 +908,7 @@ document.getElementById('npcGrid').innerHTML = NPCS.map(n => `
     </div>
   </div>`).join('');
 // Todos que andam pelo mapa da cidade (CITY_MAP.npcs): sprite parado de
-// frente (frame 0 da folha 48x72, ampliado 4x), horário e falas
+// frente (frame 0 da folha 72x96, ampliado 3x), horário e falas
 const SCHEDULE_LABEL = { day: '☀ Só de dia', night: '☾ Só de noite' };
 document.getElementById('cityNpcGrid').innerHTML = CITY_MAP.npcs.map(n => `
   <div class="card"><h3>${esc(n.name)}</h3>

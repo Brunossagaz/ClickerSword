@@ -1,72 +1,96 @@
-.. .. .. .. O. O. HR O. O. HR O. O. .. .. .. .. .. .. .. .. O. O. HR O. O. HR O. O. .. .. .. .. .. .. .. .. O. O. HR O. O. HR O. O. .. .. .. ..
-.. .. .. O. HR HR HR HR HR HR HR HR O. .. .. .. .. .. .. O. HR HR HR HR HR HR HR HR O. .. .. .. .. .. .. O. HR HR HR HR HR HR HR HR O. .. .. ..
-.. .. .. O. HR HR HR HR HR HR HR HR O. .. .. .. .. .. .. O. HR HR HR HR HR HR HR HR O. .. .. .. .. .. .. O. HR HR HR HR HR HR HR HR O. .. .. ..
-.. .. .. O. HR HR HR HR HR HR HR HR O. .. .. .. .. .. .. O. HR HR HR HR HR HR HR HR O. .. .. .. .. .. .. O. HR HR HR HR HR HR HR HR O. .. .. ..
-.. .. .. O. HR HR HR HR HR HR HR HR O. .. .. .. .. .. .. O. HR HR HR HR HR HR HR HR O. .. .. .. .. .. .. O. HR HR HR HR HR HR HR HR O. .. .. ..
-.. .. O. HR HR SK SK SK SK SK SK RD RD O. .. .. .. .. O. HR HR SK SK SK SK SK SK RD RD O. .. .. .. .. O. HR HR SK SK SK SK SK SK RD RD O. .. ..
-.. .. O. HR HR SK RD SK SK RD SK RD RD O. .. .. .. .. O. HR HR SK RD SK SK RD SK RD RD O. .. .. .. .. O. HR HR SK RD SK SK RD SK RD RD O. .. ..
-.. .. O. HR HR SK EY SK SK EY SK RD RD O. .. .. .. .. O. HR HR SK EY SK SK EY SK RD RD O. .. .. .. .. O. HR HR SK EY SK SK EY SK RD RD O. .. ..
-.. .. .. O. BD BD BD BD BD BD BD BD O. .. .. .. .. .. .. O. BD BD BD BD BD BD BD BD O. .. .. .. .. .. .. O. BD BD BD BD BD BD BD BD O. .. .. ..
-.. .. .. O. BD BD BD KD KD BD BD BD O. .. .. .. .. .. .. O. BD BD BD KD KD BD BD BD O. .. .. .. .. .. .. O. BD BD BD KD KD BD BD BD O. .. .. ..
-.. .. .. O. C2 C2 C2 C2 C2 C2 C2 2D O. .. .. .. .. .. .. O. C2 C2 C2 C2 C2 C2 C2 2D O. .. .. .. .. .. .. O. C2 C2 C2 C2 C2 C2 C2 2D O. .. .. ..
-.. .. O. C2 C2 1D C2 C2 C2 C2 1D 2D 2D O. .. .. .. .. O. C2 C2 1D C2 C2 C2 C2 1D 2D 2D O. .. .. .. .. O. C2 C2 1D C2 C2 C2 C2 1D 2D 2D O. .. ..
-.. .. O. C2 C2 C1 C1 C1 C1 C1 1D 2D 2D O. .. .. .. .. O. C2 C2 C1 C1 C1 C1 C1 1D 2D 2D O. .. .. .. .. O. C2 C2 C1 C1 C1 C1 C1 1D 2D 2D O. .. ..
-.. .. O. C2 C2 C1 C1 C1 C1 C1 1D 2D 2D O. .. .. .. .. O. C2 C2 C1 C1 C1 C1 C1 1D 2D 2D O. .. .. .. .. O. C2 C2 C1 C1 C1 C1 C1 1D 2D 2D O. .. ..
-.. .. O. C2 C2 C1 C1 C1 C1 C1 1D 2D 2D O. .. .. .. .. O. C2 C2 C1 C1 C1 C1 C1 1D 2D 2D O. .. .. .. .. O. C2 C2 C1 C1 C1 C1 C1 1D 2D 2D O. .. ..
-.. .. O. C2 C2 C1 1D 1D 1D 1D 1D 2D 2D O. .. .. .. .. O. GL C2 C1 1D 1D 1D 1D 1D 2D 2D O. .. .. .. .. O. C2 C2 C1 1D 1D 1D 1D 1D 2D GL O. .. ..
-.. .. O. GL C2 C1 C1 C1 C1 C1 1D 2D GL O. .. .. .. .. .. O. C2 C1 C1 C1 C1 C1 1D 2D 2D O. .. .. .. .. O. C2 C2 C1 C1 C1 C1 C1 1D 2D WD O. .. ..
-.. .. .. O. C2 C1 C1 C1 C1 C1 1D 2D WD O. .. .. .. .. .. O. C2 C1 C1 C1 C1 C1 1D 2D GL O. .. .. .. .. O. GL C2 C1 C1 C1 C1 C1 1D MT MT TX O. ..
-.. .. .. .. O. C1 C1 C1 C1 C1 1D MT MT TX O. .. .. .. .. .. O. C1 C1 C1 C1 C1 1D O. WD O. .. .. .. .. .. O. O. C1 C1 C1 C1 C1 1D O. O. O. .. ..
-.. .. .. .. O. C1 C1 C1 C1 C1 1D O. O. O. .. .. .. .. .. .. O. C1 C1 C1 C1 C1 1D MT MT TX O. .. .. .. .. .. O. C1 C1 C1 C1 C1 1D O. .. .. .. ..
-.. .. .. .. O. LG LG GD LG LG LG O. .. .. .. .. .. .. .. .. O. LG LG GD LG LG LG O. O. O. .. .. .. .. .. .. O. LG LG GD LG LG LG O. .. .. .. ..
-.. .. .. .. O. LG LG GD LG LG LG O. .. .. .. .. .. .. .. .. O. LG LG GD SH SH SH O. .. .. .. .. .. .. .. .. O. SH SH SH LG LG LG O. .. .. .. ..
-.. .. .. .. O. SH SH SH SH SH SH O. .. .. .. .. .. .. .. .. O. SH SH SH O. O. O. .. .. .. .. .. .. .. .. .. .. O. O. O. SH SH SH O. .. .. .. ..
-.. .. .. .. .. O. O. O. O. O. O. .. .. .. .. .. .. .. .. .. .. O. O. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. O. O. .. .. .. .. ..
-.. .. .. .. O. O. HR O. O. HR O. O. .. .. .. .. .. .. .. .. O. O. HR O. O. HR O. O. .. .. .. .. .. .. .. .. O. O. HR O. O. HR O. O. .. .. .. ..
-.. .. .. O. HR HR HR HR HR HR HR HR O. .. .. .. .. .. .. O. HR HR HR HR HR HR HR HR O. .. .. .. .. .. .. O. HR HR HR HR HR HR HR HR O. .. .. ..
-.. .. .. O. HR HR HR HR HR HR HR HR O. .. .. .. .. .. .. O. HR HR HR HR HR HR HR HR O. .. .. .. .. .. .. O. HR HR HR HR HR HR HR HR O. .. .. ..
-.. .. .. O. HR HR HR HR HR HR HR HR O. .. .. .. .. .. .. O. HR HR HR HR HR HR HR HR O. .. .. .. .. .. .. O. HR HR HR HR HR HR HR HR O. .. .. ..
-.. .. .. O. HR HR HR HR HR HR HR HR O. .. .. .. .. .. .. O. HR HR HR HR HR HR HR HR O. .. .. .. .. .. .. O. HR HR HR HR HR HR HR HR O. .. .. ..
-.. .. O. HR HR HR HR HR HR HR HR HR RD O. .. .. .. .. O. HR HR HR HR HR HR HR HR HR RD O. .. .. .. .. O. HR HR HR HR HR HR HR HR HR RD O. .. ..
-.. .. O. HR HR HR HR HR HR HR HR HR RD O. .. .. .. .. O. HR HR HR HR HR HR HR HR HR RD O. .. .. .. .. O. HR HR HR HR HR HR HR HR HR RD O. .. ..
-.. .. O. HR HR HR HR HR HR HR HR HR RD O. .. .. .. .. O. HR HR HR HR HR HR HR HR HR RD O. .. .. .. .. O. HR HR HR HR HR HR HR HR HR RD O. .. ..
-.. .. .. O. HR RD RD RD RD RD RD HR O. .. .. .. .. .. .. O. HR RD RD RD RD RD RD HR O. .. .. .. .. .. .. O. HR RD RD RD RD RD RD HR O. .. .. ..
-.. .. .. O. HR RD RD RD RD RD RD HR O. .. .. .. .. .. .. O. HR RD RD RD RD RD RD HR O. .. .. .. .. .. .. O. HR RD RD RD RD RD RD HR O. .. .. ..
-.. .. .. O. C2 C2 C2 C2 C2 C2 C2 2D O. .. .. .. .. .. .. O. C2 C2 C2 C2 C2 C2 C2 2D O. .. .. .. .. .. .. O. C2 C2 C2 C2 C2 C2 C2 2D O. .. .. ..
-.. .. O. C2 C2 1D C2 C2 C2 C2 1D 2D 2D O. .. .. .. .. O. C2 C2 1D C2 C2 C2 C2 1D 2D 2D O. .. .. .. .. O. C2 C2 1D C2 C2 C2 C2 1D 2D 2D O. .. ..
-.. .. O. C2 C2 C2 1D C2 C2 1D C2 2D 2D O. .. .. .. .. O. C2 C2 C2 1D C2 C2 1D C2 2D 2D O. .. .. .. .. O. C2 C2 C2 1D C2 C2 1D C2 2D 2D O. .. ..
-.. .. O. C2 C2 C2 C2 1D 1D C2 C2 2D 2D O. .. .. .. .. O. C2 C2 C2 C2 1D 1D C2 C2 2D 2D O. .. .. .. .. O. C2 C2 C2 C2 1D 1D C2 C2 2D 2D O. .. ..
-.. .. O. C2 C2 C2 C2 C2 C2 C2 C2 2D 2D O. .. .. .. .. O. C2 C2 C2 C2 C2 C2 C2 C2 2D 2D O. .. .. .. .. O. C2 C2 C2 C2 C2 C2 C2 C2 2D 2D O. .. ..
-.. .. O. C2 C2 C2 C2 C2 C2 C2 C2 2D 2D O. .. .. .. .. O. GL C2 C2 C2 C2 C2 C2 C2 2D 2D O. .. .. .. .. O. C2 C2 C2 C2 C2 C2 C2 C2 2D GL O. .. ..
-.. .. O. GL 1D 1D 1D 1D 1D 1D 1D 1D GL O. .. .. .. .. .. O. 1D 1D 1D 1D 1D 1D 1D 1D 2D O. .. .. .. .. O. C2 1D 1D 1D 1D 1D 1D 1D 1D O. .. .. ..
-.. .. .. O. C2 C2 C2 C2 C2 C2 C2 2D O. .. .. .. .. .. .. O. C2 C2 C2 C2 C2 C2 C2 2D GL O. .. .. .. .. O. GL C2 C2 C2 C2 C2 C2 C2 2D O. .. .. ..
-.. .. .. .. O. LG LG GD LG LG LG O. .. .. .. .. .. .. .. .. O. LG LG GD LG LG LG O. O. .. .. .. .. .. .. O. O. LG LG GD LG LG LG O. .. .. .. ..
-.. .. .. .. O. LG LG GD LG LG LG O. .. .. .. .. .. .. .. .. O. LG LG GD LG LG LG O. .. .. .. .. .. .. .. .. O. LG LG GD LG LG LG O. .. .. .. ..
-.. .. .. .. O. LG LG GD LG LG LG O. .. .. .. .. .. .. .. .. O. LG LG GD LG LG LG O. .. .. .. .. .. .. .. .. O. LG LG GD LG LG LG O. .. .. .. ..
-.. .. .. .. O. LG LG GD LG LG LG O. .. .. .. .. .. .. .. .. O. LG LG GD SH SH SH O. .. .. .. .. .. .. .. .. O. SH SH SH LG LG LG O. .. .. .. ..
-.. .. .. .. O. SH SH SH SH SH SH O. .. .. .. .. .. .. .. .. O. SH SH SH O. O. O. .. .. .. .. .. .. .. .. .. .. O. O. O. SH SH SH O. .. .. .. ..
-.. .. .. .. .. O. O. O. O. O. O. .. .. .. .. .. .. .. .. .. .. O. O. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. O. O. .. .. .. .. ..
-.. .. .. .. .. .. .. O. .. .. O. .. .. .. .. .. .. .. .. .. .. .. .. O. .. .. O. .. .. .. .. .. .. .. .. .. .. .. .. O. .. .. O. .. .. .. .. ..
-.. .. .. .. .. O. O. HR O. O. HR O. .. .. .. .. .. .. .. .. .. O. O. HR O. O. HR O. .. .. .. .. .. .. .. .. .. O. O. HR O. O. HR O. .. .. .. ..
-.. .. .. .. O. HR HR HR HR HR HR HR O. .. .. .. .. .. .. .. O. HR HR HR HR HR HR HR O. .. .. .. .. .. .. .. O. HR HR HR HR HR HR HR O. .. .. ..
-.. .. .. .. O. HR HR HR HR HR HR HR O. .. .. .. .. .. .. .. O. HR HR HR HR HR HR HR O. .. .. .. .. .. .. .. O. HR HR HR HR HR HR HR O. .. .. ..
-.. .. .. .. O. HR HR HR HR HR HR HR O. .. .. .. .. .. .. .. O. HR HR HR HR HR HR HR O. .. .. .. .. .. .. .. O. HR HR HR HR HR HR HR O. .. .. ..
-.. .. .. .. O. RD RD SK SK SK SK SK O. .. .. .. .. .. .. .. O. RD RD SK SK SK SK SK O. .. .. .. .. .. .. .. O. RD RD SK SK SK SK SK O. .. .. ..
-.. .. .. .. O. RD RD SK SK SK SK SK O. .. .. .. .. .. .. .. O. RD RD SK SK SK SK SK O. .. .. .. .. .. .. .. O. RD RD SK SK SK SK SK O. .. .. ..
-.. .. .. .. O. RD RD SK BD BD EY SK BD O. .. .. .. .. .. .. O. RD RD SK BD BD EY SK BD O. .. .. .. .. .. .. O. RD RD SK BD BD EY SK BD O. .. ..
-.. .. .. .. O. RD RD SK BD BD BD BD SK O. .. .. .. .. .. .. O. RD RD SK BD BD BD BD SK O. .. .. .. .. .. .. O. RD RD SK BD BD BD BD SK O. .. ..
-.. .. .. .. .. O. SK SK BD BD BD BD BD O. .. .. .. .. .. .. .. O. SK SK BD BD BD BD BD O. .. .. .. .. .. .. .. O. SK SK BD BD BD BD BD O. .. ..
-.. .. .. .. .. O. C2 C2 C2 C2 2D BD BD O. .. .. .. .. .. .. .. O. C2 C2 C2 C2 2D BD BD O. .. .. .. .. .. .. .. O. C2 C2 C2 C2 2D BD BD O. .. ..
-.. .. .. .. .. O. C2 C2 2D C1 C1 C1 BE O. .. .. .. .. .. .. .. O. C2 C2 2D 2D C1 C1 BE O. .. .. .. .. .. .. .. O. C2 2D C2 C1 C1 C1 BE O. .. ..
-.. .. .. .. .. O. C2 C2 2D C1 C1 C1 O. .. .. .. .. .. .. .. .. O. C2 C2 2D 2D C1 C1 O. .. .. .. .. .. .. .. .. O. C2 2D C2 C1 C1 C1 O. .. .. ..
-.. .. .. .. .. O. C2 C2 2D C1 C1 C1 O. .. .. .. .. .. .. .. .. O. C2 C2 2D 2D C1 C1 O. .. .. .. .. .. .. .. .. O. C2 2D C2 C1 C1 C1 O. .. .. ..
-.. .. .. .. .. O. C2 C2 2D C1 C1 C1 O. .. .. .. .. .. .. .. .. O. C2 C2 C2 C1 2D C1 O. .. .. .. .. .. .. .. .. O. 2D C2 C2 C1 C1 C1 O. .. .. ..
-.. .. .. .. .. O. C2 C2 2D C1 C1 C1 O. .. .. .. .. .. .. .. .. O. C2 C2 C2 C1 GL C1 O. .. .. .. .. .. .. .. .. O. GL C2 C2 C1 C1 C1 O. .. .. ..
-.. .. .. .. .. O. C2 C2 GL C1 C1 C1 O. .. .. .. .. .. .. .. .. O. C2 C2 C2 C1 WD C1 O. .. .. .. .. .. .. .. .. O. WD C2 C2 C1 C1 C1 O. .. .. ..
-.. .. .. .. .. O. C2 C2 WD C1 C1 C1 O. .. .. .. .. .. .. .. .. O. C2 C2 C2 MT MT TX O. .. .. .. .. .. .. .. O. MT MT TX C2 C1 C1 C1 O. .. .. ..
-.. .. .. .. .. .. O. MT MT TX C1 C1 O. .. .. .. .. .. .. .. .. O. GD GD O. C1 C1 C1 O. .. .. .. .. .. .. .. .. O. GD LG LG C1 C1 C1 O. .. .. ..
-.. .. .. .. .. .. O. LG LG C1 C1 1D O. .. .. .. .. .. .. .. .. O. GD GD O. C1 C1 1D O. .. .. .. .. .. .. .. .. O. GD LG LG C1 C1 1D O. .. .. ..
-.. .. .. .. .. .. O. LG LG LG O. O. .. .. .. .. .. .. .. .. .. O. GD GD O. LG LG O. .. .. .. .. .. .. .. .. .. O. GD LG LG LG O. O. .. .. .. ..
-.. .. .. .. .. .. O. LG LG LG O. .. .. .. .. .. .. .. .. .. .. O. GD GD O. LG LG O. .. .. .. .. .. .. .. .. O. SH SH LG LG LG O. .. .. .. .. ..
-.. .. .. .. .. .. O. SH SH SH SH O. .. .. .. .. .. .. .. .. O. SH SH SH O. SH SH SH O. .. .. .. .. .. .. .. .. O. O. O. SH SH SH O. .. .. .. ..
-.. .. .. .. .. .. .. O. O. O. O. .. .. .. .. .. .. .. .. .. .. O. O. O. .. O. O. O. .. .. .. .. .. .. .. .. .. .. .. .. O. O. O. .. .. .. .. ..
+.. .. .. .. .. .. .. .. O. .. .. O. .. .. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. .. .. O. .. .. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. .. .. O. .. .. O. .. .. .. .. .. .. .. .. ..
+.. .. .. .. .. .. .. O. H2 O. O. H2 O. O. H2 O. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. H2 O. O. H2 O. O. H2 O. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. H2 O. O. H2 O. O. H2 O. O. .. .. .. .. .. .. ..
+.. .. .. .. .. .. O. H1 H. H1 H1 H. H1 H1 H. H1 H2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H1 H1 H. H1 H1 H. H1 H2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H1 H1 H. H1 H1 H. H1 H2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. O. H1 H2 H2 H2 H2 H2 H2 H2 H2 H2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H2 H2 H2 H2 H2 H2 H2 H2 H2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H2 H2 H2 H2 H2 H2 H2 H2 H2 O. .. .. .. .. .. ..
+.. .. .. .. .. O. H1 H2 S1 S1 S1 S1 S1 S1 S1 S2 H1 H2 O. .. .. .. .. .. .. .. .. .. .. O. H1 H2 S1 S1 S1 S1 S1 S1 S1 S2 H1 H2 O. .. .. .. .. .. .. .. .. .. .. O. H1 H2 S1 S1 S1 S1 S1 S1 S1 S2 H1 H2 O. .. .. .. .. ..
+.. .. .. .. .. O. H1 H2 S1 S2 S2 S. S. S2 S2 S2 H1 H2 O. .. .. .. .. .. .. .. .. .. .. O. H1 H2 S1 S2 S2 S. S. S2 S2 S2 H1 H2 O. .. .. .. .. .. .. .. .. .. .. O. H1 H2 S1 S2 S2 S. S. S2 S2 S2 H1 H2 O. .. .. .. .. ..
+.. .. .. .. .. O. H1 H2 S2 H2 H2 S1 S2 H2 H2 S2 H1 H2 O. .. .. .. .. .. .. .. .. .. .. O. H1 H2 S2 H2 H2 S1 S2 H2 H2 S2 H1 H2 O. .. .. .. .. .. .. .. .. .. .. O. H1 H2 S2 H2 H2 S1 S2 H2 H2 S2 H1 H2 O. .. .. .. .. ..
+.. .. .. .. .. O. H2 H2 S2 Y. S2 S2 S2 S2 Y. S2 H2 H2 O. .. .. .. .. .. .. .. .. .. .. O. H2 H2 S2 Y. S2 S2 S2 S2 Y. S2 H2 H2 O. .. .. .. .. .. .. .. .. .. .. O. H2 H2 S2 Y. S2 S2 S2 S2 Y. S2 H2 H2 O. .. .. .. .. ..
+.. .. .. .. .. .. O. B1 B1 B1 B1 B1 B1 B1 B1 B1 B2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. B1 B1 B1 B1 B1 B1 B1 B1 B1 B2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. B1 B1 B1 B1 B1 B1 B1 B1 B1 B2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. O. B1 B. B. B. B2 B2 B. B. B. B2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. B1 B. B. B. B2 B2 B. B. B. B2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. B1 B. B. B. B2 B2 B. B. B. B2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. O. B1 B. B. B2 N. N. B1 B. B. B2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. B1 B. B. B2 N. N. B1 B. B. B2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. B1 B. B. B2 N. N. B1 B. B. B2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. O. B1 B. B. B. B1 B1 B. B. B. B2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. B1 B. B. B. B1 B1 B. B. B. B2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. B1 B. B. B. B1 B1 B. B. B. B2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. O. B1 B2 B. B. B. B. B. B. B2 B2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. B1 B2 B. B. B. B. B. B. B2 B2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. B1 B2 B. B. B. B. B. B. B2 B2 O. .. .. .. .. .. ..
+.. .. .. .. .. O. O. B2 C2 B1 B. B. B. B. B2 C2 B2 O. O. .. .. .. .. .. .. .. .. .. .. O. O. B2 C2 B1 B. B. B. B. B2 C2 B2 O. O. .. .. .. .. .. .. .. .. .. .. O. O. B2 C2 B1 B. B. B. B. B2 C2 B2 O. O. .. .. .. .. ..
+.. .. .. .. O. D1 D2 C1 C2 B2 B2 B2 B2 B2 B2 C1 C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D1 D2 C1 C2 B2 B2 B2 B2 B2 B2 C1 C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D1 D2 C1 C2 B2 B2 B2 B2 B2 B2 C1 C2 D1 D2 O. .. .. .. ..
+.. .. .. .. O. D1 D2 C1 C. C1 C1 C1 C1 C1 C1 C. C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D1 D2 C1 C. C1 C1 C1 C1 C1 C1 C. C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D1 D2 C1 C. C1 C1 C1 C1 C1 C1 C. C2 D1 D2 O. .. .. .. ..
+.. .. .. .. O. D1 D2 C1 C. C. C. C. C. C. C. C. C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D1 D2 C1 C. C. C. C. C. C. C. C. C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D1 D2 C1 C. C. C. C. C. C. C. C. C2 D1 D2 O. .. .. .. ..
+.. .. .. .. O. D1 D2 C1 C. C. C. C. C. C. C. C. C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D1 D2 C1 C. C. C. C. C. C. C. C. C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D1 D2 C1 C. C. C. C. C. C. C. C. C2 D1 D2 O. .. .. .. ..
+.. .. .. .. O. D1 D2 C1 C. C. C2 C2 C2 C2 C. C. C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D1 D2 C1 C. C. C2 C2 C2 C2 C. C. C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D1 D2 C1 C. C. C2 C2 C2 C2 C. C. C2 D1 D2 O. .. .. .. ..
+.. .. .. .. O. D1 D2 C1 C. C2 R1 R1 R1 R2 C1 C. C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D2 D2 C1 C. C2 R1 R1 R1 R2 C1 C. C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D1 D2 C1 C. C2 R1 R1 R1 R2 C1 C. C2 D2 D2 O. .. .. .. ..
+.. .. .. .. O. D2 D2 C1 C. C2 R2 R2 R2 R2 C1 C. C2 D2 D2 O. .. .. .. .. .. .. .. .. O. G1 G2 C1 C. C2 R2 R2 R2 R2 C1 C. C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D1 D2 C1 C. C2 R2 R2 R2 R2 C1 C. C2 G1 G2 O. .. .. .. ..
+.. .. .. .. O. G1 G2 C2 C. C. C1 C1 C1 C1 C. C. C2 G1 G2 O. .. .. .. .. .. .. .. .. O. G2 G2 C2 C. C. C1 C1 C1 C1 C. C. C2 D2 D2 O. .. .. .. .. .. .. .. .. O. D2 D2 C2 C. C. C1 C1 C1 C1 C. C. C2 G2 G2 O. .. .. .. ..
+.. .. .. .. O. G2 G2 O. C1 C. C. C. C. C. C. C2 O. G2 G2 O. .. .. .. .. .. .. .. .. .. O. O. O. C1 C. C. C. C. C. C. C2 O. G1 G2 O. .. .. .. .. .. .. .. .. O. G1 G2 O. C1 C. C. C. C. C. C. C2 O. O. W. O. .. .. .. ..
+.. .. .. .. .. O. O. O. C1 C. C. C. C. C. C. C2 O. O. W. O. .. .. .. .. .. .. .. .. .. .. .. O. C1 C. C. C. C. C. C. C2 O. G2 G2 O. .. .. .. .. .. .. .. .. O. G2 G2 O. C1 C. C. C. C. C. C. C2 O. O. W. O. O. .. .. ..
+.. .. .. .. .. .. .. O. C1 C. C. C. C. C. C. C2 O. O. W. O. O. .. .. .. .. .. .. .. .. .. .. O. C1 C. C. C. C. C. C. C2 O. O. W. O. .. .. .. .. .. .. .. .. .. O. O. O. C1 C. C. C. C. C. C. C2 O. M1 M1 M1 M2 O. .. ..
+.. .. .. .. .. .. .. O. C2 C2 C2 C2 C2 C2 C2 C2 O. M1 M1 M1 M2 O. .. .. .. .. .. .. .. .. .. O. C2 C2 C2 C2 C2 C2 C2 C2 O. O. W. O. O. .. .. .. .. .. .. .. .. .. .. O. C2 C2 C2 C2 C2 C2 C2 C2 O. M2 M2 M2 M2 O. .. ..
+.. .. .. .. .. .. .. O. P1 P1 P2 O. O. P1 P1 P2 O. M2 M2 M2 M2 O. .. .. .. .. .. .. .. .. .. O. P1 P1 P2 O. O. P2 P2 P2 O. M1 M1 M1 M2 O. .. .. .. .. .. .. .. .. .. O. P2 P2 P2 O. O. P1 P1 P2 O. O. O. O. O. .. .. ..
+.. .. .. .. .. .. .. O. P2 P2 P2 O. O. P2 P2 P2 O. O. O. O. O. .. .. .. .. .. .. .. .. .. .. O. P2 P2 P2 O. O. F2 F2 F2 F2 M2 M2 M2 M2 O. .. .. .. .. .. .. .. .. O. F2 F2 F2 F2 O. O. P2 P2 P2 O. .. .. .. .. .. .. ..
+.. .. .. .. .. .. O. F2 F2 F2 F2 O. O. F2 F2 F2 F2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. F2 F2 F2 F2 O. .. O. O. O. O. O. O. O. O. .. .. .. .. .. .. .. .. .. .. O. O. O. O. .. O. F2 F2 F2 F2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. .. O. O. O. O. .. .. O. O. O. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. O. O. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. O. O. O. .. .. .. .. .. .. ..
+.. .. .. .. .. .. .. .. O. .. .. O. .. .. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. .. .. O. .. .. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. .. .. O. .. .. O. .. .. .. .. .. .. .. .. ..
+.. .. .. .. .. .. .. O. H2 O. O. H2 O. O. H2 O. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. H2 O. O. H2 O. O. H2 O. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. H2 O. O. H2 O. O. H2 O. O. .. .. .. .. .. .. ..
+.. .. .. .. .. .. O. H1 H. H1 H1 H. H1 H1 H. H1 H2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H1 H1 H. H1 H1 H. H1 H2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H1 H1 H. H1 H1 H. H1 H2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. ..
+.. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H. H. H2 O. .. .. .. .. ..
+.. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H. H. H2 O. .. .. .. .. ..
+.. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H. H. H2 O. .. .. .. .. ..
+.. .. .. .. .. O. H2 H. H. H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. O. H2 H. H. H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. O. H2 H. H. H. H. H. H. H. H. H. H. H2 O. .. .. .. .. ..
+.. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H. H2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. O. H2 H2 H2 H2 H2 H2 H2 H2 H2 H2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H2 H2 H2 H2 H2 H2 H2 H2 H2 H2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H2 H2 H2 H2 H2 H2 H2 H2 H2 H2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. .. O. O. S2 S1 S1 S1 S1 S2 O. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. O. S2 S1 S1 S1 S1 S2 O. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. O. S2 S1 S1 S1 S1 S2 O. O. .. .. .. .. .. .. ..
+.. .. .. .. .. .. .. .. O. O. S2 S2 S2 S2 O. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. O. S2 S2 S2 S2 O. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. O. S2 S2 S2 S2 O. O. .. .. .. .. .. .. .. ..
+.. .. .. .. .. O. O. O. R2 C2 C1 C1 C1 C1 C2 R2 O. O. O. .. .. .. .. .. .. .. .. .. .. O. O. O. R2 C2 C1 C1 C1 C1 C2 R2 O. O. O. .. .. .. .. .. .. .. .. .. .. O. O. O. R2 C2 C1 C1 C1 C1 C2 R2 O. O. O. .. .. .. .. ..
+.. .. .. .. O. D1 D2 C1 C2 R2 C2 C. C. C2 R2 C1 C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D1 D2 C1 C2 R2 C2 C. C. C2 R2 C1 C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D1 D2 C1 C2 R2 C2 C. C. C2 R2 C1 C2 D1 D2 O. .. .. .. ..
+.. .. .. .. O. D1 D2 C1 C. C2 R2 C2 C2 R2 C1 C. C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D1 D2 C1 C. C2 R2 C2 C2 R2 C1 C. C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D1 D2 C1 C. C2 R2 C2 C2 R2 C1 C. C2 D1 D2 O. .. .. .. ..
+.. .. .. .. O. D1 D2 C1 C. C. C2 R1 R2 C1 C. C. C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D1 D2 C1 C. C. C2 R1 R2 C1 C. C. C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D1 D2 C1 C. C. C2 R1 R2 C1 C. C. C2 D1 D2 O. .. .. .. ..
+.. .. .. .. O. D1 D2 C1 C. C. C2 R2 R2 C1 C. C. C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D1 D2 C1 C. C. C2 R2 R2 C1 C. C. C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D1 D2 C1 C. C. C2 R2 R2 C1 C. C. C2 D1 D2 O. .. .. .. ..
+.. .. .. .. O. D1 D2 C1 C. C. C. C1 C1 C. C. C. C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D1 D2 C1 C. C. C. C1 C1 C. C. C. C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D1 D2 C1 C. C. C. C1 C1 C. C. C. C2 D1 D2 O. .. .. .. ..
+.. .. .. .. O. D1 D2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D2 D2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 D1 D2 O. .. .. .. .. .. .. .. .. O. D1 D2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 D2 D2 O. .. .. .. ..
+.. .. .. .. O. D2 D2 R2 R2 R2 R2 R2 R2 R2 R2 R2 R2 D2 D2 O. .. .. .. .. .. .. .. .. O. G1 G2 R2 R2 R2 R2 R2 R2 R2 R2 R2 R2 D1 D2 O. .. .. .. .. .. .. .. .. O. D1 D2 R2 R2 R2 R2 R2 R2 R2 R2 R2 R2 G1 G2 O. .. .. .. ..
+.. .. .. .. O. G1 G2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 G1 G2 O. .. .. .. .. .. .. .. .. O. G2 G2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 D2 D2 O. .. .. .. .. .. .. .. .. O. D2 D2 C2 C2 C2 C2 C2 C2 C2 C2 C2 C2 G2 G2 O. .. .. .. ..
+.. .. .. .. O. G2 G2 O. P1 P1 P1 P1 P1 P1 P1 P2 O. G2 G2 O. .. .. .. .. .. .. .. .. .. O. O. O. P1 P1 P1 P1 P1 P1 P1 P2 O. G1 G2 O. .. .. .. .. .. .. .. .. O. G1 G2 O. P1 P1 P1 P1 P1 P1 P1 P2 O. O. O. .. .. .. .. ..
+.. .. .. .. .. O. O. O. P1 P. P. P2 P2 P. P. P2 O. O. O. .. .. .. .. .. .. .. .. .. .. .. .. O. P1 P. P. P2 P2 P. P. P2 O. G2 G2 O. .. .. .. .. .. .. .. .. O. G2 G2 O. P1 P. P. P2 P2 P. P. P2 O. .. .. .. .. .. .. ..
+.. .. .. .. .. .. .. O. P1 P. P2 O. O. P1 P. P2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. P1 P. P2 O. O. P1 P. P2 O. O. O. .. .. .. .. .. .. .. .. .. .. O. O. O. P1 P. P2 O. O. P1 P. P2 O. .. .. .. .. .. .. ..
+.. .. .. .. .. .. .. O. P1 P. P2 O. O. P1 P. P2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. P1 P. P2 O. O. P1 P. P2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. P1 P. P2 O. O. P1 P. P2 O. .. .. .. .. .. .. ..
+.. .. .. .. .. .. .. O. P1 P. P2 O. O. P1 P. P2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. P1 P. P2 O. O. P2 P2 P2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. P2 P2 P2 O. O. P1 P. P2 O. .. .. .. .. .. .. ..
+.. .. .. .. .. .. .. O. P2 P2 P2 O. O. P2 P2 P2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. P2 P2 P2 O. O. F2 F2 F2 F2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. F2 F2 F2 F2 O. O. P2 P2 P2 O. .. .. .. .. .. .. ..
+.. .. .. .. .. .. O. F2 F2 F2 F2 O. O. F2 F2 F2 F2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. F2 F2 F2 F2 O. .. O. O. O. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. O. O. O. .. O. F2 F2 F2 F2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. .. O. O. O. O. .. .. O. O. O. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. O. O. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. O. O. O. .. .. .. .. .. .. ..
+.. .. .. .. .. .. .. .. .. .. O. .. .. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. .. .. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. .. .. O. .. .. .. .. .. .. .. .. .. ..
+.. .. .. .. .. .. .. .. O. O. H2 O. O. H2 O. O. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. O. H2 O. O. H2 O. O. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. O. H2 O. O. H2 O. O. O. .. .. .. .. .. .. ..
+.. .. .. .. .. .. .. O. H1 H1 H. H1 H1 H. H1 H1 H2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H1 H. H1 H1 H. H1 H1 H2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H1 H. H1 H1 H. H1 H1 H2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H. H. H. H. H. H2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. .. O. H1 H. H. H2 H2 H2 H2 H2 H2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H2 H2 H2 H2 H2 H2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H. H2 H2 H2 H2 H2 H2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. .. O. H1 H. H2 S1 S1 S1 S1 S1 S2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H2 S1 S1 S1 S1 S1 S2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H2 S1 S1 S1 S1 S1 S2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. .. O. H1 H. H2 S1 S. S. S. S. S2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H2 S1 S. S. S. S. S2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H2 S1 S. S. S. S. S2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. O. S2 H1 H. H2 S1 S. S. S. S2 S. S2 O. .. .. .. .. .. .. .. .. .. .. .. O. S2 H1 H. H2 S1 S. S. S. S2 S. S2 O. .. .. .. .. .. .. .. .. .. .. .. O. S2 H1 H. H2 S1 S. S. S. S2 S. S2 O. .. .. .. .. ..
+.. .. .. .. .. .. .. O. H1 H. H2 S1 S. S2 S2 E. S2 S2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H2 S1 S. S2 S2 E. S2 S2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H2 S1 S. S2 S2 E. S2 S2 O. .. .. .. .. ..
+.. .. .. .. .. .. .. O. H1 H. H2 S1 S2 B1 B1 B1 B1 B2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H2 S1 S2 B1 B1 B1 B1 B2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H1 H. H2 S1 S2 B1 B1 B1 B1 B2 O. .. .. .. .. ..
+.. .. .. .. .. .. .. O. H2 H2 H2 S1 S2 B1 B. B. B. B2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H2 H2 H2 S1 S2 B1 B. B. B. B2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. H2 H2 H2 S1 S2 B1 B. B. B. B2 O. .. .. .. .. ..
+.. .. .. .. .. .. .. .. O. S2 S1 S. S2 B1 B. B. B. B2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. O. S2 S1 S. S2 B1 B. B. B. B2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. O. S2 S1 S. S2 B1 B. B. B. B2 O. .. .. .. .. ..
+.. .. .. .. .. .. .. .. .. O. S2 S. S2 B1 B. B. B. B2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. S2 S. S2 B1 B. B. B. B2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. S2 S. S2 B1 B. B. B. B2 O. .. .. .. .. ..
+.. .. .. .. .. .. .. .. .. .. O. S2 S2 B1 B. B. B. B2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. S2 S2 B1 B. B. B. B2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. S2 S2 B1 B. B. B. B2 O. .. .. .. .. ..
+.. .. .. .. .. .. .. .. .. O. C1 C2 C2 B2 B. B. B. B2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. C1 C1 C2 B2 B. B. B. B2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. C2 C2 C2 B2 B. B. B. B2 O. .. .. .. .. ..
+.. .. .. .. .. .. .. .. O. C1 C2 D1 D2 C2 B2 B2 B2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. C1 C. C2 D1 D2 B2 B2 B2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. C2 D1 D2 C1 C2 B2 B2 B2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. .. .. O. C1 C2 D1 D2 C1 C1 C1 C2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. C1 C. C2 D1 D2 C1 C1 C2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. C2 D1 D2 C1 C. C1 C1 C2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. .. .. O. C1 C2 D1 D2 C1 C. C. C2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. C1 C. C2 D1 D2 C1 C. C2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. C2 D1 D2 C1 C. C. C. C2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. .. .. O. C1 C2 D1 D2 C1 C. C. C2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. C1 C. C2 D1 D2 C1 C. C2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. C2 D1 D2 C1 C. C. C. C2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. .. .. O. C1 C2 D1 D2 C1 C. C. C2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. C1 C. C2 D2 D2 C1 C. C2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. C2 D1 D2 C1 C. C. C. C2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. .. .. O. C1 C2 D1 D2 C1 C. C. C2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. C1 C. C. C2 D2 C1 C. C2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. D2 D2 C1 C. C. C. C. C2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. .. .. O. C1 C2 D2 D2 C1 C. C. C2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. C1 C. C. C. C1 C. C. C2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. O. G1 G2 C1 C. C. C. C. C. C2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. .. .. O. C2 C2 G1 G2 C2 C. C. C2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. C2 C2 C2 C2 C2 C2 C. C2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. O. G2 G2 C2 C2 C2 C2 C. C. C2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. .. .. .. O. O. G2 G2 P2 C1 C. C2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. P1 P1 P1 P2 W. C1 C2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. O. W. O. P1 P1 P1 P2 C1 C. C2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. .. .. .. .. O. W. P1 P2 C1 C. C2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. P1 P. P. P2 W. C2 C2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. O. W. O. P2 P. P. P2 C1 C. C2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. .. .. .. .. O. W. P2 P2 C1 C. C2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. P1 P. P2 M1 M1 M1 M2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. M1 M1 M1 M2 P1 P. P2 C1 C. C2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. .. .. .. O. M1 M1 M1 M2 C2 C2 C2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. P1 P. P2 O. M2 M2 M2 M2 O. .. .. .. .. .. .. .. .. .. .. .. .. O. M2 M2 M2 M2 P1 P. P2 C2 C2 C2 O. .. .. .. .. .. ..
+.. .. .. .. .. .. .. .. .. O. M2 M2 M2 M2 O. O. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. P1 P. P2 O. P1 P1 P2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. O. O. P2 P. P. P2 O. O. O. .. .. .. .. .. .. ..
+.. .. .. .. .. .. .. .. .. .. O. P2 P2 P2 O. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. O. P2 P2 P2 O. P2 P2 P2 O. O. .. .. .. .. .. .. .. .. .. .. .. .. .. O. F2 F2 F2 P2 P2 P2 O. O. .. .. .. .. .. .. .. ..
+.. .. .. .. .. .. .. .. .. .. O. F2 F2 F2 F2 F2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. O. F2 F2 F2 F2 O. O. F2 F2 F2 F2 F2 O. .. .. .. .. .. .. .. .. .. .. .. .. .. O. O. O. F2 F2 F2 F2 F2 O. .. .. .. .. .. .. ..
+.. .. .. .. .. .. .. .. .. .. .. O. O. O. O. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. O. O. O. .. .. O. O. O. O. O. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. O. O. O. O. O. .. .. .. .. .. .. .. ..

@@ -1,13 +1,21 @@
-# oldMan - NPC andando (3 direcoes x 3 frames de 16x24)
-O=#120c10
-SK=#e0a07a
-KD=#b8764e
-EY=#1a1210
-HR=#e0dcd6
-RD=#aca8a2
-C1=#6a4a2e
-1D=#4a321e
-LG=#4a4a52
-GD=#34343a
-SH=#2a1c14
-CN=#8a5a2a
+# oldMan - NPC da cidade (3 direcoes x 3 frames de 24x32)
+O=#160e1a
+S=#e0a07a
+S1=#edb38a
+S2=#986a62
+E=#241814
+Y=#6a5448
+N=#b8764e
+H=#e4e0da
+H1=#f0e6de
+H2=#9b94a9
+C=#6e4e30
+C1=#947149
+C2=#4b332c
+P=#4e4e56
+P1=#7b716a
+P2=#353348
+F=#2e1e16
+F1=#624b32
+F2=#1f1418
+W=#8e5e2c

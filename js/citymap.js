@@ -1,6 +1,6 @@
 /* ---------------------------------------------------------------------
    CITY MAP MODULE (citymap.js)
-   Tela da Cidade como mapa: a arte da vila (CITY_MAP.image) com as placas
+   Tela da Cidade como mapa: a arte da vila (CITY_MAP.images) com as placas
    dos prédios por cima (os mesmos <button> de antes — cliques, travas e
    progresso continuam em ui.js/onboarding.js), os moradores de
    CITY_MAP.npcs andando pela praça num <canvas>, a fonte clicável (depósito
@@ -10,7 +10,7 @@
    Todo texto vindo de dados entra por textContent (nunca innerHTML).
 --------------------------------------------------------------------- */
 const CityMapModule = {
-  FRAME_W: 16, FRAME_H: 24,
+  FRAME_W: CITY_MAP.frameW, FRAME_H: CITY_MAP.frameH,
   STEP_MS: 150,          // duração de cada frame da caminhada
   BUBBLE_MS: 3500,       // quanto tempo o balão de fala fica na tela
   FADE_MS: 1200,         // morador entrando/saindo de cena (horário)
@@ -31,8 +31,12 @@ const CityMapModule = {
     this.canvas = document.getElementById('cityMapCanvas');
     this.ctx = this.canvas.getContext('2d');
     this.bubble = document.getElementById('cityMapBubble');
-    this.bgEl = document.getElementById('cityMapBg');
-    this.skyEl = document.getElementById('cityMapSky');
+    this.dayEl = document.getElementById('cityMapDay');
+    this.duskEl = document.getElementById('cityMapDusk');
+    // as 3 pinturas vêm do config (o HTML só tem um fallback)
+    document.getElementById('cityMapBg').src = CITY_MAP.images.night;
+    this.dayEl.src = CITY_MAP.images.day;
+    this.duskEl.src = CITY_MAP.images.dusk;
     this.tintEl = document.getElementById('cityMapTint');
     this.clockEl = document.getElementById('cityMapClock');
     this.dayTime = CITY_MAP.startTime || 0;
@@ -76,6 +80,12 @@ const CityMapModule = {
     this.active = on;
     if(!on) this.hideBubble();
     this.updateLoop();
+    // tela alta (celular em pé): o mapa é mais largo que a janela e rola na
+    // horizontal — abre centralizado na praça
+    if(on) requestAnimationFrame(() => {
+      const sc = this.mapEl.parentElement;
+      if(sc && sc.scrollWidth > sc.clientWidth) sc.scrollLeft = (sc.scrollWidth - sc.clientWidth) / 2;
+    });
   },
   updateLoop(){
     const run = this.active && !document.hidden;
@@ -126,8 +136,10 @@ const CityMapModule = {
     if(t >= p.duskStart && t < p.nightStart) return 'Entardecer';
     return 'Noite';
   },
-  // A arte é noturna: o dia é ela clareada (filtro), com céu azul por cima
-  // e um tom quente no amanhecer/entardecer. Só mexe no DOM quando muda.
+  // Três versões da mesma arte empilhadas: noite (original, embaixo), dia e
+  // entardecer (geradas por tools/gen_city_daylight.py). O dia aparece com
+  // a luz do dia; o entardecer (que também serve de amanhecer) aparece por
+  // cima dele no pico das transições. Só mexe no DOM quando muda.
   applyDaylight(force){
     const t = this.dayTime, d = this.daylightAt(t);
     const p = CITY_MAP.dayPhases;
@@ -136,22 +148,42 @@ const CityMapModule = {
     const bump = (a, b) => Math.max(0, 1 - Math.abs(t - mid(a, b)) / (half(a, b) * 1.4));
     const warm = Math.max(bump(p.dawnStart, p.dayStart), bump(p.duskStart, p.nightStart));
     this.daylight = d;
-    const key = `${d.toFixed(3)}|${warm.toFixed(3)}`;
+    // inclui a posição do ponteiro (1/128 do dia), senão ele pararia em pleno dia/noite
+    const key = `${d.toFixed(3)}|${warm.toFixed(3)}|${Math.floor(t * 128)}`;
     if(!force && key === this.lastDaylightKey) return;
     this.lastDaylightKey = key;
-    this.bgEl.style.filter = `brightness(${(1 + 1.0 * d).toFixed(3)}) saturate(${(1 - 0.12 * d + 0.25 * warm).toFixed(3)}) contrast(${(1 - 0.06 * d).toFixed(3)})`;
-    this.skyEl.style.opacity = (0.7 * d).toFixed(3);
-    // tom da luz: laranja no amanhecer/entardecer, branco-quente de dia,
-    // azul escuro no fundo da noite
-    const night = 1 - d;
-    const r = Math.round(255 * warm + 255 * d * (1 - warm) + 30 * night * (1 - warm));
-    const g = Math.round(130 * warm + 236 * d * (1 - warm) + 40 * night * (1 - warm));
-    const b = Math.round(60 * warm + 200 * d * (1 - warm) + 110 * night * (1 - warm));
-    const a = 0.5 * warm + 0.12 * d * (1 - warm) + 0.28 * night * (1 - warm);
-    this.tintEl.style.backgroundColor = `rgba(${r},${g},${b},${a.toFixed(3)})`;
+    this.dayEl.style.opacity = d.toFixed(3);
+    this.duskEl.style.opacity = Math.min(1, warm * 1.15).toFixed(3);
+    // brilho quente leve por cima no auge do amanhecer/entardecer
+    this.tintEl.style.backgroundColor = `rgba(255,150,80,${(0.12 * warm).toFixed(3)})`;
+    // relógio: só o desenho — o nome da fase fica no title/aria-label
     const phase = this.phaseName(t);
-    this.clockEl.textContent = phase;
-    this.clockEl.dataset.phase = phase === 'Dia' || phase === 'Amanhecer' ? 'sun' : 'moon';
+    this.clockEl.title = phase;
+    this.clockEl.setAttribute('aria-label', 'Hora do dia: ' + phase);
+    this.drawClockHand(t);
+  },
+
+  // Ponteiro do relógio num canvas 32x32 por cima do mostrador
+  // (art/ui/clock-dial): 0 = meia-noite embaixo, horário, meio-dia em cima.
+  // Desenhado pixel a pixel (contorno escuro + dourado), então fica nítido
+  // ampliado junto com o mostrador.
+  drawClockHand(t){
+    const ctx = this.clockCtx || (this.clockCtx = document.getElementById('cityMapClockHand').getContext('2d'));
+    const ang = t * Math.PI * 2, dx = -Math.sin(ang), dy = Math.cos(ang);
+    const cx = 15.5, cy = 15.5, len = 10.5;
+    const pts = [];
+    for(let i = 0; i <= len; i += 0.5) pts.push([Math.floor(cx + dx * i), Math.floor(cy + dy * i)]);
+    ctx.clearRect(0, 0, 32, 32);
+    ctx.fillStyle = '#0d0a12';
+    for(const [x, y] of pts) ctx.fillRect(x - 1, y - 1, 3, 3);
+    ctx.fillRect(14, 14, 4, 4);
+    ctx.fillStyle = '#e0a52a';
+    for(const [x, y] of pts) ctx.fillRect(x, y, 1, 1);
+    const [tx, ty] = pts[pts.length - 1];
+    ctx.fillStyle = '#fff3b0';
+    ctx.fillRect(tx, ty, 1, 1);
+    ctx.fillStyle = '#ffd54a';
+    ctx.fillRect(15, 15, 2, 2);
   },
 
   // ---- moradores ----
@@ -230,7 +262,9 @@ const CityMapModule = {
         ctx.fillRect(r.x * s - 3 * s, (r.y - 18 - 30 * k) * s, 6 * s, 6 * s);
       }
     }
-    const k = CITY_MAP.spriteScale * s; // px do canvas por pixel de arte
+    // px do canvas por pixel de arte, INTEIRO: escala quebrada deixava uns
+    // pixels maiores que outros e o traço borrado
+    const k = Math.max(1, Math.round(CITY_MAP.spriteScale * s));
     const w = this.FRAME_W * k, h = this.FRAME_H * k;
     // luz do ambiente também nos moradores
     const light = 0.78 + 0.3 * this.daylight;

@@ -1,12 +1,20 @@
-# oldWoman - NPC andando (3 direcoes x 3 frames de 16x24)
-O=#120c10
-SK=#e0a07a
-KD=#b8764e
-EY=#1a1210
-HR=#d8d4d0
-RD=#a8a4a0
-C1=#3a3448
-1D=#26222f
-SW=#8a6a9a
-WX=#644a72
-SH=#2a1c14
+# oldWoman - NPC da cidade (3 direcoes x 3 frames de 24x32)
+O=#160e1a
+S=#e0a07a
+S1=#edb38a
+S2=#986a62
+E=#241814
+Y=#6a5448
+N=#b8764e
+H=#dcd8d4
+H1=#eae0d9
+H2=#968fa5
+C=#3e3850
+C1=#6e6065
+C2=#2a2543
+D=#9270a2
+D1=#b08dad
+D2=#634a80
+F=#2e1e16
+F1=#624b32
+F2=#1f1418

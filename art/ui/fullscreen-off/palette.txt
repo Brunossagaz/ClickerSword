@@ -1,0 +1,4 @@
+# fullscreen-off - icone do HUD
+O=#160e1a
+W=#ece6f6
+G=#ffd54a

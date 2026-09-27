@@ -1,13 +1,24 @@
-# kidGirl - NPC andando (3 direcoes x 3 frames de 16x24)
-O=#120c10
-SK=#eaa878
-KD=#c47a52
-EY=#1a1210
-HR=#f0c850
-RD=#c89a30
-C1=#c83a3a
-1D=#8e2626
-C2=#f4e8d0
-LG=#eaa878
-GD=#c47a52
-SH=#8e2626
+# kidGirl - NPC da cidade (3 direcoes x 3 frames de 24x32)
+O=#160e1a
+S=#eaa878
+S1=#f5b988
+S2=#9f6f61
+E=#241814
+Y=#6a5448
+N=#c47a52
+H=#f2c850
+H1=#fbd365
+H2=#a58443
+C=#cc3c3c
+C1=#dd6353
+C2=#8b2834
+D=#f6ecd8
+D1=#fef0dd
+D2=#a79ca8
+A=#ff8ab0
+P=#cc3c3c
+P1=#dd6353
+P2=#8b2834
+F=#8e2626
+F1=#ad5140
+F2=#611924

@@ -1,0 +1,20 @@
+# clock-dial - relogio do dia (noite embaixo, dia em cima)
+K=#0d0a12
+G1=#ffd54a
+G3=#8a5e1c
+SD=#6fb2e8
+DD=#4a86c0
+SA=#e8927a
+AD=#b8665a
+SE=#c8607a
+ED=#8e3e62
+SN=#1e2a5a
+ND=#131a3c
+ST=#dfe6ff
+SU=#ffd54a
+SH=#fff3b0
+MO=#e8ecff
+MC=#a8b0cc
+SR=#ffb04a
+SS=#ff7a3a
+HZ=#3a2a1a

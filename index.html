@@ -15,6 +15,15 @@
 </head>
 <body>
 
+<!-- Tela de carregamento (ver LoadingModule, js/loading.js): cobre tudo até
+     as imagens do jogo estarem decodificadas, e reaparece rápido nas trocas
+     de tela do menu. Visível desde o primeiro quadro (sem depender de JS). -->
+<div class="loading-screen" id="loadingScreen" role="status" aria-live="polite">
+  <div class="loading-stage"><div class="loading-slime"></div><div class="loading-shadow"></div></div>
+  <div class="loading-text">Carregando...</div>
+  <div class="loading-bar"><div class="loading-fill" id="loadingFill"></div></div>
+</div>
+
 <div class="bg-scene" aria-hidden="true">
   <div class="bg-scene__base"></div>
   <div class="bg-scene__smoke"></div>
@@ -25,8 +34,15 @@
   <button class="pre-splash__cta" id="preSplashStartBtn">COMECE A JOGAR</button>
 </div>
 
+<!-- Botões fixos no canto da tela durante o jogo: mochila (inventário), tela
+     cheia e configurações. -->
+<div class="hud-corner" id="hudCorner">
+  <button class="hud-btn" id="inventoryToggleBtn" title="Inventário" aria-label="Inventário"><span class="hud-icon hud-icon-backpack"></span></button>
+  <button class="hud-btn" id="fullscreenBtn" title="Tela cheia" aria-label="Tela cheia"><span class="hud-icon hud-icon-fullscreen"></span></button>
+  <button class="gear-btn hud-btn" id="settingsGearBtn" title="Configurações" aria-label="Configurações"><div class="icon icon-gear"></div></button>
+</div>
+
 <div class="title-bar">
-  <button class="gear-btn" id="settingsGearBtn" title="Configurações"><div class="icon icon-gear"></div></button>
   <h1>BEYOND THE GATE</h1>
   <div class="player-name-tag" id="playerNameTag" style="display:none;"></div>
 </div>
@@ -146,7 +162,7 @@
       <div style="margin-bottom:14px;">Sair da dungeon agora? Você vai perder o progresso deste ciclo e vai recomeçar do início dele na próxima vez.</div>
       <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
         <button class="ascend-btn" id="leaveConfirmYesBtn">SIM, SAIR</button>
-        <button class="danger-btn" id="leaveConfirmNoBtn">Cancelar</button>
+        <button class="danger-btn" id="leaveConfirmNoBtn" data-esc>Cancelar</button>
       </div>
     </div>
   </div>
@@ -534,7 +550,7 @@
 </div>
 
 <div class="game-shell" id="gameShell">
-  <aside class="sidebar-inventory expanded" id="sidebarInventory">
+  <aside class="sidebar-inventory" id="sidebarInventory">
     <button class="sidebar-toggle-btn" id="sidebarToggleBtn" title="Mostrar/esconder inventário">
       <div class="icon icon-inventario"></div>
       <span class="sidebar-toggle-label">Inventário</span>
@@ -592,11 +608,14 @@
       <div class="city-map-scroll">
       <div class="city-map" id="cityMap">
         <img class="city-map-bg" id="cityMapBg" src="assets/backgrounds/dungeon-wallpaper.png" alt="Praça da cidade" draggable="false">
-        <!-- luz do ciclo de dia e noite (ver CityMapModule.applyDaylight) -->
-        <div class="city-map-sky" id="cityMapSky"></div>
+        <!-- ciclo de dia e noite (ver CityMapModule.applyDaylight): pinturas de
+             dia e de entardecer da mesma cena (CITY_MAP.images), aparecendo
+             por cima da noite conforme a hora -->
+        <img class="city-map-bg city-map-layer" id="cityMapDay" src="assets/backgrounds/dungeon-wallpaper2.png" alt="" draggable="false">
+        <img class="city-map-bg city-map-layer" id="cityMapDusk" src="assets/backgrounds/city-dusk.png" alt="" draggable="false">
         <div class="city-map-tint" id="cityMapTint"></div>
         <canvas class="city-map-npcs" id="cityMapCanvas"></canvas>
-        <div class="city-map-clock" id="cityMapClock"></div>
+        <div class="city-map-clock" id="cityMapClock" role="img" aria-label="Hora do dia"><img src="assets/ui/clock-dial.png" alt="" draggable="false"><canvas id="cityMapClockHand" width="32" height="32"></canvas></div>
         <button class="building-card map-sign map-sign-fountain" id="openFountainBtn" aria-label="Fonte - Jogue moedas"><span class="map-sign-name">Fonte</span></button>
         <button class="building-card map-sign building-ferreiro" id="openFerreiroBtn" aria-label="Ferreiro - Compre armas"><span class="map-sign-name">Ferreiro</span></button>
         <button class="building-card map-sign building-guilda" id="openGuildaBtn" aria-label="Guilda - Tropas automáticas"><span class="map-sign-name">Guilda</span></button>
@@ -666,6 +685,8 @@
 <script src="js/upgrades.js"></script>
 <script src="js/prestige.js"></script>
 <script src="js/settings.js"></script>
+<script src="js/loading.js"></script>
+<script src="js/hud.js"></script>
 <script src="js/achievements.js"></script>
 <script src="js/citymap.js"></script>
 <script src="js/ui.js"></script>

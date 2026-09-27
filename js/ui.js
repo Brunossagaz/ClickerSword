@@ -12,6 +12,7 @@ const UI = {
     this.ctx = this.canvas.getContext('2d');
     this.canvas.parentElement.addEventListener('click', (e)=>PlayerModule.handleClick(e));
     CityMapModule.init();
+    HudModule.init();
     this.initModalBodyLock();
 
     document.getElementById('ascendBtn').addEventListener('click', ()=>PrestigeModule.ascend());
@@ -316,6 +317,11 @@ const UI = {
   // mantêm nome/assinatura de antes, então dungeons.js/monster.js/main.js não
   // precisam mudar.
   showScreen(id){
+    // troca de tela no menu (abrir menu, seletor de save, entrar no jogo):
+    // cobre com a tela de carregamento enquanto o layout novo monta
+    const MENU = ['view-mainmenu', 'view-slotpicker'];
+    if(this.currentScreen && this.currentScreen !== id && (MENU.includes(id) || MENU.includes(this.currentScreen))) LoadingModule.flash();
+    this.currentScreen = id;
     ['view-mainmenu','view-slotpicker','view-city','view-dungeon'].forEach(vid=>{
       document.getElementById(vid).classList.toggle('active', vid===id);
     });
@@ -329,6 +335,9 @@ const UI = {
     // Cidade vira mapa largo com NPCs animados (ver CityMapModule) — a
     // animação só roda enquanto essa tela está visível
     document.body.classList.toggle('screen-city', id==='view-city');
+    document.body.classList.toggle('screen-dungeon', id==='view-dungeon');
+    // mochila/inventário só existem durante o jogo; fecha ao sair
+    if(id!=='view-city' && id!=='view-dungeon') HudModule.toggleInventory(false);
     CityMapModule.setActive(id==='view-city');
   },
   showMainMenu(){ this.showScreen('view-mainmenu'); },

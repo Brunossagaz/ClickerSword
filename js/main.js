@@ -88,6 +88,7 @@ function tick(){
 }
 
 function boot(){
+  LoadingModule.start(); // tela de carregamento até as imagens/fontes estarem prontas
   UI.init();
   Sprites.startBlinkLoop();
   MainMenuModule.init();

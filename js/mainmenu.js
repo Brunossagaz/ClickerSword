@@ -15,7 +15,13 @@ const MainMenuModule = {
   pendingSlot: null,
 
   init(){
-    document.getElementById('preSplashStartBtn').addEventListener('click', ()=>document.body.classList.add('game-started'));
+    // 'COMECE A JOGAR': entra em tela cheia (o clique é o gesto que o
+    // navegador exige) e mostra o menu por trás da tela de carregamento
+    document.getElementById('preSplashStartBtn').addEventListener('click', ()=>{
+      HudModule.enterFullscreen();
+      LoadingModule.flash();
+      document.body.classList.add('game-started');
+    });
     document.getElementById('menuNewGameBtn').addEventListener('click', ()=>UI.showSlotPicker());
     document.getElementById('menuContinueBtn').addEventListener('click', ()=>UI.showSlotPicker());
     document.getElementById('menuSettingsBtn').addEventListener('click', ()=>UI.openSettingsModal());
