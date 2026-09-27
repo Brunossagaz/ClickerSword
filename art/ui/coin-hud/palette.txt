@@ -1,0 +1,10 @@
+# coin-hud - icone do HUD (24x24, relevo sombreado)
+OL=#0b0810
+A0=#f7c84a
+A1=#dc9a28
+A2=#a86a1a
+A3=#6e4212
+A4=#fff1a8
+A5=#3a1f06
+A6=#c4463c
+A7=#e87460

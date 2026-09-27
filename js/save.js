@@ -155,7 +155,7 @@ const SaveModule = {
       for(const key of Object.keys(fresh.dungeons)){
         const src = raw.dungeons[key];
         if(!isObj(src)) continue;
-        const d = numMap(src, ['killCount', 'maxCycleCompleted', 'repeatRemaining']);
+        const d = numMap(src, ['killCount', 'maxCycleCompleted', 'repeatRemaining', 'repeatTotal']);
         if(src.repeatCycleNum === null || isNum(src.repeatCycleNum)) d.repeatCycleNum = src.repeatCycleNum;
         if(src.repeatLootTotals === null) d.repeatLootTotals = null;
         else if(isObj(src.repeatLootTotals)) d.repeatLootTotals = numMap(src.repeatLootTotals, itemKeys);

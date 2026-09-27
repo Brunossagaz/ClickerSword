@@ -22,7 +22,7 @@ const LoadingModule = {
   imageList(){
     const ui = ['frame', 'frame-sm', 'btn', 'btn-hover', 'btn-press', 'btn-disabled', 'btn-active', 'btn-green', 'btn-green-hover',
       'btn-red', 'btn-red-hover', 'btn-orange', 'btn-orange-hover', 'slot', 'slot-active', 'close', 'close-hover', 'divider',
-      'clock-dial', 'backpack', 'fullscreen-on', 'fullscreen-off', 'frame-lg', 'title-plate', 'logo'].map(n => `assets/ui/${n}.png`);
+      'clock-dial', 'backpack', 'fullscreen-on', 'fullscreen-off', 'frame-lg', 'title-plate', 'logo', 'coin-hud', 'bestiary'].map(n => `assets/ui/${n}.png`);
     const icons = [...ITEM_DEFS, ...WEAPON_DEFS, ...FORGED_WEAPON_DEFS].map(d => `assets/icons/${d.icon}.png`)
       .concat(['gear', 'coin', 'lock', 'trophy', 'chest', 'menu-ribbon', 'tree-bg-tile', 'essence', 'boss', 'golden-monster',
         'ferreiro', 'guilda', 'caverna', 'loja', 'igreja', 'dungeon', 'academia', 'inventario'].map(n => `assets/icons/${n}.png`));

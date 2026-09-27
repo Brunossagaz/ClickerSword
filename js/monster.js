@@ -376,6 +376,7 @@ const MonsterModule = {
         if(d.repeatRemaining > 0){
           d.killCount = kpc * (justFinishedCycle - 1); // volta pro monstro 1 do ciclo repetido
           d.pendingSlot = null;
+          state.dungeonRun.elapsedMs = 0; // cada repetição recomeça com o tempo da Dungeon cheio
           this.spawn(false);
           UI.renderAll();
         } else {
@@ -384,11 +385,11 @@ const MonsterModule = {
           // seleção de Dungeons (ver UI.showRepeatCycleResultModal) — não
           // continua a run sozinho.
           const lootTotals = d.repeatLootTotals || {};
-          d.repeatCycleNum = null;
-          d.repeatLootTotals = null;
           const finishedDungeonKey = state.currentDungeon;
+          const info = DungeonModule.repeatInfo(finishedDungeonKey);
+          DungeonModule.clearRepeat(d);
           DungeonModule.leaveToCity();
-          UI.showRepeatCycleResultModal(finishedDungeonKey, lootTotals);
+          UI.showRepeatCycleResultModal(finishedDungeonKey, lootTotals, info);
         }
       } else {
         // fim de ciclo normal: avança pro próximo automaticamente, sem

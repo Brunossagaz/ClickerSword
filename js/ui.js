@@ -32,12 +32,7 @@ const UI = {
     });
     document.getElementById('leaveConfirmYesBtn').addEventListener('click', ()=>{
       document.getElementById('leaveConfirmModal').classList.remove('open');
-      // guarda o loot e o nome da Dungeon antes de sair (leaveToCity zera currentDungeon)
-      const leftKey = state.currentDungeon;
-      const leftLoot = Object.assign({}, state.dungeonRun.loot);
-      setTimeout(()=>UI.showLootSummaryModal(`SAIU DA DUNGEON — ${MAPS[leftKey].name}`, 'Total obtido nesta entrada:', leftLoot), 0);
-      MonsterModule.abandonCycle();
-      DungeonModule.leaveToCity();
+      DungeonModule.leaveWithSummary('SAIU DA DUNGEON');
     });
     document.getElementById('leaveConfirmNoBtn').addEventListener('click', ()=>{
       document.getElementById('leaveConfirmModal').classList.remove('open');
@@ -49,7 +44,7 @@ const UI = {
     });
     document.getElementById('timeUpLeaveBtn').addEventListener('click', ()=>{
       document.getElementById('timeUpModal').classList.remove('open');
-      DungeonModule.leaveToCity();
+      DungeonModule.leaveWithSummary('TEMPO ESGOTADO');
     });
 
     // Prédios da cidade: cada um abre um modal por cima da cena, igual ao
@@ -686,8 +681,9 @@ const UI = {
   // da tela de seleção de Dungeons (pra onde o jogador já foi devolvido por
   // DungeonModule.leaveToCity) com o total de cada item dropado durante as
   // repetições.
-  showRepeatCycleResultModal(key, totals){
-    this.showLootSummaryModal(`CICLOS CONCLUÍDOS — ${MAPS[key].name}`, 'Loot total coletado nas repetições:', totals);
+  showRepeatCycleResultModal(key, totals, info){
+    const sub = info ? `Repetir Ciclo ${info.cycle}: ${info.done} de ${info.total} ciclo(s) concluído(s). Loot total:` : 'Loot total coletado nas repetições:';
+    this.showLootSummaryModal(`CICLOS CONCLUÍDOS — ${MAPS[key].name}`, sub, totals);
   },
   // Mesmo modal, genérico — também usado quando o tempo da Dungeon acaba
   // (ver DungeonModule.onRunTimeUp).

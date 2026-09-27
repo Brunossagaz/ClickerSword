@@ -31,6 +31,7 @@ const DungeonModule = {
     OnboardingModule.announceAcademiaIfNeeded();
     state.dungeons[key].repeatCycleNum = null; // entrada manual cancela qualquer Repetir Ciclo pendente
     state.dungeons[key].repeatRemaining = 0;
+    state.dungeons[key].repeatTotal = 0;
     state.dungeons[key].repeatLootTotals = null;
     this._enterAt(key, state.dungeons[key].killCount);
   },
@@ -47,6 +48,7 @@ const DungeonModule = {
     d.pendingSlot = null; // descarta qualquer dupla em andamento de uma run anterior
     d.repeatCycleNum = null; // reinício manual (INICIAR) cancela Repetir Ciclo pendente
     d.repeatRemaining = 0;
+    d.repeatTotal = 0;
     d.repeatLootTotals = null;
     this._enterAt(key, (cycleNum - 1) * kpc);
   },
@@ -64,6 +66,7 @@ const DungeonModule = {
     this.startAtCycle(key, cycleNum);
     d.repeatCycleNum = cycleNum;
     d.repeatRemaining = Math.max(2, Math.min(50, Math.round(times) || 2));
+    d.repeatTotal = d.repeatRemaining;
     d.repeatLootTotals = {};
   },
   _enterAt(key, killCount){
@@ -94,14 +97,43 @@ const DungeonModule = {
   // mostra o loot de toda a entrada.
   onRunTimeUp(){
     const key = state.currentDungeon;
-    const d = state.dungeons[key];
     const loot = state.dungeonRun.loot;
+    const subtitle = this.summarySubtitle(key, 'Itens obtidos nesta entrada:');
     MonsterModule.abandonCycle();
+    this.clearRepeat(state.dungeons[key]);
+    this.leaveToCity();
+    UI.showLootSummaryModal(`TEMPO DA DUNGEON ESGOTADO — ${MAPS[key].name}`, subtitle, loot);
+  },
+  // "Repetir Ciclo" em andamento nesta Dungeon? { cycle, done, total } ou null
+  repeatInfo(key){
+    const d = state.dungeons[key];
+    if(!d || !d.repeatCycleNum) return null;
+    const total = d.repeatTotal || d.repeatRemaining || 0; // save antigo sem repeatTotal
+    return { cycle: d.repeatCycleNum, total, done: Math.max(0, total - (d.repeatRemaining || 0)) };
+  },
+  clearRepeat(d){
     d.repeatCycleNum = null;
     d.repeatRemaining = 0;
+    d.repeatTotal = 0;
     d.repeatLootTotals = null;
+  },
+  // subtítulo do resumo: com Repetir Ciclo ativo, diz quantos ciclos foram
+  // concluídos (independente de ter chegado ao total pedido)
+  summarySubtitle(key, fallback){
+    const r = this.repeatInfo(key);
+    if(!r) return fallback;
+    return `Repetir Ciclo ${r.cycle}: ${r.done} de ${r.total} ciclo(s) concluído(s). Itens obtidos:`;
+  },
+  // saída que encerra a entrada (botão, desistir no tempo esgotado): resumo
+  // do que foi obtido (+ ciclos concluídos, se estava repetindo)
+  leaveWithSummary(title){
+    const key = state.currentDungeon;
+    const loot = Object.assign({}, state.dungeonRun.loot);
+    const subtitle = this.summarySubtitle(key, 'Total obtido nesta entrada:');
+    MonsterModule.abandonCycle();
+    this.clearRepeat(state.dungeons[key]);
     this.leaveToCity();
-    UI.showLootSummaryModal(`TEMPO DA DUNGEON ESGOTADO — ${MAPS[key].name}`, 'Itens obtidos nesta entrada:', loot);
+    UI.showLootSummaryModal(`${title} — ${MAPS[key].name}`, subtitle, loot);
   },
   leaveToCity(){
     state.currentDungeon = null;

@@ -1,16 +1,24 @@
-.. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..
-.. .. O. O. O. O. O. O. O. O. O. O. O. .. .. ..
-.. O. Rd Rl Rl Rl Rl Rl Rl Rl Rl Rl R. O. .. ..
-.. O. Rd Rl R. R. R. R. R. R. R. R. R. O. .. ..
-.. O. Rd Rl R. R. Gd G. G. G. Gd R. R. O. .. ..
-.. O. Rd Rl R. G. G. G. G. G. G. G. R. O. .. ..
-.. O. Rd Rl R. G. O. O. G. O. O. G. R. O. .. ..
-.. O. Rd Rl R. G. O. O. G. O. O. G. R. O. .. ..
-.. O. Rd Rl R. Gd G. G. O. G. G. Gd R. O. .. ..
-.. O. Rd Rl R. R. G. G. G. G. G. R. R. O. .. ..
-.. O. Rd Rl R. R. Gd O. Gd O. Gd R. R. O. .. ..
-.. O. Rd Rl R. R. R. R. R. R. R. R. R. O. .. ..
-.. O. Rd O. O. O. O. O. O. O. O. O. O. O. .. ..
-.. O. Rd P. P. P. P. P. P. P. P. P. Pd O. .. ..
-.. .. O. O. O. O. O. O. O. O. O. O. O. O. .. ..
-.. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..
+.. .. OL OL OL OL OL OL OL OL OL OL OL OL OL OL OL OL OL OL .. .. .. ..
+.. OL A0 A0 A0 A1 A2 A2 A2 A2 A2 A2 A2 A2 A2 A3 A3 A3 A3 A4 OL .. .. ..
+.. OL A0 A0 A1 A5 A2 A2 A2 A6 A2 A2 A2 A2 A6 A7 A4 A4 A8 A7 OL .. .. ..
+.. OL A1 A9 A5 B0 A2 B1 B1 A6 A6 A6 A6 B2 A6 A6 A7 A4 A4 A7 B3 OL .. ..
+.. OL B4 B4 B4 B5 A2 B1 A6 A6 B2 B2 A6 A6 A6 A6 A6 A7 A4 A7 B6 OL .. ..
+.. OL B7 B8 B8 B9 A6 A6 A6 C0 C0 C0 B2 C0 C0 A6 A6 A6 A7 A7 B6 OL .. ..
+.. OL A0 A0 A1 A9 A2 B2 C1 C2 C2 C2 C2 C2 C3 B2 A6 A6 A6 C4 B6 OL .. ..
+.. OL A0 A1 A9 A5 A2 B2 C2 C2 C2 C2 C2 C3 C3 C3 A2 A6 B2 B2 B6 OL .. ..
+.. OL A0 A1 A9 A5 A2 B2 C2 C2 C3 C3 C3 C3 C3 C5 A2 B2 B2 C1 B6 OL .. ..
+.. OL A0 A1 A9 A5 A6 C0 C2 C6 C7 C3 C3 C6 C7 C5 A2 A6 B2 C0 B6 OL .. ..
+.. OL A0 A1 A9 A5 A2 B2 C2 C7 C7 C3 C3 C7 C7 C5 A2 A6 B2 C1 B6 OL .. ..
+.. OL A0 A1 A9 A5 A2 B2 C8 C3 C3 C3 C3 C8 C8 C9 A2 A6 B2 C0 B6 OL .. ..
+.. OL A0 A1 A9 A5 A6 B2 A6 C8 C3 C7 C7 C8 C9 A2 B2 B2 B2 C1 B6 OL .. ..
+.. OL A0 A1 A9 A5 A2 A6 A6 A6 C2 C2 C3 C5 A2 A6 A6 A6 B2 C1 B6 OL .. ..
+.. OL A0 A1 A9 A5 A2 A6 A6 B2 C5 C3 C5 C5 C5 A6 A6 B2 C0 C0 B6 OL .. ..
+.. OL A0 A1 A9 A5 A2 A6 A6 B2 C8 C5 C5 C9 A2 A6 B2 A6 B2 C0 B6 OL .. ..
+.. OL A0 A1 A9 A5 A2 A6 A6 A6 A2 A2 A2 A2 A6 A6 A6 A6 B2 C1 B6 OL .. ..
+.. OL A1 A9 A5 B0 A2 B2 A6 A6 A6 A6 B2 B2 A6 A6 A6 B2 C1 A3 B6 OL .. ..
+.. OL B4 B4 B4 B5 A6 B2 A6 A6 B2 B2 A6 A6 A6 A6 A6 C1 A3 A7 B6 OL .. ..
+.. OL B7 B8 B8 B9 A6 B2 C0 C0 C0 C0 B2 C0 C0 C0 C1 A3 A4 A7 B6 OL .. ..
+.. OL A0 A0 A1 A9 C0 C1 C1 C1 C1 C1 C1 C1 C1 C1 A3 C4 C4 D0 B6 OL .. ..
+.. OL A9 B0 B0 B0 D1 B6 B6 B6 B6 B6 B6 B6 B6 B6 B6 B6 B6 B6 D2 OL .. ..
+.. .. OL OL OL OL OL OL OL OL OL OL OL OL OL OL OL OL OL OL OL .. .. ..
+.. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..

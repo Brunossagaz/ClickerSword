@@ -899,3 +899,7 @@ body.screen-dungeon .footer-note{ color:var(--parchment); text-shadow:2px 2px 0 
   .bestiary-list{ grid-template-columns:1fr; }
   .bestiary-art{ width:56px; height:56px; }
 }
+/* ícones do HUD v2: 24x24 com relevo sombreado (art/ui/*), exibidos em 2x */
+.hud-coins .icon-coin{ width:48px; height:48px; background-image:url('../assets/ui/coin-hud.png'); }
+.hud-coins{ gap:10px; padding-left:6px; }
+@media (max-width:600px){ .hud-coins .icon-coin{ width:24px; height:24px; } }

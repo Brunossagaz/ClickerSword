@@ -1,8 +1,19 @@
-# backpack - icone do HUD
-O=#160e1a
-B=#8a5a2e
-L=#b07a42
-D=#5e3a1c
-S=#3a2412
-G=#ffd54a
-Gd=#b8862a
+# backpack - icone do HUD (24x24, relevo sombreado)
+OL=#0b0810
+A0=#8a5430
+A1=#683a1c
+A2=#2e170a
+A3=#160a06
+A4=#4a2612
+A5=#8e5428
+A6=#b27840
+A7=#663618
+A8=#d4a266
+A9=#1e0f08
+B0=#dcae4a
+B1=#f6dc8a
+B2=#8a5e1e
+B3=#b8862e
+B4=#0d0a12
+B5=#40200e
+B6=#5a3a12

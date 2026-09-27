@@ -114,6 +114,17 @@ detalhados no roadmap do `README.md` são referenciados, não duplicados.
       Compêndio se o dano disponível em cada fase alcança o "DPS mín." A vida
       cresce muito nos andares finais (Demônio passa de 1 quatrilhão).
 
+- [ ] **Afinidade de minério por minerador** — hoje todo minerador
+      (`PROSPECTOR_DEFS`) só soma `orePerSec` num sorteio único por raridade
+      (`CavernModule.rollMineral`), então o tipo de minerador não muda *o que*
+      sai. Pedido: cada minerador tem mais facilidade com alguns minérios do
+      que com outros (ex.: Explosivista rende mais Diamante Bruto, Aprendiz
+      mais Ferro) — um peso por minério em cada def, aplicado em cima do
+      `weight` de `MINERAL_DEFS`. Ao **passar o mouse** sobre o minerador na
+      Caverna, um tooltip mostra essas afinidades (quais minérios ele coleta
+      melhor/pior). A decidir: sorteio separado por minerador ou pool
+      combinado ponderado pelo `orePerSec` de cada um, e como o upgrade de
+      sorte (`oreLuck`) entra nisso.
 - [ ] **Baú de ouro na Dungeon (novo nó da árvore)** — habilidade nova na
       Academia, custa 2000 moedas: dá chance de, no lugar de um monstro,
       aparecer um **baú** que dropa 300 moedas (a recompensa sobe com o nível
@@ -127,9 +138,15 @@ detalhados no roadmap do `README.md` são referenciados, não duplicados.
 
 - [ ] **Conquistas (Achievements)** — sistema pronto (`ACHIEVEMENT_DEFS`,
       `AchievementsModule.unlock`, lista no modal, secretas com "???",
-      sobrevivem à Ascensão). Só existe "Meio Besta" (333 moedas na fonte de
-      uma vez). Falta: mais conquistas + hooks nos eventos (kills, ascensão,
-      missões...) + recompensas.
+      sobrevivem à Ascensão). 28 conquistas: moradores, 1000 abates, 100 por
+      espécie (menos chefes), armas simples, forja, 1ª de cada tropa,
+      cachoeira, lua e "Meio Besta" (conferidas em `AchievementsModule.checkAll`).
+      Falta: conquistas de ascensão/missões + recompensas.
+- [x] **Bestiário** — botão de livro no canto (`BestiaryModule`,
+      `js/bestiary.js`): arte, descrição, andar e abates por espécie
+      (`state.monsterKills`, vitalício).
+- [ ] **Expedições da Guilda em pausa** — escondidas por
+      `CONFIG.guildExpeditionsEnabled: false`; voltar pra `true` ao retomar.
 - [ ] **Liberar sprite de personagem** — não existe sprite jogável (só
       monstros). Estender a pipeline de arte + condição de desbloqueio.
 
@@ -147,6 +164,19 @@ detalhados no roadmap do `README.md` são referenciados, não duplicados.
 - [x] Expansão da mineração — 6 minérios com raridade, mineradores,
       upgrades e baú (`js/cavern.js`).
 - [x] Moeda única do jogo — economia gira em torno de vender item/minério.
+- [ ] **Compêndio completo e 100% editável** — tudo do jogo deve aparecer no
+      Compêndio (`tools/compendio.html`) e todo campo deve ser editável
+      (salvo em `js/overrides-data.js`, aplicado por `js/overrides.js`). Hoje
+      falta, por exemplo: mineradores (`PROSPECTOR_DEFS`, só leitura — e as
+      afinidades de minério acima), upgrades da Caverna
+      (`CAVERN_UPGRADE_DEFS`), missões (`QUEST_DEFS`), conquistas
+      (`ACHIEVEMENT_DEFS`), upgrades de prestígio (`PRESTIGE_UPGRADE_DEFS`),
+      expedições (`GUILD_EXPEDITION_DEFS`), falas e rotas dos moradores
+      (`CITY_MAP.npcs`, `*_LINES`), textos do Bestiário (`desc`/`boss` dos
+      monstros) e os números de `CONFIG` fora de `ConfigOverrides.CONFIG_KEYS`.
+      Nos já cobertos, liberar os campos que o patch ainda não aceita (ex.:
+      monstro só edita `name`/`hpMult`/`drops` — ver
+      `ConfigOverrides.COLLECTIONS`).
 - [ ] Compêndio: criar monstros e habilidades novas (hoje só edita; monstro
       precisa de sprite e lugar nos ciclos, habilidade precisa de posição em
       `UPGRADE_TREE`).

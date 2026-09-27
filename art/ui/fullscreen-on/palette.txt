@@ -1,4 +1,15 @@
-# fullscreen-on - icone do HUD
-O=#160e1a
-W=#ece6f6
-G=#ffd54a
+# fullscreen-on - icone do HUD (24x24, relevo sombreado)
+OL=#0b0810
+A0=#787c96
+A1=#dcae4a
+A2=#aab0c8
+A3=#2a2c3e
+A4=#b8862e
+A5=#5a3a12
+A6=#4a4e66
+A7=#2a1a08
+A8=#12121c
+A9=#f7c84a
+B0=#dc9a28
+B1=#a86a1a
+B2=#3a1f06

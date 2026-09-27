@@ -1,11 +1,11 @@
 {
-    "export":  {
-                   "scales":  [
-                                  4
-                              ]
-               },
-    "grid":  {
-                 "height":  16,
-                 "width":  16
-             }
+  "grid": {
+    "width": 24,
+    "height": 24
+  },
+  "export": {
+    "scales": [
+      1
+    ]
+  }
 }

@@ -1,6 +1,16 @@
-# gear - engrenagem de metal
-O=#0d0a12
-D=#4a4458
-B=#8a849c
-L=#bdb6d0
-H=#ece6f6
+# gear - icone do HUD (24x24, relevo sombreado)
+OL=#0b0810
+A0=#aab0c8
+A1=#787c96
+A2=#4a4e66
+A3=#eef0fa
+A4=#2a2c3e
+A5=#12121c
+A6=#dcae4a
+A7=#f6dc8a
+A8=#b8862e
+A9=#16101c
+B0=#07050a
+B1=#8a5e1e
+B2=#5a3a12
+B3=#2a1a08

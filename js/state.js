@@ -22,15 +22,17 @@ function freshState(){
     // `repeatRemaining>0`, ao derrotar o chefe do ciclo `repeatCycleNum` o
     // jogo volta pro monstro 1 desse MESMO ciclo em vez de avançar pro
     // próximo, até `repeatRemaining` chegar a 0 (ver MonsterModule.onDeath).
+    // `repeatTotal`: quantas repetições foram pedidas (concluídas = repeatTotal -
+    // repeatRemaining), mostrado no resumo de QUALQUER fim do modo.
     // `repeatLootTotals`: soma (por item) de tudo que dropou durante essa
     // sessão de repetição (todo monstro, não só o chefe) — mostrado no
     // resumo ao final (ver UI.showRepeatCycleResultModal).
     dungeons:{
-      slimes:{killCount:0, pendingSlot:null, maxCycleCompleted:0, repeatCycleNum:null, repeatRemaining:0, repeatLootTotals:null},
-      goblins:{killCount:0, pendingSlot:null, maxCycleCompleted:0, repeatCycleNum:null, repeatRemaining:0, repeatLootTotals:null},
-      wilds:{killCount:0, pendingSlot:null, maxCycleCompleted:0, repeatCycleNum:null, repeatRemaining:0, repeatLootTotals:null},
-      dragons:{killCount:0, pendingSlot:null, maxCycleCompleted:0, repeatCycleNum:null, repeatRemaining:0, repeatLootTotals:null},
-      demons:{killCount:0, pendingSlot:null, maxCycleCompleted:0, repeatCycleNum:null, repeatRemaining:0, repeatLootTotals:null}
+      slimes:{killCount:0, pendingSlot:null, maxCycleCompleted:0, repeatCycleNum:null, repeatRemaining:0, repeatTotal:0, repeatLootTotals:null},
+      goblins:{killCount:0, pendingSlot:null, maxCycleCompleted:0, repeatCycleNum:null, repeatRemaining:0, repeatTotal:0, repeatLootTotals:null},
+      wilds:{killCount:0, pendingSlot:null, maxCycleCompleted:0, repeatCycleNum:null, repeatRemaining:0, repeatTotal:0, repeatLootTotals:null},
+      dragons:{killCount:0, pendingSlot:null, maxCycleCompleted:0, repeatCycleNum:null, repeatRemaining:0, repeatTotal:0, repeatLootTotals:null},
+      demons:{killCount:0, pendingSlot:null, maxCycleCompleted:0, repeatCycleNum:null, repeatRemaining:0, repeatTotal:0, repeatLootTotals:null}
     },
     totalKillsAll:0,
     // ciclos completos (chefe derrotado) no total, vitalício — usado pra
