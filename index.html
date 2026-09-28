@@ -661,7 +661,13 @@
       <div class="dungeon-layout">
       <div class="dungeon-main">
       <div class="arena-frame">
-        <div class="tier-label" id="tierLabel">CICLO I · MONSTRO 1</div>
+        <!-- Onde o jogador está na Dungeon (ver UI.renderMonsterInfo) -->
+        <div class="dungeon-info" id="dungeonInfo">
+          <div class="dungeon-info-row"><span class="dungeon-info-label">Mapa</span><span class="dungeon-info-value" id="dungeonInfoMap">-</span></div>
+          <div class="dungeon-info-row"><span class="dungeon-info-label">Ciclo</span><span class="dungeon-info-value" id="dungeonInfoCycle">1</span></div>
+          <div class="dungeon-info-row"><span class="dungeon-info-label">Monstro</span><span class="dungeon-info-value" id="dungeonInfoSlot">1/10</span></div>
+          <div class="dungeon-info-kills">Abatidos: <span id="dungeonInfoKills">0</span></div>
+        </div>
         <div class="double-monster-badge" id="doubleMonsterBadge" style="display:none;"></div>
         <div class="monster-name" id="monsterName">SLIME</div>
         <div class="monster-stage" id="monsterStage">
