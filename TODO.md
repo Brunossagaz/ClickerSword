@@ -31,17 +31,14 @@ detalhados no roadmap do `README.md` são referenciados, não duplicados.
       de Sorte, Monstro Dourado e Tempo (ver abaixo). Continua aberto pra
       mais ramos — pra adicionar: entrada em `UPGRADE_DEFS` (com `effects`)
       + posição em `UPGRADE_TREE`.
-- [ ] **Timeout do chefe reinicia sozinho** — hoje, ao estourar o tempo
-      contra QUALQUER monstro, abre o `timeUpModal` ("Tentar de novo" /
-      "Voltar pra cidade"). Pedido: pro chefe, trocar por um contador de 3s
-      na arena que reinicia o ciclo sozinho (mesmo efeito de
-      `MonsterModule.retryCycle()`, que agora também zera o tempo da
-      Dungeon), com mensagem de aviso. Perguntas em aberto: vale só pro chefe
-      ou pra qualquer monstro? Dá pra voltar pra cidade durante a contagem?
-- [ ] **Redesenhar cabeçalho da Dungeon** — hoje é 1 linha só (`tierLabel`,
-      `UI.renderMonsterInfo`), fonte pequena e texto longo. Pedido: bloco no
-      canto superior direito da arena, empilhado (Mapa / Ciclo / Monstro).
-      Ficou mais urgente com as 2 barras de tempo embaixo do monstro.
+- [x] **Redesenhar cabeçalho da Dungeon** — a linha única `tierLabel` virou
+      um bloco empilhado no canto superior direito da arena (`#dungeonInfo`:
+      Mapa / Ciclo / Monstro + total de abatidos, `UI.renderMonsterInfo`).
+      Nome do monstro e selo de grupo ganham margem pra não passar por baixo
+      dele; em telas ≤760px vira uma faixa de 3 colunas acima do monstro.
+
+~~Timeout do chefe reinicia sozinho~~ — descartado: o `timeUpModal`
+("Tentar de novo" / "Voltar pra cidade") continua valendo pra todo monstro.
 
 ## Feito recentemente (fora das fases originais)
 
@@ -88,9 +85,13 @@ detalhados no roadmap do `README.md` são referenciados, não duplicados.
       (em tela cheia a tecla é travada pro jogo via Keyboard Lock). Tela de
       carregamento com slime pulando (`LoadingModule`, `js/loading.js`):
       decodifica todas as imagens na abertura e cobre as trocas de tela do menu.
-- [ ] **Mapa explorável (plano B)** — personagem do jogador andando
-      (teclado/clique), colisão, câmera e NPCs com rotina; exige tileset,
-      prédios vistos de cima e sprite do jogador. A Dungeon fica como está.
+- [ ] **Mapa da cidade mais interativo e que evolui com o tempo** — substitui
+      o antigo plano B de mapa explorável (personagem andando, colisão,
+      câmera), que foi descartado. A cidade continua sendo a pintura com
+      placas, mas ganha ambientes mais detalhados e mais pontos clicáveis, e
+      muda conforme o jogo avança (prédios melhorados, novas áreas, mais
+      moradores). A definir: o que dispara cada mudança (tempo de jogo,
+      Ascensão, upgrades dos prédios) e quais ambientes entram primeiro.
 - [x] **UI em pixel art "pedra + ouro"** — `css/ui-skin.css` por cima do
       `style.css`: molduras, botões (normal/hover/press/disabled + verde/
       vermelho/laranja), abas, fechar, divisórias, barras, slots, tooltips,

@@ -476,7 +476,10 @@ const UI = {
     const totalSlots = MonsterModule.current.totalSlots;
     const monsterNameEl = document.getElementById('monsterName');
     monsterNameEl.innerHTML = (MonsterModule.current.isBoss ? '<div class="icon icon-boss"></div>CHEFE: ' : '') + t.name;
-    document.getElementById('tierLabel').textContent = `${MAPS[state.currentDungeon].name} · CICLO ${loop} · MONSTRO ${slotPos}/${totalSlots} (ABATIDOS NO TOTAL: ${state.totalKillsAll})`;
+    document.getElementById('dungeonInfoMap').textContent = MAPS[state.currentDungeon].name;
+    document.getElementById('dungeonInfoCycle').textContent = loop;
+    document.getElementById('dungeonInfoSlot').textContent = `${slotPos}/${totalSlots}`;
+    document.getElementById('dungeonInfoKills').textContent = this.fmt(state.totalKillsAll);
 
     // Posição de monstro em grupo (dupla ou tripla, ver MAPS.slimes/
     // MAPS.dragons): destaca bem qual fase do grupo está na tela agora

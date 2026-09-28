@@ -466,7 +466,6 @@ body{ font-size:22px; }
 .weapon-choice-card .weapon-name{ font-size:12px; }
 .weapon-choice-card .weapon-desc{ font-size:17px; }
 
-.tier-label{ font-size:15px; }
 .monster-name{ font-size:17px; }
 .double-monster-badge{ font-size:18px; }
 .hp-text{ font-size:17px; }
@@ -898,4 +897,31 @@ body.screen-dungeon .footer-note{ color:var(--parchment); text-shadow:2px 2px 0 
 @media (max-width: 520px){
   .bestiary-list{ grid-template-columns:1fr; }
   .bestiary-art{ width:56px; height:56px; }
+}
+
+/* Bloco Mapa / Ciclo / Monstro da Dungeon com a moldura pequena da skin.
+   No celular sai do canto e vira uma faixa de 3 colunas acima do monstro. */
+.dungeon-info{
+  background:none;
+  border:6px solid transparent;
+  border-image:var(--ui-frame-sm) 6 fill / 12px round;
+  padding:6px 8px;
+  image-rendering:pixelated;
+  box-shadow:0 3px 6px rgba(0,0,0,0.6);
+}
+.dungeon-info-kills{ border-top:none; background:var(--ui-divider) left top / 16px 8px repeat-x; padding-top:10px; }
+@media (max-width:760px){
+  .dungeon-info{
+    position:static;
+    width:auto;
+    display:grid;
+    grid-template-columns:2fr 1fr 1fr;
+    gap:4px 10px;
+    margin:0 0 10px;
+  }
+  .dungeon-info-row + .dungeon-info-row{ margin-top:0; }
+  .dungeon-info-value{ font-size:18px; }
+  .dungeon-info-kills{ grid-column:1 / -1; margin-top:2px; text-align:center; }
+  .arena-frame .monster-name,
+  .arena-frame .double-monster-badge{ margin-left:0; margin-right:0; }
 }
