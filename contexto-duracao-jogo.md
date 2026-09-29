@@ -79,46 +79,90 @@ As missões saíram de dentro da Loja, do Ferreiro e da Igreja.
 - Capítulo IV, Dragão: o dragão guardava a cidade do que está abaixo. Anselmo confessa que a ordem dele vigiava o portão.
 - Capítulo V, Além do Portão: o selo se fecha, "por enquanto". Isso deixa o gancho para um 6º andar.
 
-## 4. Números atuais do simulador (4 cliques/s, jogador ideal, sem ganho offline)
-| andar | orçamento | simulado |
-|---|---|---|
-| slimes | 0,75 h | 0,18 h |
-| goblins | 1,0 h | 0,60 h |
-| wilds | 1,5 h | 0,56 h |
-| dragons | 2,0 h | 0,42 h |
-| demons | 2,5 h | 0,08 h |
-| **total** | **7,75 h** | **1,85 h** |
+## 4. Segunda rodada (2026-09-29): Gelo, orçamento, armas, bruxa, missões e conquistas
+**Gelo**
+- Intervalo mínimo de 5 s para 2,5 s de congelamento: no máximo metade do tempo congelado.
+- Teto de +60% no dano extra (`maxPower`). A aba Arcana mostra "MÁX".
+- Resultado: o jogador simulado passou a dividir os pontos entre Gelo, Raio e Fogo.
 
-- A 3 cliques/s: 2,13 h. Um jogador real deve levar ~30 a 50% a mais, por navegação, leitura e compras não ideais.
-- O modelo antigo dava 4,4 h porque ignorava as Habilidades Arcanas e a Caverna.
+**Orçamento**
+- `CONFIG.balanceIdealShare = 0.7`: o simulador mira 70% do orçamento, porque um jogador real é ~40% mais lento.
+- `hpScale`: slimes 8,5, goblins 43, wilds 1600, dragons 7900 e demons 34000.
+- `cycleHpMult` suaviza ciclos triviais e paredões:
+  - slimes: ciclo 1 em 0,0915, mantendo o 1º slime com 14 de vida;
+  - dragons: ciclos 4 e 5 reforçados;
+  - demons: entrada mais suave e ciclos 4 e 5 reforçados.
+- Custos não mudaram. No teste com Academia e tropas 30% mais caras, o Demônio batia no limite de 40 min
+  de farm e ficava 22% abaixo da meta.
 
-**Achado principal: o Gelo das Habilidades Arcanas domina o jogo.**
-- Com 6 pontos em Velocidade, o intervalo do Gelo (2,5 s) fica igual à duração do congelamento. O monstro fica
-  congelado o tempo todo: os relógios andam na metade da velocidade e o dano recebido sobe sem teto
-  (+0,08 por nível de Dano).
-- O jogador simulado põe todos os pontos em Gelo.
-- Só desligar as Arcanas já leva o total de 1,85 h para 3,44 h.
-- Com Arcanas, Caverna e dourado desligados: 8,17 h.
+**Armas**
+- As 3 iniciais agora são diferentes: Espada +2 de dano, Arco +1 e 8% de crítico, Machado +1 e queimadura.
+- 8 forjadas novas: 2 alternativas por andar (uma de clique, outra de tropas), com o efeito do andar:
+  - Goblin: drop extra;
+  - Selvagens: queimadura;
+  - Dragão: crítico;
+  - Demônio: dano bruto.
+- 4 drops brutos novos:
+  - Lâmina Goblin: Goblin Maior, 20%;
+  - Clava do Troll: 2%;
+  - Garra de Dragão: 4%;
+  - Lâmina Demoníaca: 2%.
+- O Ferreiro agrupa as receitas por andar e esconde as de andares trancados.
+- O Machado Ancestral agora pede 1 Cristal Arcano (antes 3).
+- **Ícones provisórios**: 12 PNGs em `assets/icons/` (`item-goblinblade`, `item-trollclub`, `item-dragonclaw`,
+  `item-demonblade`, `weapon-goblinraiderdagger`, `weapon-goblinprieststaff`, `weapon-orctribalaxe`,
+  `weapon-trollelderclub`, `weapon-dragonscaleblade`, `weapon-firelizardbow`, `weapon-demonhornsword`,
+  `weapon-shadowscythe`) são cópias de ícones parecidos. Basta sobrescrevê-los.
 
-**Outros achados**
-- A variância do Cristal Arcano quase não pesa hoje: o jogador termina o jogo sem forjar o Machado Ancestral
-  (fica com 2 de 3 cristais), porque as Arcanas tornam a arma dispensável.
-- As tropas quase não são compradas no fim (12 recrutas e 7 arqueiros).
+**Madame Morgana** (`js/witch.js`, só à noite)
+- Clicar nela abre a conversa:
+  - apresentação com respostas (uma delas dá a conquista secreta "Quase Sapo");
+  - depois, um menu com Alquimia, entregar pedido, pedir trabalho e "o que você sabe sobre o selo" (lore por capítulo).
+- **Alquimia** (`ALCHEMY_RECIPES`): transforma material que sobra em minério raro, inclusive Cristal Arcano.
+  Libera ao concluir o 1º pedido dela.
+- **5 pedidos noturnos**, liberados por capítulo e entregues só à noite, com recompensa.
+  Objetivos novos: `killMonster` (abates a partir do pedido) e `visitSpot` (clicar num ponto do mapa à noite).
 
-## 5. Próximos passos sugeridos (ainda não feitos)
-1. **Rebalancear as Arcanas**:
-   - intervalo mínimo do Gelo maior que a duração, para ele não congelar o tempo todo;
-   - teto no bônus de dano do Gelo;
-   - ou custo crescente por nível.
-2. **Rebalancear contra o orçamento**, usando o simulador (subir `hpScale` por andar e ajustar custos).
-   O maior déficit está em demons e dragons.
-3. **Narrativa como ritmo**, expandindo a passagem de andar:
-   - **Missões de capítulo com etapas**: além de vencer o ciclo 5, pedir 1 ou 2 objetivos temáticos do andar
-     ("traga o amuleto do Goblin Maior", "forje uma arma com escamas de dragão"), só para a história, sem travar o andar.
-   - **Chefe com fala antes da luta**: uma fala curta ao aparecer o chefe do ciclo 5 (a janela de diálogo já pausa o jogo).
-   - **Fragmentos de lore no Bestiário**: 25/100/500 abates por espécie liberam um trecho de história.
-   - **Diário do herói**: uma aba nas Missões que registra as cenas vistas e as respostas dadas, para reler.
-   - **NPCs de ambiente com falas por capítulo**: as falas soltas dos moradores (`lines`) mudam conforme `state.story.chapter`.
-   - **6º andar**: o gancho do final ("por enquanto") abre espaço para "o que espera além do portão".
-4. **Uma arma forjada por andar**, feita com drops daquele andar. Hoje só existem armas do Pântano.
-5. **Sistema de pena para o Cristal Arcano**, se ele voltar a ser necessário.
+**Pedidos dos moradores** (`js/requests.js`)
+- 3 vagas repetíveis: caçada, entrega ou visita a um ponto do mapa (ponto dourado brilhando; o clique conclui na hora).
+- Recompensa em moedas, proporcional ao andar mais alto liberado.
+- A vaga volta 4 minutos depois de concluir; há o botão "Dispensar".
+
+**Conquistas**: 28 → 51. As novas cobrem:
+- os 5 capítulos;
+- forja por andar e "todas";
+- 25 vitórias contra cada chefe;
+- todos os pedidos da cidade e da bruxa;
+- 10 e 50 pedidos de moradores;
+- Sob a Lua, Aprendiz de Alquimia, Cristal Destilado e Quase Sapo (secreta).
+
+Só as missões dão recompensa; conquistas continuam só de coleção.
+
+## 5. Números atuais do simulador (4 cliques/s, jogador ideal, sem ganho offline)
+| andar | meta ideal (70%) | simulado | mediana com sorteio |
+|---|---|---|---|
+| slimes | 0,52 h | 0,52 h | 0,52 h |
+| goblins | 0,70 h | 0,70 h | 0,72 h |
+| wilds | 1,05 h | 0,91 h | 0,94 h |
+| dragons | 1,40 h | 1,38 h | 1,32 h |
+| demons | 1,75 h | 1,93 h | 1,75 h |
+| **total** | **5,42 h** | **5,43 h** | **5,06 h** |
+
+- Jogador real estimado: ~7,8 h, no orçamento de 7,75 h. Maior farm num ciclo: ~42 min.
+- Pedidos repetíveis ficam fora do simulador; a Alquimia também. Os pedidos da bruxa entram.
+
+**Achado em aberto: quem clica devagar sofre muito.**
+- 3 cliques/s: ~8,7 h reais, com um paredão de 69 min.
+- 1,4 clique/s: ~25 h, com paredão de 12 h no Demônio.
+- As tropas são fracas e o jogo depende muito do clique. As armas "de tropas" ajudam, mas não resolvem.
+
+## 6. Próximos passos sugeridos
+1. Tornar as tropas e o Clique Automático viáveis para quem clica pouco (jogo mais idle), ou assumir o jogo como "ativo".
+2. Arte final dos 12 ícones.
+3. Revisar os textos (história e bruxa) em `js/dialogues-data.js`.
+4. Ideias de narrativa ainda não feitas:
+   - fala do chefe antes da luta;
+   - lore no Bestiário;
+   - diário do herói;
+   - falas dos moradores por capítulo;
+   - 6º andar.

@@ -79,7 +79,7 @@
     const MINERALS = ITEM_DEFS.filter(d => d.type === 'mineral');
     const allWeapons = [...WEAPON_DEFS, ...FORGED_WEAPON_DEFS];
     const weaponMap = Object.fromEntries(allWeapons.map(w => [w.key, w]));
-    const clone = o => JSON.parse(JSON.stringify(o));
+    const clone = o => JSON.parse(JSON.stringify(o, (k, v) => k[0] === '_' ? undefined : v));
 
     // ---------- vida (a MESMA função do jogo: monsterHp em js/config.js) ----------
     const groupSize = slot => (!slot || !slot.pairChoices) ? 1 : Math.max(...slot.pairChoices.map(o => o.length));
@@ -152,16 +152,21 @@
       const req = MAPS[dKey] && MAPS[dKey].unlockRequirement;
       return !req || (st.maxCycle[req.dungeon] || 0) >= req.cycle;
     }
+    // capítulos concluídos (andares vencidos em sequência) = state.story.chapter
+    const chapterOf = st => { let c = 0; while(c < DUNGEON_ORDER.length && (st.maxCycle[DUNGEON_ORDER[c]] || 0) >= CONFIG.maxCycleNum) c++; return c; };
     function objectiveDone(st, obj){
       if(obj.type === 'deliverItem') return (st.inv[obj.itemKey] || 0) >= obj.itemQty;
       if(obj.type === 'defeatCycle') return st.cyclesDone >= obj.count;
       if(obj.type === 'ownWeapons') return WEAPON_DEFS.filter(d => st.weapons[d.key]).length >= obj.count;
-      return true; // tipo novo que o simulador não conhece: não trava a simulação
+      // abates pedidos e visitas a pontos do mapa: saem jogando normalmente
+      // (o farm do andar já mata o monstro pedido; a visita é um clique)
+      return true;
     }
     function tryQuests(st){
       if(off.has('missoes')) return;
       for(const q of QUESTS){
         if(st.quests[q.key]) continue;
+        if(q.requiresChapter != null && chapterOf(st) < q.requiresChapter) continue; // bruxa só pede depois do capítulo
         // a 2ª arma simples da missão do Creiton: compra assim que puder
         for(const obj of q.objectives) if(obj.type === 'ownWeapons' && !objectiveDone(st, obj) && isOpen(st, 'ferreiro')){
           const w = WEAPON_DEFS.filter(d => !st.weapons[d.key] && !d.custom).sort((a, b) => (a.buyCost || 0) - (b.buyCost || 0))[0];
@@ -170,6 +175,10 @@
         if(!q.objectives.every(obj => objectiveDone(st, obj))) continue;
         for(const obj of q.objectives) if(obj.type === 'deliverItem') st.inv[obj.itemKey] -= obj.itemQty;
         st.quests[q.key] = true;
+        if(q.reward){
+          st.gold += q.reward.gold || 0;
+          for(const [k, n] of Object.entries(q.reward.items || {})) st.inv[k] = (st.inv[k] || 0) + n;
+        }
         mark(st, `missão ${q.key}${q.unlocksBuilding ? ' → libera ' + q.unlocksBuilding : ''}`);
       }
     }
@@ -206,7 +215,8 @@
       for(const def of ARCANE){
         if(!st.arcane[def.key]) continue;
         const iv = Math.max(def.minIntervalMs, def.intervalMs * Math.pow(def.speedStep, st.arcane[def.key + 'Spd'] || 0)) / 1000;
-        const power = def.dmgBase + def.dmgPerLevel * (st.arcane[def.key + 'Dmg'] || 0);
+        const raw = def.dmgBase + def.dmgPerLevel * (st.arcane[def.key + 'Dmg'] || 0);
+        const power = def.maxPower != null ? Math.min(def.maxPower, raw) : raw;
         if(def.key === 'fire') fx.add += click * power / Math.max(iv, def.durationMs / 1000); // reaplicar renova, não empilha
         else if(def.key === 'lightning') fx.add += click * power / iv;
         else if(def.key === 'ice'){
@@ -217,9 +227,19 @@
       }
       return fx;
     }
+    // queimadura da arma (burnChance/burnDamagePercent): cada clique com
+    // sorte reaplica (não empilha) `pct` do dano do clique ao longo de
+    // CONFIG.burnDurationMs — reaplicar antes do fim perde o resto
+    function weaponBurnDps(st, cps){
+      const w = weaponOf(st);
+      if(!w || !w.burnChance || !w.burnDamagePercent) return 0;
+      const dur = (CONFIG.burnDurationMs || 3000) / 1000;
+      return clickDmg(st) * critMult(st) * w.burnDamagePercent * Math.min(cps * w.burnChance, 1 / dur);
+    }
     function dps(st, farming){
       const fx = arcaneFx(st);
-      return (clickDmg(st) * (CPS + (farming ? autoCps(st) : 0)) * critMult(st) + troopDps(st) + fx.add) * fx.mult;
+      const cps = CPS + (farming ? autoCps(st) : 0);
+      return (clickDmg(st) * cps * critMult(st) + weaponBurnDps(st, cps) + troopDps(st) + fx.add) * fx.mult;
     }
     const timeMult = st => arcaneFx(st).time;
     // dano "efetivo" pra comparar compras: Gelo estica o tempo, que vale como dano
@@ -305,14 +325,60 @@
       }
       addGains(st, gains);
     }
+    // armas que dá pra mirar agora: não possui, pré-requisito ok, andar liberado
+    function forgeCandidates(st){
+      if(off.has('forja')) return [];
+      return FORGED_WEAPON_DEFS.filter(w => !st.weapons[w.key] && (!w.requiresWeapon || st.weapons[w.requiresWeapon])
+        && (!w.floor || !MAPS[w.floor] || isDungeonUnlocked(st, w.floor)));
+    }
+    // Quanto falta pra forjar `w`: tempo estimado (s) pra juntar os drops
+    // (no melhor ciclo já vencido), esperar o minério da Caverna e as moedas.
+    // null = hoje não tem de onde tirar algum material.
+    function planFor(st, w){
+      const farmList = st.farm ? cycleMonsters(st.farm.d, st.farm.c) : null;
+      let tDrops = 0, oreWait = 0, src = null, srcT = 0;
+      for(const m of w.recipe.materials || []){
+        const miss = m.qty - (st.inv[m.itemKey] || 0);
+        if(miss <= 0) continue;
+        if(item(m.itemKey) && item(m.itemKey).type === 'mineral'){
+          const r = oreRate(st) * (mineralDist(st.cavernUpgrades.oreLuck)[m.itemKey] || 0);
+          if(r <= 0) return null;
+          oreWait = Math.max(oreWait, miss / r);
+          continue;
+        }
+        const sr = bestSource(st, m.itemKey);
+        if(!sr) return null;
+        const t = miss / sr.rate;
+        tDrops += t;
+        if(!src || t > srcT){ src = sr; srcT = t; }
+      }
+      const inc = income(st, farmList);
+      const T = Math.max(tDrops, oreWait) + Math.max(0, (w.recipe.coinCost || 0) - st.gold) / Math.max(1e-9, inc);
+      return { T: Math.max(1, T), src };
+    }
+    // A próxima forja que ele persegue: a de maior ganho de dano por tempo
+    // pra conseguir (armas do mesmo andar são alternativas — fica com a
+    // melhor pro estilo dele). Cache por instante do relógio.
     function nextForge(st){
-      if(off.has('forja')) return null;
-      return FORGED_WEAPON_DEFS.find(w => !st.weapons[w.key] && (!w.requiresWeapon || st.weapons[w.requiresWeapon])) || null;
+      if(st._forgeAt === st.clock && st._forgeCache !== undefined) return st._forgeCache;
+      let best = null, bestRate = 0, bestPlan = null;
+      const base = effDps(st);
+      for(const w of forgeCandidates(st)){
+        const copy = clone(st); copy.weapons[w.key] = 1; equipBest(copy);
+        const g = (effDps(copy) - base) / Math.max(1e-9, base);
+        if(g <= 0.02) continue; // menos de 2%: não vale o trabalho
+        const plan = planFor(st, w);
+        if(!plan) continue;
+        const rate = g / plan.T;
+        if(rate > bestRate){ bestRate = rate; best = w; bestPlan = plan; }
+      }
+      st._forgeAt = st.clock; st._forgeCache = best; st._forgePlan = bestPlan;
+      return best;
     }
     // itens que ele NÃO vende: entregas de missão pendentes + receita da próxima forja
     function reserve(st){
       const r = {};
-      if(!off.has('missoes')) for(const q of QUESTS) if(!st.quests[q.key])
+      if(!off.has('missoes')) for(const q of QUESTS) if(!st.quests[q.key] && !(q.requiresChapter != null && chapterOf(st) < q.requiresChapter))
         for(const obj of q.objectives) if(obj.type === 'deliverItem') r[obj.itemKey] = (r[obj.itemKey] || 0) + obj.itemQty;
       const W = isOpen(st, 'ferreiro') ? nextForge(st) : null;
       if(W) for(const m of W.recipe.materials || []) r[m.itemKey] = (r[m.itemKey] || 0) + m.qty;
@@ -463,25 +529,10 @@
     function forgeDetour(st, farmList){
       const W = isOpen(st, 'ferreiro') ? nextForge(st) : null;
       if(!W || !farmList) return null;
-      let tDrops = 0, oreWait = 0, src = null, srcT = 0;
-      for(const m of W.recipe.materials || []){
-        const miss = m.qty - (st.inv[m.itemKey] || 0);
-        if(miss <= 0) continue;
-        if(item(m.itemKey) && item(m.itemKey).type === 'mineral'){
-          const r = oreRate(st) * (mineralDist(st.cavernUpgrades.oreLuck)[m.itemKey] || 0);
-          if(r <= 0) return null;
-          oreWait = Math.max(oreWait, miss / r);
-          continue;
-        }
-        const s = bestSource(st, m.itemKey);
-        if(!s) return null;
-        const t = miss / s.rate;
-        tDrops += t;
-        if(!src || t > srcT){ src = s; srcT = t; }
-      }
-      if(!src) return null;
+      const plan = st._forgePlan;
+      if(!plan || !plan.src) return null; // só minério faltando: o farm normal já espera por ele
+      const src = plan.src, T = plan.T;
       const inc = income(st, farmList);
-      const T = Math.max(tDrops, oreWait) + Math.max(0, (W.recipe.coinCost || 0) - st.gold) / Math.max(1e-9, inc);
       const copy = clone(st); copy.weapons[W.key] = 1; equipBest(copy);
       const base = effDps(st);
       const forgeRate = (effDps(copy) - base) / Math.max(1e-9, base) / T;
@@ -503,11 +554,12 @@
       return killed.length;
     }
     function manage(st, farmList){
+      st._forgeAt = -1;
       tryQuests(st);
       sell(st);
       buyCavern(st);
       spendArcane(st);
-      while(buyBest(st, farmList)){}
+      while(buyBest(st, farmList)){ st._forgeAt = -1; }
       tryQuests(st);
     }
     // Tenta cada ciclo em ordem; se não passa, faz a gestão (missões, venda,
@@ -549,6 +601,7 @@
           if(c > (st.maxCycle[dKey] || 0)) st.maxCycle[dKey] = c;
           if(c === CONFIG.maxCycleNum && dKey === CONFIG.arcaneUnlockDungeon && arcaneOpen(st)) mark(st, 'Habilidades Arcanas liberadas');
           lastCleared = { list, dKey, c };
+          st.farm = { d: dKey, c };
           rows.push({ dungeon: dKey, cycle: c, minutes: (st.clock - start) / 60, totalHours: st.clock / 3600, farmRuns, detourRuns,
             hpMax: Math.max(...list.map(m => m.hp)), hpSum: list.reduce((s, m) => s + m.hp, 0),
             dps: dps(st, false), need, clickDmg: clickDmg(st), clickPart: clickDmg(st) * CPS * critMult(st), troopPart: troopDps(st),
@@ -559,13 +612,15 @@
       return { rows, st, clock: st.clock, events: st.events };
     }
 
-    // horas por andar × orçamento (MAPS[k].timeBudgetH, ± opts.budgetTolerance)
+    // horas por andar × meta do jogador ideal (MAPS[k].timeBudgetH ×
+    // CONFIG.balanceIdealShare, ± opts.budgetTolerance). `budget` já vem nessa escala.
+    const IDEAL_SHARE = CONFIG.balanceIdealShare || 1;
     function floorTimes(res){
       const out = [];
       let prev = 0;
       for(const k of DUNGEON_ORDER){
         const mine = res.rows.filter(r => r.dungeon === k);
-        const budget = MAPS[k] && MAPS[k].timeBudgetH != null ? MAPS[k].timeBudgetH : null;
+        const budget = MAPS[k] && MAPS[k].timeBudgetH != null ? MAPS[k].timeBudgetH * IDEAL_SHARE : null;
         if(!mine.length) break;
         const last = mine[mine.length - 1];
         if(last.stuck){ out.push({ key: k, stuck: true, budget, status: 'trava' }); break; }
@@ -592,7 +647,7 @@
         points: Array.from({ length: n }, (_, i) => { const cost = Math.ceil(p.baseCost * Math.pow(p.costGrowth, i)); const gps = p.orePerSec * ov; return { i: i + 1, cost, goldPerSec: gps, paybackMin: cost / Math.max(1e-9, gps) / 60 }; }) }));
     }
 
-    return { run, floorTimes, cycleMonsters, killValue, requiredDps, oreValue, dungeonIncome, troopCurve, cavernCurve, CPS, TOLERANCE };
+    return { run, floorTimes, IDEAL_SHARE, cycleMonsters, killValue, requiredDps, oreValue, dungeonIncome, troopCurve, cavernCurve, CPS, TOLERANCE };
   }
   if(typeof module !== 'undefined' && module.exports) module.exports = { createBalanceSim };
   else root.BalanceCore = { createBalanceSim };

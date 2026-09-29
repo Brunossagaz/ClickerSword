@@ -96,16 +96,16 @@ if(samples > 0){
     totals.push(r.clock / 3600);
   }
   console.log(`${samples} amostras com sorteio | ${CPS} cliques/s${disable.length ? ' | sem ' + disable.join(', ') : ''}${stuck ? ` | ${stuck} travaram` : ''}`);
-  console.log('andar       orçamento     mediana    pior 10%   melhor 10%');
+  console.log('andar      meta ideal     mediana    pior 10%   melhor 10%');
   let bad = false;
   for(const k of DUNGEON_ORDER){
     const v = perFloor[k]; if(!v.length) continue;
-    const b = MAPS[k].timeBudgetH, med = pct(v, 0.5);
+    const b = MAPS[k].timeBudgetH != null ? MAPS[k].timeBudgetH * sim.IDEAL_SHARE : null, med = pct(v, 0.5);
     const out = b != null && Math.abs(med / b - 1) > sim.TOLERANCE;
     bad = bad || out;
     console.log(`${k.padEnd(10)} ${(b != null ? hrs(b) : '—').padStart(10)}  ${hrs(med).padStart(10)}  ${hrs(pct(v, 0.9)).padStart(10)}  ${hrs(pct(v, 0.1)).padStart(10)}${out ? '   ← fora do orçamento' : ''}`);
   }
-  if(totals.length) console.log(`${'total'.padEnd(10)} ${hrs(DUNGEON_ORDER.reduce((s, k) => s + (MAPS[k].timeBudgetH || 0), 0)).padStart(10)}  ${hrs(pct(totals, 0.5)).padStart(10)}  ${hrs(pct(totals, 0.9)).padStart(10)}  ${hrs(pct(totals, 0.1)).padStart(10)}`);
+  if(totals.length) console.log(`${'total'.padEnd(10)} ${hrs(DUNGEON_ORDER.reduce((s, k) => s + (MAPS[k].timeBudgetH || 0), 0) * sim.IDEAL_SHARE).padStart(10)}  ${hrs(pct(totals, 0.5)).padStart(10)}  ${hrs(pct(totals, 0.9)).padStart(10)}  ${hrs(pct(totals, 0.1)).padStart(10)}`);
   process.exit(bad || stuck ? 1 : 0);
 }
 
@@ -125,13 +125,14 @@ for(const r of res.rows){
 console.log('\nMarcos:');
 for(const e of res.events) console.log(`  ${hrs(e.hours).padStart(8)}  ${e.text}`);
 
-console.log(`\nOrçamento por andar (1ª passagem, ±${Math.round(sim.TOLERANCE * 100)}%):`);
-console.log('andar       orçamento   simulado   situação');
+console.log(`\nOrçamento por andar (1ª passagem; meta do jogador ideal = ${Math.round(sim.IDEAL_SHARE * 100)}% do orçamento, ±${Math.round(sim.TOLERANCE * 100)}%):`);
+console.log('andar      meta ideal   simulado   situação');
 for(const f of floors){
   if(f.stuck){ console.log(`${f.key.padEnd(10)} ${(f.budget != null ? hrs(f.budget) : '—').padStart(10)}  ${'—'.padStart(9)}   TRAVA`); continue; }
   const diff = f.pct != null ? ` (${f.pct >= 1 ? '+' : ''}${Math.round((f.pct - 1) * 100)}%)` : '';
   console.log(`${f.key.padEnd(10)} ${(f.budget != null ? hrs(f.budget) : '—').padStart(10)}  ${hrs(f.hours).padStart(9)}   ${f.status ? STATUS[f.status] : 'sem orçamento'}${diff}`);
 }
 const budgetTotal = DUNGEON_ORDER.reduce((s, k) => s + (MAPS[k].timeBudgetH || 0), 0);
-console.log(`${'total'.padEnd(10)} ${hrs(budgetTotal).padStart(10)}  ${hrs(res.clock / 3600).padStart(9)}`);
+console.log(`${'total'.padEnd(10)} ${hrs(budgetTotal * sim.IDEAL_SHARE).padStart(10)}  ${hrs(res.clock / 3600).padStart(9)}`);
+console.log(`jogador real estimado: ~${hrs(res.clock / 3600 / sim.IDEAL_SHARE)} (orçamento ${hrs(budgetTotal)})`);
 process.exit(floors.some(f => f.status && f.status !== 'ok') ? 1 : 0);

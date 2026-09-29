@@ -39,6 +39,7 @@ const DialogueModule = {
       modal: document.getElementById('dialogueModal'),
       panel: document.getElementById('dialoguePortraitPanel'),
       portrait: document.getElementById('dialoguePortrait'),
+      sheet: document.getElementById('dialoguePortraitSheet'),
       role: document.getElementById('dialogueRole'),
       box: document.getElementById('dialogueBox'),
       name: document.getElementById('dialogueName'),
@@ -138,9 +139,18 @@ const DialogueModule = {
       el.name.textContent = (sp.name || '').toUpperCase();
       if(sp.portrait){
         el.panel.style.display = '';
-        el.portrait.src = sp.portrait;
-        el.portrait.alt = sp.name;
-        el.portrait.classList.toggle('is-sprite', !!sp.sprite);
+        // `frame`: 1º quadro de uma folha de morador (cols × rows quadros)
+        el.portrait.style.display = sp.frame ? 'none' : '';
+        el.sheet.style.display = sp.frame ? '' : 'none';
+        if(sp.frame){
+          el.sheet.style.backgroundImage = `url('${sp.portrait}')`;
+          el.sheet.style.backgroundSize = `${sp.frame.cols * 100}% ${sp.frame.rows * 100}%`;
+          el.sheet.style.aspectRatio = `${sp.frame.w} / ${sp.frame.h}`;
+        } else {
+          el.portrait.src = sp.portrait;
+          el.portrait.alt = sp.name;
+          el.portrait.classList.toggle('is-sprite', !!sp.sprite);
+        }
         el.role.textContent = sp.role || '';
       } else {
         el.panel.style.display = 'none';
@@ -177,6 +187,7 @@ const DialogueModule = {
       state.dialogueMemory[line.memory] = ch.id;
     }
     if(ch.action) c.endActions.push(ch.action);
+    if(ch.achievement) AchievementsModule.unlock(ch.achievement);
     this.el.choices.replaceChildren();
     if(ch.reply) c.pendingReply = { speaker: line.speaker, text: ch.reply };
     this.next();

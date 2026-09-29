@@ -17,6 +17,10 @@ const CONFIG = {
   // tempo por andar (MAPS[andar].timeBudgetH), medido pelo simulador
   // (tools/balance_sim.js e aba Curvas do Compêndio). Só usado pelas ferramentas.
   balanceRefCps: 4,
+  // O jogador simulado é ideal (compra certo, não navega nem lê): um real
+  // leva ~40% a mais. O simulador valida o andar contra esta fração do
+  // orçamento (0.7 × timeBudgetH), pra o jogador real ficar no orçamento.
+  balanceIdealShare: 0.7,
   // Ciclo máximo de qualquer Dungeon — ao bater o chefe do Ciclo 5, o jogo
   // não avança pro Ciclo 6: volta pro monstro 1 do próprio Ciclo 5, que
   // passa a se repetir pra sempre (ver MonsterModule.onDeath/spawn).
@@ -197,7 +201,7 @@ const MONSTER_TYPES = [
     key: 'goblinGreater', name: 'GOBLIN MAIOR', boss: true,
     desc: 'Maior, mais velho e mais cruel que qualquer outro goblin. Usa uma coroa torta e se diz rei de tudo que vê.',
     image: 'assets/sprites/goblin_greater.png', frameW: 128, frameH: 128, hpMult: 6.5, blinkCapable: true,
-    drops: [{ item: 'goblinCrown', qtyMin: 5, qtyMax: 5 }]
+    drops: [{ item: 'goblinCrown', qtyMin: 5, qtyMax: 5 }, { item: 'goblinBlade', chance: 0.20, qtyMin: 1, qtyMax: 1 }]
   },
   // --- Mapa 3: Terras Selvagens (ciclo 7 em diante) ---
   {
@@ -210,19 +214,19 @@ const MONSTER_TYPES = [
     key: 'troll', name: 'TROLL',
     desc: 'Couro grosso como casca de árvore e um apetite sem fim. Feridas pequenas fecham antes de você piscar.',
     image: 'assets/sprites/troll.png', frameW: 128, frameH: 128, blinkCapable: true,
-    drops: [{ item: 'trollHide', qtyMin: 2, qtyMax: 2 }]
+    drops: [{ item: 'trollHide', qtyMin: 2, qtyMax: 2 }, { item: 'trollClub', chance: 0.02, qtyMin: 1, qtyMax: 1 }]
   },
   {
     key: 'dragon', name: 'DRAGÃO',
     desc: 'Senhor do andar em chamas. Cada escama vale uma fortuna — se você sobreviver pra arrancá-la.',
     image: 'assets/sprites/dragon.png', frameW: 128, frameH: 128, blinkCapable: true,
-    drops: [{ item: 'dragonScale', qtyMin: 3, qtyMax: 3 }]
+    drops: [{ item: 'dragonScale', qtyMin: 3, qtyMax: 3 }, { item: 'dragonClaw', chance: 0.04, qtyMin: 1, qtyMax: 1 }]
   },
   {
     key: 'demon', name: 'DEMÔNIO',
     desc: 'Veio de além do portão. Seus chifres crepitam com uma energia que faz o ar tremer.',
     image: 'assets/sprites/demon.png', frameW: 128, frameH: 128, blinkCapable: true,
-    drops: [{ item: 'demonHorn', qtyMin: 3, qtyMax: 3 }]
+    drops: [{ item: 'demonHorn', qtyMin: 3, qtyMax: 3 }, { item: 'demonBlade', chance: 0.02, qtyMin: 1, qtyMax: 1 }]
   },
   // --- Mapa 4: Andar do Dragão --- 1 espécie nova (Lagarto de Fogo) +
   // 'dragon' (já existia, agora exclusivo deste andar em vez de dividir
@@ -288,11 +292,11 @@ const MAPS = {
   // `cycleHpMult` (opcional): multiplicador de vida só daquele ciclo, em cima
   // de hpScale (ver monsterHp).
   slimes: {
-    name: 'Andar do Pântano dos Slimes', hpScale: 1.5, timeBudgetH: 0.75,
-    // Ciclo 1 com metade da vida: o 1º slime (27 → 14 de vida) morre nos 10s
-    // com o dano inicial (1 por clique) a ~1.4 cliques/s. Antes pedia 2.7
-    // cliques/s e quem clicava devagar travava no 1º monstro do jogo.
-    cycleHpMult: { 1: 0.5 },
+    name: 'Andar do Pântano dos Slimes', hpScale: 8.5, timeBudgetH: 0.75,
+    // Ciclo 1 bem mais leve que o resto do andar: o 1º slime tem 14 de vida
+    // e morre nos 10s com o dano inicial a ~1.4 cliques/s (antes pedia 2.7 e
+    // quem clicava devagar travava no 1º monstro do jogo). 14 / (18 × 8.5).
+    cycleHpMult: { 1: 0.0915 },
     cycles: {
       // Ciclo 1: só slime verde, do início ao fim.
       1: ['slime', 'slime', 'slime', 'slime',
@@ -335,7 +339,7 @@ const MAPS = {
   // troca a dupla forte por uma TRIPLA — todo ciclo aqui soma exatamente 12
   // mortes (killsPerCycle), igual ao Ciclo 1 (ver comentário no topo de MAPS).
   goblins: {
-    name: 'Andar do Reino Goblin', hpScale: 11, timeBudgetH: 1,
+    name: 'Andar do Reino Goblin', hpScale: 43, timeBudgetH: 1,
     unlockRequirement: { dungeon: 'slimes', cycle: 5 },
     cycles: {
       // Ciclo 1: verde dominante, vermelho estreando.
@@ -376,7 +380,7 @@ const MAPS = {
   // Só Orc e Troll (Dragão e Demônio agora têm andar próprio — ver
   // MAPS.dragons/MAPS.demons). Todo ciclo soma 12 mortes, igual ao Ciclo 1.
   wilds: {
-    name: 'Andar das Terras Selvagens', hpScale: 1400, timeBudgetH: 1.5,
+    name: 'Andar das Terras Selvagens', hpScale: 1600, timeBudgetH: 1.5,
     unlockRequirement: { dungeon: 'goblins', cycle: 5 },
     cycles: {
       // Ciclo 1: padrão básico, 2 duplas (posições 5 e 9).
@@ -417,7 +421,10 @@ const MAPS = {
   // Selvagens pra virar o destaque deste andar, ver ITEM_DEFS.dragonScale).
   // Só 3 ciclos: killsPerCycle = 5 (3 avulsos + 1 dupla), fixo nos 3.
   dragons: {
-    name: 'Andar do Dragão', hpScale: 5400, timeBudgetH: 2,
+    name: 'Andar do Dragão', hpScale: 7900, timeBudgetH: 2,
+    // ciclos 4-5 repetem a formação dos ciclos 1-2 (só Lagartos de Fogo) e
+    // ficavam triviais depois dos Dragões do ciclo 3 — reforçados
+    cycleHpMult: { 4: 1.3, 5: 1.5 },
     unlockRequirement: { dungeon: 'wilds', cycle: 5 },
     cycles: {
       // Ciclo 1: 3 Lagartos de Fogo avulsos + 1 DUPLA de Lagartos de Fogo
@@ -440,7 +447,10 @@ const MAPS = {
   // propósito — todo ciclo tem 10 posições únicas, igual ao Goblin/Slime
   // originais. É o andar mais avançado do jogo hoje.
   demons: {
-    name: 'Andar do Demônio', hpScale: 6200, timeBudgetH: 2.5,
+    name: 'Andar do Demônio', hpScale: 34000, timeBudgetH: 2.5,
+    // entrada (ciclos 1-2) mais suave e ciclos 4-5 (que repetem a formação
+    // dos ciclos 1-2) reforçados, pra dificuldade subir sem paredão
+    cycleHpMult: { 1: 0.9, 2: 0.9, 4: 1.3, 5: 1.05 },
     unlockRequirement: { dungeon: 'dragons', cycle: 5 },
     cycles: {
       // Ciclo 1: só Mini Servo, do início ao fim.
@@ -466,8 +476,9 @@ const MAPS = {
 //        × CONFIG.hpKillGrowth^(abate no ciclo)  (sobe um pouco dentro do ciclo)
 //        × MAPS[andar].cycleHpMult[ciclo]        (opcional, ajuste de um ciclo só)
 //        × CONFIG.bossHpMult (chefe) × hpMult do monstro × 1.5 (grupo forte)
-// hpScale de cada andar foi calibrado com o simulador pra que o dano que o
-// jogador consegue comprar alcance a vida com um farm razoável.
+// hpScale de cada andar foi calibrado com o simulador pra que a 1ª passagem
+// leve ~70% de MAPS[andar].timeBudgetH (o jogador simulado é ideal; um real
+// é ~40% mais lento) sem nenhum ciclo pedir mais de 40 min de farm seguido.
 const DUNGEON_ORDER = ['slimes', 'goblins', 'wilds', 'dragons', 'demons'];
 function monsterHp(dungeonKey, cycle, killIdxInCycle, isBoss, hpMult){
   const map = MAPS[dungeonKey];
@@ -498,6 +509,12 @@ const ITEM_DEFS = [
   { key: 'slimeSword', name: 'Espada de Gosma (Bruta)', icon: 'item-slimesword', sellPrice: 30, type: 'brokenWeapon' },
   { key: 'slimeAxe', name: 'Machado de Gosma (Bruto)', icon: 'item-slimeaxe', sellPrice: 100, type: 'brokenWeapon' },
   { key: 'slimeAxeGreater', name: 'Machado de Gosma Maior (Bruto)', icon: 'item-slimeaxegreater', sellPrice: 300, type: 'brokenWeapon' },
+  // armas brutas dos outros andares (ver drops do Goblin Maior, Troll, Dragão e
+  // Demônio) — base das armas forjadas de cada andar
+  { key: 'goblinBlade', name: 'Lâmina Goblin (Bruta)', icon: 'item-goblinblade', sellPrice: 150, type: 'brokenWeapon' },
+  { key: 'trollClub', name: 'Clava do Troll (Bruta)', icon: 'item-trollclub', sellPrice: 600, type: 'brokenWeapon' },
+  { key: 'dragonClaw', name: 'Garra de Dragão (Bruta)', icon: 'item-dragonclaw', sellPrice: 2500, type: 'brokenWeapon' },
+  { key: 'demonBlade', name: 'Lâmina Demoníaca (Bruta)', icon: 'item-demonblade', sellPrice: 6000, type: 'brokenWeapon' },
   // --- Andar do Reino Goblin ---
   { key: 'goblinEar', name: 'Orelha de Goblin', icon: 'item-goblinear', sellPrice: 3, type: 'material', dungeon: 'goblins', weight: 35 },
   { key: 'goblinFang', name: 'Presa de Goblin Vermelho', icon: 'item-goblinfang', sellPrice: 5, type: 'material', dungeon: 'goblins', weight: 28 },
@@ -581,6 +598,38 @@ const CAVERN_UPGRADE_DEFS = [
   { key: 'oreRatePct', name: 'Picareta Reforçada', desc: '+10% velocidade de mineração', baseCost: 1500, costGrowth: 1.8, maxLevel: 10, pct: 0.10 },
   { key: 'oreLuck', name: 'Faro de Minérios', desc: '+10% chance de minérios raros', baseCost: 2000, costGrowth: 1.8, maxLevel: 10, pct: 0.10 },
 ];
+
+// Alquimia da Madame Morgana (ver WitchModule, js/witch.js): transforma
+// material que sobra em minério raro — perde valor de venda de propósito
+// (é um sumidouro), mas dá um caminho garantido pros minérios que a Caverna
+// sorteia raramente, inclusive o Cristal Arcano. Libera ao concluir o 1º
+// pedido dela; cada receita só aparece com o andar `floor` liberado.
+const ALCHEMY_RECIPES = [
+  { key: 'alchGold', floor: 'slimes', inputs: [{ itemKey: 'slimeGel', qty: 60 }, { itemKey: 'slimeCompound', qty: 20 }], output: { itemKey: 'goldOre', qty: 3 } },
+  { key: 'alchSilver', floor: 'goblins', inputs: [{ itemKey: 'goblinEar', qty: 40 }, { itemKey: 'goblinFang', qty: 20 }], output: { itemKey: 'silverOre', qty: 8 } },
+  { key: 'alchDiamond', floor: 'goblins', inputs: [{ itemKey: 'goblinShard', qty: 20 }, { itemKey: 'goblinScale', qty: 10 }, { itemKey: 'goblinAmulet', qty: 5 }], output: { itemKey: 'rawDiamond', qty: 1 } },
+  { key: 'alchDiamond2', floor: 'wilds', inputs: [{ itemKey: 'orcTusk', qty: 8 }, { itemKey: 'trollHide', qty: 5 }], output: { itemKey: 'rawDiamond', qty: 2 } },
+  { key: 'alchCrystal', floor: 'dragons', inputs: [{ itemKey: 'fireLizardScale', qty: 10 }, { itemKey: 'dragonScale', qty: 4 }, { itemKey: 'rawDiamond', qty: 3 }], output: { itemKey: 'arcaneCrystal', qty: 1 } },
+  { key: 'alchCrystal2', floor: 'demons', inputs: [{ itemKey: 'shadowEssence', qty: 6 }, { itemKey: 'demonHorn', qty: 2 }], output: { itemKey: 'arcaneCrystal', qty: 1 } },
+];
+
+// Pedidos repetíveis dos moradores (ver RequestsModule, js/requests.js):
+// `slots` pedidos ao mesmo tempo; concluído (ou dispensado), a vaga volta
+// depois de `cooldownMs`. Tipos: caçada (derrotar N de um monstro de andar
+// liberado), entrega (N de um material) e visita (ir até um ponto do mapa da
+// cidade — CITY_MAP.spots — e clicar nele). Recompensa em moeda: valor
+// esperado do que foi pedido × `valueMult` (caçada/entrega) ou
+// `spotSeconds` segundos de farm do andar mais alto liberado (visita).
+const REQUEST_CONFIG = {
+  slots: 3,
+  cooldownMs: 4 * 60 * 1000,
+  dismissCooldownMs: 60 * 1000,
+  huntKills: [15, 40],
+  deliverValue: [60, 90], // segundos de farm do andar, em valor de venda do item
+  valueMult: 1.6,
+  spotSeconds: 45,
+  weights: { hunt: 3, deliver: 3, spot: 2 },
+};
 
 // Falas soltas do Barnabé — sorteada 1 por vez toda vez que a Loja é aberta
 // (depois da 1ª apresentação, ver QuestModule.openBarnabeIntro), só clima,
@@ -684,6 +733,19 @@ const CITY_MAP = {
   // elipse da fonte.
   waterfall: { x: 1433, y: 298, rx: 20, ry: 62, gapMs: 1500 },
   moon: { x: 584, y: 34, rx: 26, ry: 26 },
+  // Pontos que pedidos/missões mandam visitar (ver RequestsModule e o
+  // objetivo 'visitSpot' de QuestModule): só aparecem (brilhando) e só
+  // respondem ao clique enquanto alguma missão ativa aponta pra eles.
+  // `name` entra no texto do pedido ("Procure perto de <name>").
+  spots: [
+    { key: 'wagonWheel', name: 'a roda de carroça quebrada', x: 1115, y: 655, rx: 30, ry: 26 },
+    { key: 'churchBarrels', name: 'os barris da igreja', x: 478, y: 655, rx: 24, ry: 26 },
+    { key: 'anvil', name: 'a bigorna do Ferreiro', x: 1250, y: 697, rx: 34, ry: 20 },
+    { key: 'flowerCart', name: 'o carrinho de flores', x: 160, y: 672, rx: 70, ry: 22 },
+    { key: 'lamppost', name: 'o lampião da praça', x: 402, y: 815, rx: 22, ry: 36 },
+    { key: 'watchtower', name: 'a torre de vigia', x: 1336, y: 305, rx: 32, ry: 48 },
+    { key: 'weaponRack', name: 'o suporte de armas', x: 1505, y: 690, rx: 24, ry: 34 },
+  ],
   // Ciclo de dia e noite (ver CityMapModule.applyDaylight): duração de um
   // dia inteiro e em que fração dele cada fase termina (0 = meia-noite). A
   // arte original é noturna — o dia é a mesma imagem clareada e colorida.
@@ -713,10 +775,13 @@ const CITY_MAP = {
 // mesmo padrão flat/opcional) e leia ele no único lugar do código que já
 // calcula aquele stat (ex.: um bônus de ouro entraria em ShopModule/onde
 // quer que a venda calcule o preço final).
+// As 3 iniciais têm estilos diferentes (antes eram idênticas, +1): Espada
+// equilibrada (dano fixo), Arco de crítico, Machado de queimadura — com o
+// valor médio parecido no começo do jogo.
 const WEAPON_DEFS = [
-  { key: 'swordSimple', name: 'Espada Simples', icon: 'weapon-sword', clickDamageBonus: 1, buyCost: 500 },
-  { key: 'bowArrow', name: 'Arco e Flecha', icon: 'weapon-bow', clickDamageBonus: 1, buyCost: 500 },
-  { key: 'axe', name: 'Machado', icon: 'weapon-axe', clickDamageBonus: 1, buyCost: 500 },
+  { key: 'swordSimple', name: 'Espada Simples', icon: 'weapon-sword', clickDamageBonus: 2, buyCost: 500 },
+  { key: 'bowArrow', name: 'Arco e Flecha', icon: 'weapon-bow', clickDamageBonus: 1, critChanceBonus: 0.08, buyCost: 500 },
+  { key: 'axe', name: 'Machado', icon: 'weapon-axe', clickDamageBonus: 1, burnChance: 0.25, burnDamagePercent: 0.4, buyCost: 500 },
 ];
 
 // Armas FORJADAS — resultado de consertar uma arma bruta (ver ITEM_DEFS
@@ -731,9 +796,11 @@ const WEAPON_DEFS = [
 // `recipe.materials` são chaves de ITEM_DEFS consumidas de state.inventory;
 // `recipe.coinCost` é consumido de state.gold — tudo verificado em
 // ForgeModule.canForge antes de deixar forjar.
+// `floor`: andar da arma — o Ferreiro agrupa por andar e só mostra as
+// receitas de andares já liberados (ver UI.renderForgeList).
 const FORGED_WEAPON_DEFS = [
   {
-    key: 'slimeWarriorSword', name: 'Espada do Guerreiro Slime', icon: 'weapon-slimewarriorsword',
+    key: 'slimeWarriorSword', name: 'Espada do Guerreiro Slime', icon: 'weapon-slimewarriorsword', floor: 'slimes',
     clickDamageBonus: 50, dpsBonus: 20,
     recipe: {
       coinCost: 700, materials: [
@@ -746,7 +813,7 @@ const FORGED_WEAPON_DEFS = [
     }
   },
   {
-    key: 'slimeWarriorAxe', name: 'Machado do Guerreiro Slime', icon: 'weapon-slimewarrioraxe',
+    key: 'slimeWarriorAxe', name: 'Machado do Guerreiro Slime', icon: 'weapon-slimewarrioraxe', floor: 'slimes',
     requiresWeapon: 'slimeWarriorSword', // forja em ordem (ver ForgeModule.canForge)
     clickDamageBonus: 150, dpsBonus: 60,
     recipe: {
@@ -761,7 +828,7 @@ const FORGED_WEAPON_DEFS = [
     }
   },
   {
-    key: 'slimeKingGreatAxe', name: 'Machado Ancestral do Rei Slime', icon: 'weapon-slimekinggreataxe',
+    key: 'slimeKingGreatAxe', name: 'Machado Ancestral do Rei Slime', icon: 'weapon-slimekinggreataxe', floor: 'slimes',
     requiresWeapon: 'slimeWarriorAxe',
     clickDamageBonus: 400, dpsBonus: 150,
     recipe: {
@@ -772,9 +839,79 @@ const FORGED_WEAPON_DEFS = [
         { itemKey: 'bronzeChunk', qty: 250 },
         { itemKey: 'goldOre', qty: 40 },
         { itemKey: 'rawDiamond', qty: 15 },
-        { itemKey: 'arcaneCrystal', qty: 3 },
+        { itemKey: 'arcaneCrystal', qty: 1 },
       ]
     }
+  },
+
+  // ---- Um par por andar, ALTERNATIVAS (forja uma, a outra ou as duas, em
+  // qualquer ordem): a 1ª é de clique, a 2ª de tropas (DPS), e as duas levam
+  // o efeito do andar — Goblin: drop extra; Selvagens: queimadura; Dragão:
+  // crítico; Demônio: dano bruto. Base: a arma bruta que o monstro forte do
+  // andar dropa + materiais do andar + minério da Caverna.
+  {
+    key: 'goblinRaiderDagger', name: 'Adaga do Saqueador Goblin', icon: 'weapon-goblinraiderdagger', floor: 'goblins',
+    clickDamageBonus: 120, extraDropChance: 0.15,
+    recipe: { coinCost: 6000, materials: [
+      { itemKey: 'goblinBlade', qty: 2 }, { itemKey: 'goblinFang', qty: 120 }, { itemKey: 'goblinScale', qty: 50 },
+      { itemKey: 'goblinSeal', qty: 8 }, { itemKey: 'ironOre', qty: 120 }, { itemKey: 'silverOre', qty: 15 },
+    ] }
+  },
+  {
+    key: 'goblinPriestStaff', name: 'Cajado do Sacerdote Goblin', icon: 'weapon-goblinprieststaff', floor: 'goblins',
+    dpsBonus: 900, extraDropChance: 0.15,
+    recipe: { coinCost: 6000, materials: [
+      { itemKey: 'goblinBlade', qty: 2 }, { itemKey: 'goblinShard', qty: 100 }, { itemKey: 'goblinAmulet', qty: 35 },
+      { itemKey: 'goblinCrown', qty: 8 }, { itemKey: 'bronzeChunk', qty: 120 }, { itemKey: 'silverOre', qty: 15 },
+    ] }
+  },
+  {
+    key: 'orcTribalAxe', name: 'Machado Tribal Orc', icon: 'weapon-orctribalaxe', floor: 'wilds',
+    clickDamageBonus: 450, burnChance: 0.30, burnDamagePercent: 1.5,
+    recipe: { coinCost: 30000, materials: [
+      { itemKey: 'trollClub', qty: 2 }, { itemKey: 'orcTusk', qty: 100 }, { itemKey: 'trollHide', qty: 30 },
+      { itemKey: 'ironOre', qty: 250 }, { itemKey: 'goldOre', qty: 25 },
+    ] }
+  },
+  {
+    key: 'trollElderClub', name: 'Clava do Troll Ancião', icon: 'weapon-trollelderclub', floor: 'wilds',
+    dpsBonus: 6000, burnChance: 0.15, burnDamagePercent: 1.0,
+    recipe: { coinCost: 30000, materials: [
+      { itemKey: 'trollClub', qty: 2 }, { itemKey: 'trollHide', qty: 80 }, { itemKey: 'orcTusk', qty: 40 },
+      { itemKey: 'bronzeChunk', qty: 250 }, { itemKey: 'goldOre', qty: 25 },
+    ] }
+  },
+  {
+    key: 'dragonScaleBlade', name: 'Lâmina de Escama de Dragão', icon: 'weapon-dragonscaleblade', floor: 'dragons',
+    clickDamageBonus: 1200, critChanceBonus: 0.10, critDamageBonus: 0.5,
+    recipe: { coinCost: 120000, materials: [
+      { itemKey: 'dragonClaw', qty: 2 }, { itemKey: 'dragonScale', qty: 50 }, { itemKey: 'fireLizardScale', qty: 100 },
+      { itemKey: 'rawDiamond', qty: 15 }, { itemKey: 'arcaneCrystal', qty: 1 },
+    ] }
+  },
+  {
+    key: 'fireLizardBow', name: 'Arco do Lagarto de Fogo', icon: 'weapon-firelizardbow', floor: 'dragons',
+    dpsBonus: 20000, critChanceBonus: 0.05, critDamageBonus: 0.25,
+    recipe: { coinCost: 120000, materials: [
+      { itemKey: 'dragonClaw', qty: 2 }, { itemKey: 'fireLizardScale', qty: 180 }, { itemKey: 'dragonScale', qty: 20 },
+      { itemKey: 'goldOre', qty: 50 }, { itemKey: 'arcaneCrystal', qty: 1 },
+    ] }
+  },
+  {
+    key: 'demonHornSword', name: 'Espada do Chifre Demoníaco', icon: 'weapon-demonhornsword', floor: 'demons',
+    clickDamageBonus: 3500,
+    recipe: { coinCost: 350000, materials: [
+      { itemKey: 'demonBlade', qty: 2 }, { itemKey: 'demonHorn', qty: 35 }, { itemKey: 'shadowEssence', qty: 50 },
+      { itemKey: 'rawDiamond', qty: 25 }, { itemKey: 'arcaneCrystal', qty: 2 },
+    ] }
+  },
+  {
+    key: 'shadowScythe', name: 'Foice das Sombras', icon: 'weapon-shadowscythe', floor: 'demons',
+    dpsBonus: 60000,
+    recipe: { coinCost: 350000, materials: [
+      { itemKey: 'demonBlade', qty: 2 }, { itemKey: 'shadowEssence', qty: 90 }, { itemKey: 'miniServoClaw', qty: 100 },
+      { itemKey: 'rawDiamond', qty: 25 }, { itemKey: 'arcaneCrystal', qty: 2 },
+    ] }
   },
 ];
 
@@ -790,6 +927,11 @@ const FORGED_WEAPON_DEFS = [
 // de state que marca que o NPC já fez o pedido (a missão só aparece depois);
 // `speaker` (chave de DIALOGUE_SPEAKERS) fala `completeText` na conversa de
 // conclusão (ver QuestModule.deliver).
+// Pedidos da Madame Morgana (`giver: 'witch'`): anunciados por ela na
+// conversa (ver WitchModule — `requiresChapter` = capítulo mínimo em
+// state.story.chapter), só podem ser entregues À NOITE (`nightOnly`) e dão
+// `reward` { gold, items }. Objetivos extras: 'killMonster' conta só os
+// abates DEPOIS do pedido; 'visitSpot' = clicar no ponto CITY_MAP.spots.
 const QUEST_DEFS = [
   {
     key: 'slimeGelDelivery', npc: 'Barnabé', speaker: 'barnabe', unlocksBuilding: 'ferreiro', announcedFlag: 'metBarnabe',
@@ -829,6 +971,60 @@ const QUEST_DEFS = [
       { type: 'defeatCycle', count: 1, label: 'Derrotar o chefe de um ciclo em qualquer Dungeon' },
     ],
     completeText: 'Isso deve bastar pra convencer os poucos mineradores que restaram a voltar ao trabalho, e sua coragem lá fora acaba com a última dúvida deles. A Caverna está pronta pra ser explorada.'
+  },
+  {
+    key: 'witchMoonHerbs', npc: 'Madame Morgana', speaker: 'morgana', giver: 'witch', nightOnly: true, requiresChapter: 0,
+    title: 'Ingredientes ao Luar', desc: 'Gosma de slime colhida na dungeon é a base de toda boa poção. Ela promete ensinar Alquimia.',
+    objectives: [
+      { type: 'deliverItem', itemKey: 'slimeGel', itemQty: 30 },
+      { type: 'deliverItem', itemKey: 'slimeCompound', itemQty: 12 },
+    ],
+    reward: { gold: 400 },
+    completeText: 'Perfeito, perfeito! Agora sim podemos brincar de verdade. Volte qualquer noite e eu transformo suas sobras em coisa valiosa. Chamam isso de *Alquimia*, querido.'
+  },
+  {
+    key: 'witchSealEcho', npc: 'Madame Morgana', speaker: 'morgana', giver: 'witch', nightOnly: true, requiresChapter: 2,
+    title: 'Eco do Selo', desc: 'Os amuletos goblins "cantam". Ela quer ouvir o canto de perto, lá do alto da torre de vigia.',
+    objectives: [
+      { type: 'deliverItem', itemKey: 'goblinAmulet', itemQty: 6 },
+      { type: 'deliverItem', itemKey: 'goblinSeal', itemQty: 3 },
+      { type: 'visitSpot', spot: 'watchtower', label: 'Escutar o selo do alto da torre de vigia (à noite)', night: true,
+        visitText: 'Do alto da torre, o vento traz um zumbido baixo... como um sino tocando debaixo da terra.' },
+    ],
+    reward: { gold: 3000, items: { arcaneCrystal: 1 } },
+    completeText: 'Ouviu? Não? Pois eu ouvi. O selo não está só rachando... ele está *chamando* alguém. Fique com este cristal. Vai precisar.'
+  },
+  {
+    key: 'witchTrollBlood', npc: 'Madame Morgana', speaker: 'morgana', giver: 'witch', nightOnly: true, requiresChapter: 3,
+    title: 'Sangue de Troll', desc: 'Trolls se curam de qualquer ferida. Ela quer descobrir por quê.',
+    objectives: [
+      { type: 'killMonster', monster: 'troll', count: 40 },
+      { type: 'deliverItem', itemKey: 'trollHide', itemQty: 15 },
+    ],
+    reward: { gold: 20000, items: { goldOre: 10 } },
+    completeText: 'Hmm... o sangue deles brilha no escuro. Algo lá embaixo os alimenta. Tome, pelo trabalho sujo.'
+  },
+  {
+    key: 'witchDragonEmber', npc: 'Madame Morgana', speaker: 'morgana', giver: 'witch', nightOnly: true, requiresChapter: 4,
+    title: 'Brasa de Dragão', desc: 'Uma brasa que não se apaga, pra aquecer o caldeirão de uma bruxa exigente.',
+    objectives: [
+      { type: 'deliverItem', itemKey: 'dragonScale', itemQty: 10 },
+      { type: 'deliverItem', itemKey: 'fireLizardScale', itemQty: 30 },
+      { type: 'visitSpot', spot: 'anvil', label: 'Acender a brasa na bigorna do Ferreiro (à noite)', night: true,
+        visitText: 'A brasa encosta no ferro e arde azul por um instante. Em algum lugar, a Madame Morgana ri sozinha.' },
+    ],
+    reward: { gold: 60000, items: { arcaneCrystal: 2, rawDiamond: 5 } },
+    completeText: 'Olha só como arde! O Creiton vai reclamar da bigorna chamuscada... deixe que reclame. Leve isto.'
+  },
+  {
+    key: 'witchShadowVeil', npc: 'Madame Morgana', speaker: 'morgana', giver: 'witch', nightOnly: true, requiresChapter: 5,
+    title: 'Véu de Sombras', desc: 'O selo fechou. Ela quer garantir que continue assim... ou é o que diz.',
+    objectives: [
+      { type: 'deliverItem', itemKey: 'shadowEssence', itemQty: 20 },
+      { type: 'deliverItem', itemKey: 'demonHorn', itemQty: 5 },
+    ],
+    reward: { gold: 150000, items: { arcaneCrystal: 2 } },
+    completeText: 'Um véu costurado com sombra de demônio. Se algo tentar abrir aquela porta de novo, eu vou saber primeiro. E você também, porque vou te chamar.'
   },
 ];
 
@@ -1131,6 +1327,12 @@ const PRESTIGE_UPGRADE_DEFS = [
 //   ice       — congela por `durationMs`: o monstro recebe
 //               +(`dmgBase + dmgPerLevel*nív`) de dano (fração, 0.2 = +20%)
 //               e os relógios (monstro e Dungeon) andam a `slowFactor` da velocidade
+// `maxPower` (opcional): teto do efeito somando os níveis de Dano.
+// Gelo rebalanceado: antes o intervalo mínimo (2,5s) era igual à duração, e
+// com 6 níveis de Velocidade o monstro ficava congelado 100% do tempo — com
+// os relógios pela metade e dano extra sem teto, virava a única escolha e
+// cortava o jogo pela metade (ver tools/balance_sim.js --sem arcano). Agora
+// congela no máximo metade do tempo (2,5s a cada 5s) e o dano extra para em +60%.
 const ARCANE_SKILL_DEFS = [
   { key: 'fire', name: 'Fogo', color: '#ff8a3d',
     desc: 'Queima o inimigo, causando dano contínuo.',
@@ -1142,8 +1344,8 @@ const ARCANE_SKILL_DEFS = [
     dmgBase: 3, dmgPerLevel: 1.5 },
   { key: 'ice', name: 'Gelo', color: '#7fd8ff',
     desc: 'Congela o inimigo: ele recebe mais dano e o tempo passa mais devagar.',
-    intervalMs: 6000, minIntervalMs: 2500, speedStep: 0.85,
-    durationMs: 2500, slowFactor: 0.5, dmgBase: 0.2, dmgPerLevel: 0.08 },
+    intervalMs: 8000, minIntervalMs: 5000, speedStep: 0.85,
+    durationMs: 2500, slowFactor: 0.5, dmgBase: 0.2, dmgPerLevel: 0.08, maxPower: 0.6 },
 ];
 
 // Conquistas (ver AchievementsModule, js/achievements.js) — no fim do
@@ -1157,9 +1359,15 @@ const ARCANE_SKILL_DEFS = [
 //   basicWeapons  — possui todas as WEAPON_DEFS (as armas simples)
 //   forge         — possui alguma FORGED_WEAPON_DEFS
 //   npcsMet       — conversou com todos os moradores de CITY_MAP.npcs
+//   chapter       — state.story.chapter > index (capítulo concluído)
+//   forgeFloor    — possui alguma arma forjada do andar `floor`
+//   forgeAll      — possui todas as FORGED_WEAPON_DEFS
+//   questsDone    — concluiu todas as QUEST_DEFS com esse `giver` (null = NPCs da cidade)
+//   requestsDone  — concluiu `count` pedidos repetíveis (state.requests.done)
 // Sem `type` = conquista de evento, desbloqueada direto por
 // AchievementsModule.unlock no lugar onde acontece (fonte, cachoeira, lua).
 const ACHIEVEMENT_KILLS_PER_SPECIES = 100;
+const ACHIEVEMENT_BOSS_KILLS = 25;
 const ACHIEVEMENT_DEFS = [
   { key: 'npcsMet', type: 'npcsMet', name: 'Rosto Conhecido', desc: 'Conversou com todos os moradores da cidade ao menos uma vez.' },
   { key: 'kills1000', type: 'totalKills', count: 1000, name: 'Mil Abates', desc: 'Derrotou 1000 monstros.' },
@@ -1169,6 +1377,23 @@ const ACHIEVEMENT_DEFS = [
   ...TROOP_DEFS.map(t => ({ key: 'troop_' + t.key, type: 'troop', troop: t.key })),
   // 1 por espécie de monstro (menos chefes), a cada ACHIEVEMENT_KILLS_PER_SPECIES abates
   ...MONSTER_TYPES.filter(m => !m.boss).map(m => ({ key: 'kills_' + m.key, type: 'monsterKills', monster: m.key, count: ACHIEVEMENT_KILLS_PER_SPECIES })),
+  // capítulos da história (nome/descrição vêm de STORY_CHAPTERS na hora, ver labelOf)
+  ...DUNGEON_ORDER.map((d, i) => ({ key: 'chapter_' + d, type: 'chapter', index: i })),
+  // forja: uma arma de cada andar, e todas
+  ...DUNGEON_ORDER.map(d => ({ key: 'forge_' + d, type: 'forgeFloor', floor: d })),
+  { key: 'forgeAll', type: 'forgeAll', name: 'Arsenal Lendário', desc: 'Forjou todas as armas do Ferreiro.' },
+  // chefes: ACHIEVEMENT_BOSS_KILLS vitórias contra cada chefe
+  ...MONSTER_TYPES.filter(m => m.boss).map(m => ({ key: 'boss_' + m.key, type: 'monsterKills', monster: m.key, count: ACHIEVEMENT_BOSS_KILLS, boss: true })),
+  // missões
+  { key: 'cityQuestsAll', type: 'questsDone', giver: null, name: 'Amigo da Cidade', desc: 'Concluiu todos os pedidos do Barnabé, do Creiton e do Irmão Anselmo.' },
+  { key: 'requests10', type: 'requestsDone', count: 10, name: 'Prestativo', desc: 'Concluiu 10 pedidos dos moradores.' },
+  { key: 'requests50', type: 'requestsDone', count: 50, name: 'Herói do Povo', desc: 'Concluiu 50 pedidos dos moradores.' },
+  // Madame Morgana
+  { key: 'witchMet', name: 'Sob a Lua', desc: 'Conversou com a Madame Morgana.' },
+  { key: 'alchemyFirst', name: 'Aprendiz de Alquimia', desc: 'Fez a primeira transmutação no caldeirão da bruxa.' },
+  { key: 'alchemyCrystal', name: 'Cristal Destilado', desc: 'Transmutou um Cristal Arcano.' },
+  { key: 'witchQuestsAll', type: 'questsDone', giver: 'witch', name: 'Confiança da Bruxa', desc: 'Concluiu todos os pedidos da Madame Morgana.' },
+  { key: 'quaseSapo', name: 'Quase Sapo', desc: 'Duvidou dos poderes da bruxa. Na cara dela.', secret: true },
   { key: 'waterfall', name: 'Respingos', desc: 'Clicou três vezes seguidas na cachoeira.', secret: true },
   { key: 'moon', name: 'Lunático', desc: 'Tocou a lua numa noite da cidade.', secret: true },
   { key: 'meioBesta', name: 'Meio Besta', desc: 'Jogou exatamente 333 moedas na fonte de uma vez só.', secret: true },

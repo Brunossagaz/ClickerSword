@@ -472,6 +472,26 @@
   </div>
 </div>
 
+<!-- Caldeirão da Madame Morgana (ver WitchModule.renderAlchemy) — aberto pela conversa com ela. -->
+<div class="modal-overlay" id="alchemyModal">
+  <div class="modal-group">
+    <div class="npc-side-panel">
+      <div class="dialogue-portrait-frame"><div class="dialogue-portrait-sheet alchemy-witch"></div></div>
+      <div class="npc-speech">"Tudo vira outra coisa, querido. É só saber a receita."</div>
+    </div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="pixel">ALQUIMIA</span>
+        <button class="modal-close" id="alchemyCloseBtn" aria-label="Fechar">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="footer-note" style="margin-top:0;">Transforma material que sobra em minério. Novas receitas aparecem conforme você libera andares.</div>
+        <div id="alchemyList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Janela de Missões (botão no canto, ver QuestModule.renderMissions):
      capítulo da história + pedidos dos NPCs + concluídas. -->
 <div class="modal-overlay" id="missionsModal">
@@ -489,7 +509,7 @@
 <div class="modal-overlay dialogue-overlay" id="dialogueModal">
   <div class="modal-group dialogue-group">
     <div class="npc-side-panel" id="dialoguePortraitPanel">
-      <div class="dialogue-portrait-frame"><img class="npc-portrait" id="dialoguePortrait" src="" alt=""></div>
+      <div class="dialogue-portrait-frame"><img class="npc-portrait" id="dialoguePortrait" src="" alt=""><div class="dialogue-portrait-sheet" id="dialoguePortraitSheet" style="display:none;"></div></div>
       <div class="npc-speech" id="dialogueRole"></div>
     </div>
     <div class="modal-box dialogue-box" id="dialogueBox">
@@ -670,6 +690,8 @@
 <script src="js/dialogue.js"></script>
 <script src="js/story.js"></script>
 <script src="js/quests.js"></script>
+<script src="js/requests.js"></script>
+<script src="js/witch.js"></script>
 <script src="js/player.js"></script>
 <script src="js/arcane.js"></script>
 <script src="js/troops.js"></script>

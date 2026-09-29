@@ -141,6 +141,38 @@ const SaveModule = {
       const ok = v => typeof v === 'string' && /^[A-Za-z0-9_]{1,40}$/.test(v);
       for(const k of Object.keys(raw.dialogueMemory).slice(0, 100)) if(ok(k) && ok(raw.dialogueMemory[k])) out.dialogueMemory[k] = raw.dialogueMemory[k];
     }
+    if(isObj(raw.questsAnnounced)) out.questsAnnounced = boolMap(raw.questsAnnounced, Object.keys(fresh.quests));
+    if(isObj(raw.questBase)){
+      out.questBase = {};
+      for(const q of Object.keys(fresh.quests)) if(isObj(raw.questBase[q])) out.questBase[q] = numMap(raw.questBase[q], monsterKeys);
+    }
+    if(isObj(raw.spotVisits)){
+      const spotKeys = (CITY_MAP.spots || []).map(s => s.key);
+      out.spotVisits = {};
+      for(const k of Object.keys(raw.spotVisits)){
+        const [q, sp] = k.split(':');
+        if(has(fresh.quests, q) && spotKeys.includes(sp) && raw.spotVisits[k] === true) out.spotVisits[k] = true;
+      }
+    }
+    if(isObj(raw.witch)) out.witch = { met: raw.witch.met === true };
+    if(isObj(raw.requests)){
+      const r = raw.requests, n = REQUEST_CONFIG.slots;
+      const spotKeys = (CITY_MAP.spots || []).map(s => s.key);
+      const cleanReq = q => {
+        if(!isObj(q) || !isNum(q.id) || !isNum(q.reward)) return null;
+        const giver = typeof q.giver === 'string' ? q.giver.replace(/[\u0000-\u001f\u007f<>]/g, '').slice(0, 30) : 'Um morador';
+        if(q.type === 'hunt' && monsterKeys.includes(q.monster) && isNum(q.count) && isNum(q.base)) return { id: q.id, type: 'hunt', giver, monster: q.monster, count: q.count, base: q.base, reward: q.reward };
+        if(q.type === 'deliver' && itemKeys.includes(q.item) && isNum(q.qty)) return { id: q.id, type: 'deliver', giver, item: q.item, qty: q.qty, reward: q.reward };
+        if(q.type === 'spot' && spotKeys.includes(q.spot)) return { id: q.id, type: 'spot', giver, spot: q.spot, reward: q.reward };
+        return null;
+      };
+      out.requests = {
+        slots: Array.from({ length: n }, (_, i) => Array.isArray(r.slots) ? cleanReq(r.slots[i]) : null),
+        nextAt: Array.from({ length: n }, (_, i) => Array.isArray(r.nextAt) && isNum(r.nextAt[i]) ? r.nextAt[i] : 0),
+        done: isNum(r.done) ? Math.floor(r.done) : 0,
+        seq: isNum(r.seq) ? Math.floor(r.seq) : 0,
+      };
+    }
     if(isObj(raw.story)){
       const s = raw.story;
       out.story = {
@@ -221,6 +253,11 @@ const SaveModule = {
     state.monsterKills = Object.assign(Object.fromEntries(MONSTER_TYPES.map(d => [d.key, 0])), loaded.monsterKills||{});
     state.npcsMet = Object.assign(Object.fromEntries(CITY_MAP.npcs.map(n => [n.key, false])), loaded.npcsMet||{});
     state.dialogueMemory = Object.assign({}, loaded.dialogueMemory||{});
+    state.questsAnnounced = Object.assign({}, loaded.questsAnnounced||{});
+    state.questBase = Object.assign({}, loaded.questBase||{});
+    state.spotVisits = Object.assign({}, loaded.spotVisits||{});
+    state.witch = Object.assign(freshState().witch, loaded.witch||{});
+    state.requests = loaded.requests || freshState().requests;
     state.prestige = Object.assign({pClick:0,pDps:0,pOreRate:0,pCrit:0}, loaded.prestige||{});
     state.arcaneSkills = Object.assign(freshState().arcaneSkills, loaded.arcaneSkills||{});
     state.guild = Object.assign({active:false,cycleKey:null,startedAt:0,durationMs:0}, loaded.guild||{});

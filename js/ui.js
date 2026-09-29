@@ -196,6 +196,7 @@ const UI = {
     DialogueModule.init();
     DialogueModule.init();
     QuestModule.init();
+    WitchModule.init();
 
     this.initSettingsModal();
   },
@@ -953,7 +954,7 @@ const UI = {
     if(def.critChanceBonus) parts.push(`+${Math.round(def.critChanceBonus*100)}% chance de crítico`);
     if(def.critDamageBonus) parts.push(`+${Math.round(def.critDamageBonus*100)}% dano crítico`);
     if(def.extraDropChance) parts.push(`${Math.round(def.extraDropChance*100)}% chance de drop extra`);
-    if(def.burnChance) parts.push(`${Math.round(def.burnChance*100)}% chance de queimadura`);
+    if(def.burnChance) parts.push(`${Math.round(def.burnChance*100)}% chance de queimadura (${Math.round((def.burnDamagePercent||0)*100)}% do golpe)`);
     return parts.join(' · ');
   },
   // Aba Armas do Inventário — "seleção de arma equipada": lista TODA arma
@@ -1034,10 +1035,29 @@ const UI = {
   // type:'brokenWeapon') em FORGED_WEAPON_DEFS. Cada material mostra
   // possui/precisa, verde se já tem o suficiente. Já forjada não mostra
   // botão de novo (state.weapons[key] só vai a 1, não empilha).
+  // Agrupada por andar (FORGED_WEAPON_DEFS.floor): andares ainda não
+  // liberados aparecem só como um aviso, sem revelar as receitas.
   renderForgeList(){
     const el = document.getElementById('forgeList');
     el.innerHTML = '';
+    let lastFloor = null;
     for(const def of FORGED_WEAPON_DEFS){
+      const floor = def.floor || DUNGEON_ORDER[0];
+      if(floor !== lastFloor){
+        lastFloor = floor;
+        const head = document.createElement('div');
+        head.className = 'forge-floor-title';
+        head.textContent = MAPS[floor] ? MAPS[floor].name : floor;
+        el.appendChild(head);
+        if(MAPS[floor] && !DungeonModule.isUnlocked(floor)){
+          const lock = document.createElement('div');
+          lock.className = 'footer-note forge-floor-locked';
+          lock.innerHTML = '<div class="icon icon-lock"></div>';
+          lock.append('Receitas liberadas ao alcançar este andar.');
+          el.appendChild(lock);
+        }
+      }
+      if(MAPS[floor] && !DungeonModule.isUnlocked(floor)) continue;
       const owned = state.weapons[def.key] > 0;
       const row = document.createElement('div');
       const materialsHtml = def.recipe.materials.map(m=>{
@@ -1465,6 +1485,7 @@ const UI = {
     this.renderCityBuildingLocks();
     this.renderLeaveButtonVisibility();
     QuestModule.render();
+    WitchModule.renderAlchemy();
     this.renderUpgradeTree();
     this.renderPrestigeTab();
     this.renderArcaneTab();
@@ -1529,6 +1550,7 @@ const UI = {
       const interval = ArcaneModule.intervalMs(def.key);
       const nextInterval = ArcaneModule.intervalMs(def.key, spdLvl + 1);
       const spdMaxed = interval <= def.minIntervalMs;
+      const dmgMaxed = ArcaneModule.dmgMaxed(def.key);
       const extra = def.key === 'ice' ? `<div class="arcane-stat">Tempo passa a ${this.arcanePct(def.slowFactor)} da velocidade</div>` : '';
       html += `
         <div class="arcane-card${learned ? ' learned' : ''}" style="--skill-color:${def.color}">
@@ -1550,8 +1572,8 @@ const UI = {
           <div class="arcane-branches">
             <div class="arcane-branch">
               <div class="arcane-branch-title">DANO <span>Nv ${dmgLvl}</span></div>
-              <div class="arcane-branch-next">→ ${this.arcaneEffectText(def.key, dmgLvl + 1)}</div>
-              <button class="buy-btn" data-up="${def.key}" data-branch="Dmg" ${canSpend ? '' : 'disabled'}>+1 (${cost} pt)</button>
+              <div class="arcane-branch-next">${dmgMaxed ? 'Dano máximo' : `→ ${this.arcaneEffectText(def.key, dmgLvl + 1)}`}</div>
+              <button class="buy-btn" data-up="${def.key}" data-branch="Dmg" ${canSpend && !dmgMaxed ? '' : 'disabled'}>${dmgMaxed ? 'MÁX' : `+1 (${cost} pt)`}</button>
             </div>
             <div class="arcane-branch">
               <div class="arcane-branch-title">VELOCIDADE <span>Nv ${spdLvl}</span></div>

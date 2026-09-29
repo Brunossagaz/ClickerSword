@@ -142,6 +142,11 @@ function freshState(){
     quests: Object.fromEntries(QUEST_DEFS.map(d => [d.key, false])),
     dialogueMemory: {}, // respostas prontas escolhidas nos diálogos { chave: id } — ver DialogueModule.choose
     story: { chapter:0, pendingCity:null, cardShown:-1 }, // ver StoryModule
+    questsAnnounced: {}, // pedidos com giver (bruxa) já feitos — ver QuestModule.announce
+    questBase: {},       // abates no momento do pedido, pros objetivos killMonster { quest: { monstro: n } }
+    spotVisits: {},      // objetivos visitSpot cumpridos { 'quest:ponto': true }
+    witch: { met:false },
+    requests: { slots: Array(REQUEST_CONFIG.slots).fill(null), nextAt: Array(REQUEST_CONFIG.slots).fill(0), done:0, seq:0 }, // ver RequestsModule
     // Expedição da Guilda em andamento (ver GuildModule) — só 1 por vez.
     // `startedAt`/`durationMs` (ambos em ms, Date.now()) definem quando ela
     // termina; resolve sozinha (itens direto na mochila) tanto no tick do

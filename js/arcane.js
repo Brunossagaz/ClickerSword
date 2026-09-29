@@ -55,6 +55,8 @@ const ArcaneModule = {
   // branch: 'Dmg' ou 'Spd'
   upgrade(key, branch){
     if(!this.isLearned(key) || (branch !== 'Dmg' && branch !== 'Spd') || !this.canSpend()) return;
+    if(branch === 'Dmg' && this.dmgMaxed(key)) return;
+    if(branch === 'Spd' && this.intervalMs(key) <= this.def(key).minIntervalMs) return;
     state.arcaneSkills[key+branch] += 1;
     SaveModule.save();
     UI.renderAll();
@@ -79,7 +81,13 @@ const ArcaneModule = {
   },
   power(key, dmg = this.dmgLevel(key)){
     const def = this.def(key);
-    return def.dmgBase + def.dmgPerLevel * dmg;
+    const p = def.dmgBase + def.dmgPerLevel * dmg;
+    return def.maxPower != null ? Math.min(def.maxPower, p) : p;
+  },
+  // ramo de Dano no teto (ARCANE_SKILL_DEFS.maxPower) — mais níveis não somam nada
+  dmgMaxed(key){
+    const def = this.def(key);
+    return def.maxPower != null && this.power(key) >= def.maxPower - 1e-9;
   },
   baseDamage(){
     return Math.max(1, PlayerModule.clickDamage());

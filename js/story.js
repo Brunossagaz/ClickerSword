@@ -36,6 +36,7 @@ const StoryModule = {
     state.story.chapter += 1;
     state.story.pendingCity = dungeonKey;
     SaveModule.save();
+    AchievementsModule.checkAll();
     DialogueModule.play('floorEnd_' + dungeonKey, { onEnd: done });
   },
 

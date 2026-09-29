@@ -265,6 +265,17 @@ const CityMapModule = {
         ctx.fillRect(r.x * s - 3 * s, (r.y - 18 - 30 * k) * s, 6 * s, 6 * s);
       }
     }
+    // pontos de missão: anel dourado pulsando + brilho em losango
+    const t = performance.now() / 1000, dpr = window.devicePixelRatio || 1;
+    for(const sp of this.activeSpots()){
+      const pulse = 0.5 + 0.5 * Math.sin(t * 3);
+      ctx.strokeStyle = `rgba(255,213,74,${(0.45 + 0.4 * pulse).toFixed(3)})`;
+      ctx.lineWidth = 2 * dpr;
+      ctx.beginPath(); ctx.ellipse(sp.x * s, sp.y * s, (sp.rx + 4 * pulse) * s, (sp.ry + 4 * pulse) * s, 0, 0, Math.PI * 2); ctx.stroke();
+      const cx = sp.x * s, cy = (sp.y - sp.ry - 14) * s, r = (5 + 2 * pulse) * s;
+      ctx.fillStyle = '#ffd54a';
+      ctx.beginPath(); ctx.moveTo(cx, cy - r * 1.6); ctx.lineTo(cx + r, cy); ctx.lineTo(cx, cy + r * 1.6); ctx.lineTo(cx - r, cy); ctx.closePath(); ctx.fill();
+    }
     // px do canvas por pixel de arte, INTEIRO: escala quebrada deixava uns
     // pixels maiores que outros e o traço borrado
     const k = Math.max(1, Math.round(CITY_MAP.spriteScale * s));
@@ -317,6 +328,15 @@ const CityMapModule = {
     const dx = (p.x - e.x) / e.rx, dy = (p.y - e.y) / e.ry;
     return dx * dx + dy * dy <= 1;
   },
+  // pontos de CITY_MAP.spots com missão/pedido ativo (os noturnos só de noite)
+  activeSpots(){
+    const night = this.daylight < 0.5;
+    const keys = QuestModule.activeSpots().filter(a => !a.night || night).map(a => a.spot);
+    return (CITY_MAP.spots || []).filter(s => keys.includes(s.key));
+  },
+  activeSpotAt(p){
+    return this.activeSpots().find(s => this.inEllipse(p, s)) || null;
+  },
   inFountain(p){
     return this.inEllipse(p, CITY_MAP.fountain);
   },
@@ -324,6 +344,8 @@ const CityMapModule = {
     const p = this.pointOf(e);
     const n = this.npcAt(p);
     if(n) return this.say(n);
+    const spot = this.activeSpotAt(p);
+    if(spot){ QuestModule.visitSpot(spot.key); return; }
     if(this.inFountain(p)) return this.openFountain();
     if(this.inEllipse(p, CITY_MAP.waterfall)) return this.splashWaterfall(p);
     // a lua só está no céu de noite (de dia a pintura do dia cobre ela)
@@ -342,6 +364,8 @@ const CityMapModule = {
       state.npcsMet[n.def.key] = true;
       AchievementsModule.checkAll(); // Rosto Conhecido (todos os moradores)
     }
+    // a bruxa tem conversa de verdade (pedidos, Alquimia) — ver WitchModule
+    if(n.def.key === 'witch'){ this.hideBubble(); WitchModule.talk(); return; }
     const lines = n.def.lines || [];
     const name = document.createElement('b');
     name.textContent = n.def.name;

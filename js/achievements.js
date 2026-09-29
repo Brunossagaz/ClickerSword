@@ -27,7 +27,17 @@ const AchievementsModule = {
     if(def.type === 'monsterKills'){
       const m = MONSTER_TYPES.find(t => t.key === def.monster);
       const name = m ? BestiaryModule.displayName(m) : def.monster;
+      if(def.boss) return { name: `Carrasco: ${name}`, desc: `Derrotou ${this.num(def.count)} vezes o chefe ${name}.` };
       return { name: `Caçador: ${name}`, desc: `Derrotou ${this.num(def.count)} monstros da espécie ${name}.` };
+    }
+    if(def.type === 'chapter'){
+      const ch = STORY_CHAPTERS[def.index] || {};
+      return { name: `${ch.num}: ${ch.title}`, desc: `Concluiu o ${String(ch.num || '').toLowerCase()} da história.` };
+    }
+    if(def.type === 'forgeFloor'){
+      const map = MAPS[def.floor];
+      const short = map ? map.name.replace(/^Andar (do|da|das|dos) /, '') : def.floor;
+      return { name: `Armeiro: ${short}`, desc: `Forjou uma arma do ${map ? map.name : def.floor}.` };
     }
     if(def.type === 'troop'){
       const t = TROOP_DEFS.find(d => d.key === def.troop);
@@ -41,19 +51,25 @@ const AchievementsModule = {
     if(def.type === 'totalKills') return [state.totalKillsAll, def.count];
     if(def.type === 'monsterKills') return [(state.monsterKills && state.monsterKills[def.monster]) || 0, def.count];
     if(def.type === 'npcsMet') return [CITY_MAP.npcs.filter(n => state.npcsMet && state.npcsMet[n.key]).length, CITY_MAP.npcs.length];
+    if(def.type === 'requestsDone') return [(state.requests && state.requests.done) || 0, def.count];
     return null;
   },
   isMet(def){
     switch(def.type){
       case 'totalKills':
       case 'monsterKills':
-      case 'npcsMet': {
+      case 'npcsMet':
+      case 'requestsDone': {
         const [cur, max] = this.progressOf(def);
         return cur >= max;
       }
       case 'troop': return (state.troops[def.troop] || 0) > 0;
       case 'basicWeapons': return WEAPON_DEFS.every(w => state.weapons[w.key] > 0);
       case 'forge': return FORGED_WEAPON_DEFS.some(w => state.weapons[w.key] > 0);
+      case 'forgeFloor': return FORGED_WEAPON_DEFS.some(w => (w.floor || DUNGEON_ORDER[0]) === def.floor && state.weapons[w.key] > 0);
+      case 'forgeAll': return FORGED_WEAPON_DEFS.every(w => state.weapons[w.key] > 0);
+      case 'chapter': return !!state.story && state.story.chapter > def.index;
+      case 'questsDone': return QUEST_DEFS.filter(q => (q.giver || null) === def.giver).every(q => state.quests[q.key]);
       default: return false; // conquista de evento — só via unlock() direto
     }
   },

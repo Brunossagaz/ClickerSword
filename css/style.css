@@ -959,6 +959,20 @@
     --icon-weapon-slimewarriorsword:url('../assets/icons/weapon-slimewarriorsword.png');
     --icon-weapon-slimewarrioraxe:url('../assets/icons/weapon-slimewarrioraxe.png');
     --icon-weapon-slimekinggreataxe:url('../assets/icons/weapon-slimekinggreataxe.png');
+    /* armas/itens dos andares 2-5: os PNGs em assets/icons são PROVISÓRIOS
+       (cópias de ícones parecidos) — é só sobrescrever o arquivo com a arte final */
+    --icon-item-goblinblade:url('../assets/icons/item-goblinblade.png');
+    --icon-item-trollclub:url('../assets/icons/item-trollclub.png');
+    --icon-item-dragonclaw:url('../assets/icons/item-dragonclaw.png');
+    --icon-item-demonblade:url('../assets/icons/item-demonblade.png');
+    --icon-weapon-goblinraiderdagger:url('../assets/icons/weapon-goblinraiderdagger.png');
+    --icon-weapon-goblinprieststaff:url('../assets/icons/weapon-goblinprieststaff.png');
+    --icon-weapon-orctribalaxe:url('../assets/icons/weapon-orctribalaxe.png');
+    --icon-weapon-trollelderclub:url('../assets/icons/weapon-trollelderclub.png');
+    --icon-weapon-dragonscaleblade:url('../assets/icons/weapon-dragonscaleblade.png');
+    --icon-weapon-firelizardbow:url('../assets/icons/weapon-firelizardbow.png');
+    --icon-weapon-demonhornsword:url('../assets/icons/weapon-demonhornsword.png');
+    --icon-weapon-shadowscythe:url('../assets/icons/weapon-shadowscythe.png');
     --icon-mineral-iron:url('../assets/icons/mineral-iron.png');
     --icon-mineral-bronze:url('../assets/icons/mineral-bronze.png');
     --icon-mineral-silver:url('../assets/icons/mineral-silver.png');
@@ -1000,6 +1014,18 @@
   .icon-weapon-slimewarriorsword{background-image:var(--icon-weapon-slimewarriorsword); width:20px; height:20px;}
   .icon-weapon-slimewarrioraxe{background-image:var(--icon-weapon-slimewarrioraxe); width:20px; height:20px;}
   .icon-weapon-slimekinggreataxe{background-image:var(--icon-weapon-slimekinggreataxe); width:20px; height:20px;}
+  .icon-item-goblinblade{background-image:var(--icon-item-goblinblade); width:20px; height:20px;}
+  .icon-item-trollclub{background-image:var(--icon-item-trollclub); width:20px; height:20px;}
+  .icon-item-dragonclaw{background-image:var(--icon-item-dragonclaw); width:20px; height:20px;}
+  .icon-item-demonblade{background-image:var(--icon-item-demonblade); width:20px; height:20px;}
+  .icon-weapon-goblinraiderdagger{background-image:var(--icon-weapon-goblinraiderdagger); width:20px; height:20px;}
+  .icon-weapon-goblinprieststaff{background-image:var(--icon-weapon-goblinprieststaff); width:20px; height:20px;}
+  .icon-weapon-orctribalaxe{background-image:var(--icon-weapon-orctribalaxe); width:20px; height:20px;}
+  .icon-weapon-trollelderclub{background-image:var(--icon-weapon-trollelderclub); width:20px; height:20px;}
+  .icon-weapon-dragonscaleblade{background-image:var(--icon-weapon-dragonscaleblade); width:20px; height:20px;}
+  .icon-weapon-firelizardbow{background-image:var(--icon-weapon-firelizardbow); width:20px; height:20px;}
+  .icon-weapon-demonhornsword{background-image:var(--icon-weapon-demonhornsword); width:20px; height:20px;}
+  .icon-weapon-shadowscythe{background-image:var(--icon-weapon-shadowscythe); width:20px; height:20px;}
   .icon-mineral-iron{background-image:var(--icon-mineral-iron); width:20px; height:20px;}
   .icon-mineral-bronze{background-image:var(--icon-mineral-bronze); width:20px; height:20px;}
   .icon-mineral-silver{background-image:var(--icon-mineral-silver); width:20px; height:20px;}

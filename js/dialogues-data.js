@@ -26,7 +26,8 @@
 // `voice`: timbre do "bip" de fala (ver DialogueModule.voiceBlip) — pitch em
 // Hz, onda do oscilador e quanto o tom varia de letra pra letra.
 // `sprite: true`: o retrato é uma folha de monstro (3 frames lado a lado) —
-// mostra só o 1º frame.
+// mostra só o 1º frame. `frame`: o retrato é um quadro de uma folha de
+// morador da cidade (art/npc: cols × rows quadros de w × h px) — mostra o 1º.
 const DIALOGUE_SPEAKERS = {
   anselmo:  { name: 'Irmão Anselmo', role: 'Clérigo da cidade', portrait: 'assets/portraits/anselmo.png', voice: { pitch: 185, wave: 'triangle', vary: 0.10 } },
   barnabe:  { name: 'Barnabé', role: 'Dono da Loja', portrait: 'assets/portraits/barnabe.png', voice: { pitch: 250, wave: 'square', vary: 0.18 } },
@@ -34,6 +35,7 @@ const DIALOGUE_SPEAKERS = {
   aldo:     { name: 'Professor Aldo', role: 'Professor da Academia', portrait: 'assets/icons/academia.png', voice: { pitch: 310, wave: 'sine', vary: 0.14 } },
   goblinRei:{ name: 'Goblin Maior', role: 'Chefe do Reino Goblin', portrait: 'assets/sprites/goblin_greater.png', sprite: true, voice: { pitch: 420, wave: 'sawtooth', vary: 0.30 } },
   dragao:   { name: 'Dragão', role: 'Senhor do andar em chamas', portrait: 'assets/sprites/dragon.png', sprite: true, voice: { pitch: 70, wave: 'sawtooth', vary: 0.08 } },
+  morgana:  { name: 'Madame Morgana', role: 'Bruxa (só aparece à noite)', portrait: 'assets/sprites/npc-witch.png', frame: { w: 32, h: 48, cols: 3, rows: 3 }, voice: { pitch: 360, wave: 'triangle', vary: 0.22 } },
   narrador: { name: '', narrator: true, voice: { pitch: 95, wave: 'sine', vary: 0.04 } },
 };
 
@@ -201,6 +203,48 @@ const DIALOGUES = {
     { speaker: 'narrador', text: 'A dungeon continua lá, além do portão, e os monstros ainda rondam seus andares. Mas agora a cidade sabe o nome de quem a protege.' },
     { chapter: 'Fim', title: 'Beyond the Gate', text: 'Obrigado por jogar! A história continua em uma próxima atualização.' },
   ] },
+};
+
+// ---------------- Madame Morgana (ver WitchModule, js/witch.js) ----------------
+// RASCUNHO pra revisão, igual à história acima.
+Object.assign(DIALOGUES, {
+  witchIntro: { lines: [
+    { speaker: 'morgana', text: 'Hehehe... finalmente alguém com coragem de falar comigo depois que escurece.' },
+    { speaker: 'morgana', text: 'Madame Morgana, ao seu dispor. Leio a lua, as cinzas e, às vezes, as pessoas.', memory: 'morgana', choices: [
+      { id: 'respeito', text: 'Muito prazer, madame.', reply: 'Educado! Que raridade nesta cidade.' },
+      { id: 'desconfia', text: 'O Anselmo sabe que você está aqui?', reply: 'O Anselmo sabe de muitas coisas. E finge não saber de outras tantas.' },
+      { id: 'sapo', text: 'Você é bruxa de verdade? Prove.', reply: 'Quer virar sapo? ... Não? Então não me desafie, querido. Hehehe.', achievement: 'quaseSapo' },
+    ] },
+    { speaker: 'morgana', text: 'Essa dungeon transborda magia. Quem sabe misturar as coisas certas... transforma sobra em tesouro.' },
+    { speaker: 'morgana', text: 'Traga-me uns ingredientes e eu te mostro como. Mas só à noite: de dia eu durmo.' },
+  ] },
+});
+
+// textos soltos da bruxa, montados em conversa na hora (ver WitchModule.talk)
+const WITCH_TEXTS = {
+  // saudação ao clicar nela de novo (a 1ª que bater o `when` vale)
+  greetings: [
+    { when: 'morgana=sapo', text: 'Voltou, pequeno sapo? Hehehe. Brincadeira... por enquanto.' },
+    { when: 'morgana=desconfia', text: 'O Anselmo mandou você me vigiar? Diga a ele que mandei lembranças.' },
+    { text: 'Uma noite linda pra misturar coisas perigosas, não acha?' },
+  ],
+  // o que ela diz do selo, por capítulo (índice = state.story.chapter)
+  lore: [
+    'A lua anda nervosa. Algo embaixo da cidade se mexe, e não é minhoca.',
+    'O círculo partido... O Anselmo te contou? Claro que não contou tudo. Nunca conta.',
+    'Os goblins adoravam o selo porque ele *canta*. Eu também ouço. Faz tempo.',
+    'Os bichos fogem antes da gente. Se os trolls correram, é porque o que vem é pior.',
+    'O dragão falou com você? Dragões nunca mentem. Só escolhem muito bem o que dizer.',
+    'Fechado... por enquanto. A lua continua nervosa, querido. E eu também.',
+  ],
+  // anúncio de cada pedido dela (chave = QUEST_DEFS.key)
+  questIntro: {
+    witchMoonHerbs: 'Primeiro, o básico: *30 Geleias* e *12 Compostos de Slime*. Traga numa noite dessas e eu te ensino a Alquimia.',
+    witchSealEcho: 'Esses amuletos goblins... Traga *6 Amuletos* e *3 Selos*, e depois suba na *torre de vigia* numa noite. Quero saber o que você ouve lá de cima.',
+    witchTrollBlood: 'Trolls fecham qualquer ferida. Derrote *40 trolls* e me traga *15 Peles*. Quero ver o sangue deles no meu caldeirão.',
+    witchDragonEmber: 'Preciso de uma brasa que não se apague: *10 Escamas de Dragão*, *30 de Lagarto de Fogo*, e acenda tudo na *bigorna do Ferreiro* à noite. Não conte ao Creiton.',
+    witchShadowVeil: 'O selo fechou, mas eu não confio em portas. Traga *20 Essências das Sombras* e *5 Chifres*. Vou costurar um véu.',
+  },
 };
 
 // cartão de título de cada capítulo (tocado ao começar o jogo e depois de cada cityAfter_*)

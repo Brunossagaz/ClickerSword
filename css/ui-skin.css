@@ -1047,3 +1047,30 @@ body:not(.screen-city):not(.screen-dungeon) #missionsBtn{ display:none; }
 .missions-done summary{ cursor:pointer; font-size:19px; color:var(--parchment); }
 .mission-done-row{ margin:4px 0 0 10px; color:var(--arcane); }
 .mission-done-row span{ color:var(--parchment-dim); }
+
+/* Ferreiro: receitas agrupadas por andar (ver UI.renderForgeList) */
+.forge-floor-title{
+  font-family:'Press Start 2P', monospace; font-size:11px; color:var(--ember);
+  letter-spacing:1px; margin:14px 0 6px; padding-bottom:4px; border-bottom:2px solid var(--stone);
+}
+.forge-floor-title:first-child{ margin-top:0; }
+.forge-floor-locked{ display:flex; align-items:center; gap:4px; margin:0 0 6px; }
+
+/* retrato que é um quadro de folha de sprites (Madame Morgana, ver DIALOGUE_SPEAKERS.frame) */
+.dialogue-portrait-sheet{
+  height:100%; margin:0 auto;
+  background-repeat:no-repeat; background-position:0 0;
+  image-rendering:pixelated;
+}
+.dialogue-portrait-frame{ display:flex; align-items:center; justify-content:center; }
+.alchemy-witch{
+  background-image:url('../assets/sprites/npc-witch.png');
+  background-size:300% 300%; aspect-ratio:32 / 48;
+}
+.mission-portrait-sheet{ width:30px; height:44px; background-repeat:no-repeat; background-position:0 0; image-rendering:pixelated; }
+.mission-reward{ font-size:17px; color:var(--gold-glow); }
+.mission-night{ font-size:16px; color:#b98cff; font-style:italic; }
+.mission-actions{ display:flex; gap:8px; margin-top:4px; }
+.mission-request.is-waiting{ opacity:0.6; }
+.mission-request .mission-giver{ color:var(--parchment); }
+.alchemy-btns{ display:flex; flex-direction:column; gap:6px; flex:none; }

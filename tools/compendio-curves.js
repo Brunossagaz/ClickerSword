@@ -217,7 +217,7 @@ const CurvesView = (() => {
       for(const f of sim.floorTimes(res)){
         if(f.stuck || f.budget == null) continue;
         const diff = Math.round((f.pct - 1) * 100);
-        items.push({ level: f.status === 'ok' ? 'ok' : 'warn', tag: 'Orçamento ' + FLOOR_SHORT(f.key) + ':', text: `${hrsTxt(f.hours)} de ${hrsTxt(f.budget)} planejadas (${diff >= 0 ? '+' : ''}${diff}%)${f.status === 'rapido' ? ' — rápido demais' : f.status === 'lento' ? ' — lento demais' : ''}${budgetNote}.` });
+        items.push({ level: f.status === 'ok' ? 'ok' : 'warn', tag: 'Orçamento ' + FLOOR_SHORT(f.key) + ':', text: `${hrsTxt(f.hours)} de ${hrsTxt(f.budget)} planejadas pro jogador ideal (${diff >= 0 ? '+' : ''}${diff}%)${f.status === 'rapido' ? ' — rápido demais' : f.status === 'lento' ? ' — lento demais' : ''}${budgetNote}.` });
       }
       if(done.length){
         const worst = done.reduce((a, b) => (b.minutes > a.minutes ? b : a));
