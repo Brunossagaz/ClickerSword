@@ -131,8 +131,17 @@ function freshState(){
     // já mostrou o aviso do Clérigo sobre a Academia liberada (5ª entrada na
     // Dungeon)? ver OnboardingModule.announceAcademiaIfNeeded
     academiaAnnounced:false,
+    // já mostrou a conversa do Professor sobre as Habilidades Arcanas? (ver
+    // OnboardingModule.announceArcaneIfNeeded)
+    arcaneAnnounced:false,
+    // Habilidades Arcanas (ver ARCANE_SKILL_DEFS/ArcaneModule): por
+    // habilidade, `<key>` = 1 se já aprendida, `<key>Dmg`/`<key>Spd` = nível
+    // em cada ramo. Mapa numérico plano pra reaproveitar o numMap do save.
+    arcaneSkills: Object.fromEntries(ARCANE_SKILL_DEFS.flatMap(d => [[d.key, 0], [d.key+'Dmg', 0], [d.key+'Spd', 0]])),
     // missões concluídas (true/false por chave) — ver QUEST_DEFS/QuestModule
     quests: Object.fromEntries(QUEST_DEFS.map(d => [d.key, false])),
+    dialogueMemory: {}, // respostas prontas escolhidas nos diálogos { chave: id } — ver DialogueModule.choose
+    story: { chapter:0, pendingCity:null, cardShown:-1 }, // ver StoryModule
     // Expedição da Guilda em andamento (ver GuildModule) — só 1 por vez.
     // `startedAt`/`durationMs` (ambos em ms, Date.now()) definem quando ela
     // termina; resolve sozinha (itens direto na mochila) tanto no tick do

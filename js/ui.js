@@ -63,9 +63,9 @@ const UI = {
       if(!state.metCreiton){
         QuestModule.openCreitonIntro();
       } else {
-        document.getElementById('ferreiroCreitonLine').textContent =
-          '"'+CREITON_LINES[Math.floor(Math.random()*CREITON_LINES.length)]+'"';
         ferreiroModal.classList.add('open');
+        DialogueModule.typeInto(document.getElementById('ferreiroCreitonLine'),
+          '"'+CREITON_LINES[Math.floor(Math.random()*CREITON_LINES.length)]+'"', DialogueModule.voiceFor('creiton'));
       }
     });
     document.getElementById('ferreiroCloseBtn').addEventListener('click', ()=>ferreiroModal.classList.remove('open'));
@@ -119,6 +119,11 @@ const UI = {
       repeatCycleResultModal.addEventListener('click', (e)=>{ if(e.target === repeatCycleResultModal) repeatCycleResultModal.classList.remove('open'); });
     }
     this.wireBuildingModal('openAcademiaBtn', 'academiaModal', 'academiaCloseBtn');
+    this.initModalTabs('academiaModal');
+    // a árvore só mede o tamanho da janela quando está visível — ao voltar
+    // pra aba dela, recentraliza (senão ficava com a medida de quando estava escondida)
+    document.querySelector('#academiaModal .modal-tab-btn[data-tab="academiaTabTree"]')
+      .addEventListener('click', ()=>this.resetTreeView());
     this.initModalTabs('sidebarInventory');
     this.initSidebarToggle();
     document.getElementById('cavernChestBtn').addEventListener('click', ()=>CavernModule.collectChest());
@@ -169,9 +174,9 @@ const UI = {
       if(!state.metBarnabe){
         QuestModule.openBarnabeIntro();
       } else {
-        document.getElementById('lojaBarnabeLine').textContent =
-          '"'+BARNABE_LINES[Math.floor(Math.random()*BARNABE_LINES.length)]+'"';
         lojaModal.classList.add('open');
+        DialogueModule.typeInto(document.getElementById('lojaBarnabeLine'),
+          '"'+BARNABE_LINES[Math.floor(Math.random()*BARNABE_LINES.length)]+'"', DialogueModule.voiceFor('barnabe'));
       }
     });
     document.getElementById('lojaCloseBtn').addEventListener('click', ()=>lojaModal.classList.remove('open'));
@@ -188,6 +193,8 @@ const UI = {
     document.getElementById('lojaDropsSellSelectedBtn').addEventListener('click', ()=>this.sellSelected(this.shopCategoryDefs().drops));
     document.getElementById('lojaWeaponsSellSelectedBtn').addEventListener('click', ()=>this.sellSelected(this.shopCategoryDefs().weapons));
     document.getElementById('lojaMineralsSellSelectedBtn').addEventListener('click', ()=>this.sellSelected(this.shopCategoryDefs().minerals));
+    DialogueModule.init();
+    DialogueModule.init();
     QuestModule.init();
 
     this.initSettingsModal();
@@ -402,6 +409,7 @@ const UI = {
     document.getElementById('audioToggleLabel').textContent = SettingsModule.current.audioEnabled ? 'Ativado' : 'Desativado';
     document.getElementById('volumeSlider').value = SettingsModule.current.volume;
     document.getElementById('languageSelect').value = SettingsModule.current.language;
+    document.getElementById('textSpeedSelect').value = SettingsModule.current.textSpeed;
     document.getElementById('settingsSlotSection').style.display = SaveModule.activeSlot ? '' : 'none';
     document.getElementById('settingsModal').classList.add('open');
   },
@@ -445,6 +453,8 @@ const UI = {
     });
     document.getElementById('volumeSlider').addEventListener('input', (e)=>SettingsModule.setVolume(Number(e.target.value)));
     document.getElementById('languageSelect').addEventListener('change', (e)=>SettingsModule.setLanguage(e.target.value));
+    document.getElementById('textSpeedSelect').addEventListener('change', (e)=>SettingsModule.setTextSpeed(e.target.value));
+    document.getElementById('textSpeedSelect').addEventListener('change', (e)=>SettingsModule.setTextSpeed(e.target.value));
   },
   fmt(n){
     n = Math.floor(n);
@@ -1046,14 +1056,17 @@ const UI = {
           </div>`;
       } else {
         const canForge = ForgeModule.canForge(def);
-        row.className = 'shop-row'+(canForge?'':' disabled');
+        const needs = ForgeModule.prerequisiteMissing(def);
+        row.className = 'shop-row'+(canForge?'':' disabled')+(needs?' locked':'');
         row.innerHTML = `
           <div class="shop-info">
             <div class="name"><div class="icon icon-${def.icon}"></div>${def.name}</div>
             <div class="desc">${this.weaponBonusText(def)}</div>
+            ${needs ? '<div class="desc forge-needs"></div>' : ''}
             <div class="recipe-materials">${materialsHtml}</div>
           </div>
           <button class="buy-btn" ${canForge?'':'disabled'}><div class="icon icon-coin"></div> ${UI.fmt(def.recipe.coinCost)}</button>`;
+        if(needs) row.querySelector('.forge-needs').textContent = 'Forje antes: ' + needs.name;
         if(canForge){
           row.querySelector('button').addEventListener('click', ()=>ForgeModule.forge(def.key));
         }
@@ -1069,14 +1082,16 @@ const UI = {
     for(const def of PROSPECTOR_DEFS){
       const owned = state.prospectors[def.key];
       const cost = CavernModule.costForProspector(def);
-      const canAfford = state.gold >= cost;
+      const unlocked = CavernModule.isProspectorUnlocked(def);
+      const canAfford = unlocked && state.gold >= cost;
       const row = document.createElement('div');
-      row.className = 'shop-row'+(canAfford?'':' disabled');
+      row.className = 'shop-row'+(canAfford?'':' disabled')+(unlocked?'':' locked');
       row.innerHTML = `
         <div class="shop-info">
           <div class="name">${def.name}</div>
           <div class="desc">${def.desc} cada</div>
           <div class="owned">Possui: ${owned}</div>
+          ${unlocked ? '' : '<div class="desc">Libera junto com o ' + MAPS[def.requiresDungeon].name + '</div>'}
         </div>
         <button class="buy-btn" ${canAfford?'':'disabled'}><div class="icon icon-coin"></div> ${UI.fmt(cost)}</button>`;
       row.querySelector('button').addEventListener('click', ()=>CavernModule.buyProspector(def.key));
@@ -1381,6 +1396,13 @@ const UI = {
     }
   },
   renderPrestigeTab(){
+    // Ascensão fora do jogo (ver CONFIG.ascensionEnabled): some da Igreja e
+    // das Estatísticas, e a Igreja mostra só a nota de silêncio.
+    const enabled = !!CONFIG.ascensionEnabled;
+    document.getElementById('ascensionSection').style.display = enabled ? '' : 'none';
+    document.getElementById('igrejaQuietNote').style.display = enabled ? 'none' : '';
+    document.getElementById('invStatEssenceRow').style.display = enabled ? '' : 'none';
+    if(!enabled) return;
     document.getElementById('essenceCount').textContent = UI.fmt(state.essence);
     const gain = PrestigeModule.potentialEssence();
     document.getElementById('essenceGain').textContent = gain;
@@ -1442,9 +1464,173 @@ const UI = {
     this.renderForgeList();
     this.renderCityBuildingLocks();
     this.renderLeaveButtonVisibility();
-    QuestModule.renderAllQuestBanners();
+    QuestModule.render();
     this.renderUpgradeTree();
     this.renderPrestigeTab();
+    this.renderArcaneTab();
+    this.renderArcaneBar();
+  },
+  // ---------------------------------------------------------------------
+  // Habilidades Arcanas (ver ArcaneModule/ARCANE_SKILL_DEFS)
+  // ---------------------------------------------------------------------
+  // Ícones desenhados em SVG (sem PNG ainda) — cor vem da def
+  arcaneIconSvg(key, color){
+    const paths = {
+      fire: `<path d="M12 1.5c.6 3.6 4.9 5.6 4.9 11.1a4.9 4.9 0 0 1-9.8 0c0-2.8 1.7-3.9 2-6.6 1 1 1.6 2.3 1.6 3.6 1.3-2 1.6-4.9 1.3-8.1z" fill="${color}"/><path d="M12 12.5c.3 1.7 2.3 2.4 2.3 4.5a2.3 2.3 0 0 1-4.6 0c0-1.3.8-1.9 1-3 .5.4.8 1 .8 1.6.5-1 .6-2 .5-3.1z" fill="#fff3c4"/>`,
+      lightning: `<path d="M13.5 1.5 4.5 13.5h6.2l-1.7 9 10-12.8h-6.3l.8-8.2z" fill="${color}" stroke="#7a5a00" stroke-width="1" stroke-linejoin="round"/>`,
+      ice: `<g stroke="${color}" stroke-width="2.2" stroke-linecap="round"><path d="M12 2v20M3.3 7l17.4 10M3.3 17 20.7 7"/><path d="M9.5 3.8 12 6l2.5-2.2M9.5 20.2 12 18l2.5 2.2M3.6 10.5 6.8 9.3 6 6M20.4 13.5l-3.2 1.2.8 3.3M3.6 13.5l3.2 1.2-.8 3.3M20.4 10.5l-3.2-1.2.8-3.3" fill="none"/></g>`
+    };
+    return `<svg viewBox="0 0 24 24" class="arcane-icon" aria-hidden="true">${paths[key] || ''}</svg>`;
+  },
+  arcaneSecs(ms){
+    return (ms/1000).toFixed(1).replace('.', ',') + 's';
+  },
+  arcanePct(x){
+    return Math.round(x*100) + '%';
+  },
+  // Linha de efeito de uma habilidade pra um nível de dano `dmg` qualquer
+  // (usada pro valor atual e pra prévia do próximo nível)
+  arcaneEffectText(key, dmg){
+    const def = ArcaneModule.def(key);
+    const p = ArcaneModule.power(key, dmg);
+    if(key === 'fire') return `${this.arcanePct(p)} do dano por clique em ${this.arcaneSecs(def.durationMs)}`;
+    if(key === 'lightning') return `${this.arcanePct(p)} do dano por clique por raio`;
+    return `+${this.arcanePct(p)} de dano recebido por ${this.arcaneSecs(def.durationMs)}`;
+  },
+  showAcademiaTab(tabId){
+    const btn = document.querySelector(`#academiaModal .modal-tab-btn[data-tab="${tabId}"]`);
+    if(btn) btn.click();
+  },
+  renderArcaneTab(){
+    const el = document.getElementById('arcaneTab');
+    if(!el) return;
+    const unlocked = ArcaneModule.isUnlocked();
+    const points = ArcaneModule.pointsAvailable();
+    const earned = ArcaneModule.pointsEarned();
+    const maxPoints = DUNGEON_ORDER.length * CONFIG.maxCycleNum;
+    const cost = CONFIG.arcanePointCost;
+    const canSpend = ArcaneModule.canSpend();
+    const unlockFloor = DUNGEON_ORDER.indexOf(CONFIG.arcaneUnlockDungeon) + 1;
+
+    let html = `
+      <div class="arcane-header">
+        <div class="arcane-points"><span class="arcane-points-value">${points}</span> Ponto${points === 1 ? '' : 's'} Arcano${points === 1 ? '' : 's'}</div>
+        <div class="footer-note">Ganhe 1 ponto ao derrotar o chefe de cada ciclo pela 1ª vez (${earned}/${maxPoints} conquistados). As habilidades aprendidas disparam sozinhas durante a batalha.</div>
+        ${unlocked && ArcaneModule.pointsSpent() > 0 ? `<button class="small-btn arcane-reset-btn" id="arcaneResetBtn" title="Devolve todos os pontos gastos, de graça">Reiniciar habilidades</button>` : ''}
+      </div>`;
+    if(!unlocked){
+      html += `<div class="arcane-locked-note"><div class="icon icon-lock"></div>Conclua o ${unlockFloor}º andar (${MAPS[CONFIG.arcaneUnlockDungeon].name}) e volte à cidade para liberar.</div>`;
+    }
+    html += `<div class="arcane-grid${unlocked ? '' : ' locked'}">`;
+    for(const def of ARCANE_SKILL_DEFS){
+      const learned = ArcaneModule.isLearned(def.key);
+      const dmgLvl = ArcaneModule.dmgLevel(def.key);
+      const spdLvl = ArcaneModule.spdLevel(def.key);
+      const interval = ArcaneModule.intervalMs(def.key);
+      const nextInterval = ArcaneModule.intervalMs(def.key, spdLvl + 1);
+      const spdMaxed = interval <= def.minIntervalMs;
+      const extra = def.key === 'ice' ? `<div class="arcane-stat">Tempo passa a ${this.arcanePct(def.slowFactor)} da velocidade</div>` : '';
+      html += `
+        <div class="arcane-card${learned ? ' learned' : ''}" style="--skill-color:${def.color}">
+          <div class="arcane-card-top">
+            <div class="arcane-card-icon">${this.arcaneIconSvg(def.key, def.color)}</div>
+            <div>
+              <div class="arcane-card-name pixel">${def.name.toUpperCase()}</div>
+              <div class="arcane-card-level">${learned ? `Nível ${1 + dmgLvl + spdLvl}` : 'Não aprendida'}</div>
+            </div>
+          </div>
+          <div class="arcane-card-desc">${def.desc}</div>
+          <div class="arcane-stat">${this.arcaneEffectText(def.key, dmgLvl)}</div>
+          <div class="arcane-stat">Dispara a cada ${this.arcaneSecs(interval)}</div>
+          ${extra}`;
+      if(!learned){
+        html += `<button class="ascend-btn arcane-learn-btn" data-learn="${def.key}" ${canSpend ? '' : 'disabled'}>APRENDER — ${cost} ponto</button>`;
+      } else {
+        html += `
+          <div class="arcane-branches">
+            <div class="arcane-branch">
+              <div class="arcane-branch-title">DANO <span>Nv ${dmgLvl}</span></div>
+              <div class="arcane-branch-next">→ ${this.arcaneEffectText(def.key, dmgLvl + 1)}</div>
+              <button class="buy-btn" data-up="${def.key}" data-branch="Dmg" ${canSpend ? '' : 'disabled'}>+1 (${cost} pt)</button>
+            </div>
+            <div class="arcane-branch">
+              <div class="arcane-branch-title">VELOCIDADE <span>Nv ${spdLvl}</span></div>
+              <div class="arcane-branch-next">${spdMaxed ? 'Velocidade máxima' : `→ a cada ${this.arcaneSecs(nextInterval)}`}</div>
+              <button class="buy-btn" data-up="${def.key}" data-branch="Spd" ${canSpend && !spdMaxed ? '' : 'disabled'}>${spdMaxed ? 'MÁX' : `+1 (${cost} pt)`}</button>
+            </div>
+          </div>`;
+      }
+      html += `</div>`;
+    }
+    html += `</div>`;
+    el.innerHTML = html;
+    el.querySelectorAll('[data-learn]').forEach(b => b.addEventListener('click', ()=>ArcaneModule.learn(b.dataset.learn)));
+    el.querySelectorAll('[data-up]').forEach(b => b.addEventListener('click', ()=>ArcaneModule.upgrade(b.dataset.up, b.dataset.branch)));
+    // Reiniciar pede um 2º clique pra confirmar (evita apagar a build sem querer);
+    // se não confirmar em 4s, o botão volta ao normal.
+    const resetBtn = document.getElementById('arcaneResetBtn');
+    if(resetBtn){
+      resetBtn.addEventListener('click', ()=>{
+        if(resetBtn.classList.contains('confirm')){ ArcaneModule.resetSkills(); return; }
+        resetBtn.classList.add('confirm');
+        resetBtn.textContent = `Confirmar? Devolve ${ArcaneModule.pointsSpent()} ponto(s)`;
+        setTimeout(()=>{
+          if(!resetBtn.isConnected) return;
+          resetBtn.classList.remove('confirm');
+          resetBtn.textContent = 'Reiniciar habilidades';
+        }, 4000);
+      });
+    }
+  },
+  // Barra fixa na arena com as habilidades aprendidas — a parte escura de
+  // cada ícone esvazia conforme a próxima execução se aproxima. Chamada a
+  // cada tick (main.js): só recria o HTML quando o conjunto aprendido muda.
+  renderArcaneBar(){
+    const bar = document.getElementById('arcaneBar');
+    const learned = ARCANE_SKILL_DEFS.filter(d => ArcaneModule.isLearned(d.key));
+    if(!learned.length || !state.currentDungeon){
+      bar.style.display = 'none';
+      return;
+    }
+    bar.style.display = '';
+    const sig = learned.map(d => d.key + (1 + ArcaneModule.dmgLevel(d.key) + ArcaneModule.spdLevel(d.key))).join('|');
+    if(bar.dataset.sig !== sig){
+      bar.dataset.sig = sig;
+      bar.innerHTML = learned.map(d => `
+        <div class="arcane-slot" data-key="${d.key}" style="--skill-color:${d.color}" title="${d.name}: ${d.desc}">
+          ${this.arcaneIconSvg(d.key, d.color)}
+          <div class="arcane-slot-cd"></div>
+          <div class="arcane-slot-lvl">${1 + ArcaneModule.dmgLevel(d.key) + ArcaneModule.spdLevel(d.key)}</div>
+        </div>`).join('');
+    }
+    for(const d of learned){
+      const slot = bar.querySelector(`[data-key="${d.key}"]`);
+      const progress = Math.min(1, (ArcaneModule.timers[d.key] || 0) / ArcaneModule.intervalMs(d.key));
+      slot.querySelector('.arcane-slot-cd').style.height = ((1 - progress) * 100) + '%';
+      const active = (d.key === 'fire' && !!ArcaneModule.burn) || (d.key === 'ice' && ArcaneModule.isFrozen());
+      slot.classList.toggle('active', active);
+    }
+  },
+  // Monstro queimando/congelado (classes na arena, ver CSS .arcane-burning/.arcane-frozen)
+  renderArcaneEffects(){
+    const stage = document.getElementById('monsterStage');
+    stage.classList.toggle('arcane-burning', !!ArcaneModule.burn && ArcaneModule.isActive());
+    stage.classList.toggle('arcane-frozen', ArcaneModule.isFrozen());
+  },
+  showLightningStrike(){
+    const bolt = document.getElementById('arcaneBolt');
+    bolt.classList.remove('strike'); void bolt.offsetWidth; bolt.classList.add('strike');
+    this.screenShake();
+  },
+  showFloatingArcaneDamage(dmg, key){
+    const stage = document.getElementById('monsterStage');
+    const div = document.createElement('div');
+    div.className = 'float-dmg arcane-' + key;
+    div.textContent = '-' + this.fmt(dmg);
+    // um pouco pro lado, pra não sobrepor o número do clique no centro
+    div.style.left = (key === 'lightning' ? 38 : 62) + '%';
+    stage.appendChild(div);
+    setTimeout(()=>div.remove(), 850);
   },
   showFloatingDamage(dmg, isCrit, evt){
     const stage = document.getElementById('monsterStage');

@@ -1,0 +1,22 @@
+# monster-fire-lizard-34 - versão 3/4 (mesma paleta do perfil); luz de cima/esquerda
+# corpo OL C0..C4 | barriga G* | chifres/garras/dentes K* TT | lava/chama L1..L5 W1 | olho E1 E2 PU
+OL=#120E12
+C0=#1E1A1E
+C1=#2A2528
+C2=#3A3438
+C3=#524A4C
+C4=#6E6466
+G1=#3A302C
+G2=#54463E
+K1=#6A5E50
+K2=#B8A888
+TT=#E8DCC0
+L1=#7A1E0C
+L2=#D8420E
+L3=#FF8A1E
+L4=#FFD04A
+L5=#FFF4B0
+W1=#4A2C26
+E1=#FFB020
+E2=#FFE680
+PU=#120E12

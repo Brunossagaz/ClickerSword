@@ -73,6 +73,7 @@ const DungeonModule = {
     state.currentDungeon = key;
     state.dungeonRun = { elapsedMs:0, loot:{} }; // toda entrada começa com o tempo cheio
     state.dungeons[key].killCount = killCount;
+    ArcaneModule.resetBattle(); // habilidades arcanas começam a contar do zero a cada entrada
     // isFirst só quando a Dungeon começa exatamente no monstro 1 — assim
     // reentrar no meio de uma luta de chefe não "desliga" o chefe à toa
     MonsterModule.spawn(killCount === 0);
@@ -126,10 +127,10 @@ const DungeonModule = {
   },
   // saída que encerra a entrada (botão, desistir no tempo esgotado): resumo
   // do que foi obtido (+ ciclos concluídos, se estava repetindo)
-  leaveWithSummary(title){
+  leaveWithSummary(title, subtitleText){
     const key = state.currentDungeon;
     const loot = Object.assign({}, state.dungeonRun.loot);
-    const subtitle = this.summarySubtitle(key, 'Total obtido nesta entrada:');
+    const subtitle = this.summarySubtitle(key, subtitleText || 'Total obtido nesta entrada:');
     MonsterModule.abandonCycle();
     this.clearRepeat(state.dungeons[key]);
     this.leaveToCity();
@@ -140,6 +141,11 @@ const DungeonModule = {
     MonsterModule.current = null;
     UI.showCityView();
     UI.renderAll();
+    // conversas da volta, nessa ordem (todas esperam o resumo de loot fechar):
+    // aviso da Loja, reação da cidade ao andar vencido, Arcanas, cartão do capítulo
     OnboardingModule.announceShopUnlockIfNeeded();
+    StoryModule.onReturnToCity();
+    OnboardingModule.announceArcaneIfNeeded();
+    StoryModule.afterReturnToCity();
   }
 };

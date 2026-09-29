@@ -15,8 +15,13 @@ const CavernModule = {
     const owned = state.prospectors[def.key];
     return Math.ceil(def.baseCost * Math.pow(def.costGrowth, owned));
   },
+  // tier liberado junto com o andar (PROSPECTOR_DEFS.requiresDungeon)
+  isProspectorUnlocked(def){
+    return !def.requiresDungeon || !MAPS[def.requiresDungeon] || DungeonModule.isUnlocked(def.requiresDungeon);
+  },
   buyProspector(key){
     const def = PROSPECTOR_DEFS.find(p=>p.key===key);
+    if(!def || !this.isProspectorUnlocked(def)) return;
     const cost = this.costForProspector(def);
     if(state.gold >= cost){
       state.gold -= cost;
@@ -40,13 +45,14 @@ const CavernModule = {
     }
   },
   // Soma de orePerSec de todos os mineradores possuídos, multiplicada pelo
-  // bônus de Picareta Reforçada (+20%/nível, ver CAVERN_UPGRADE_DEFS) e pelo
+  // bônus de Picareta Reforçada (pct por nível, ver CAVERN_UPGRADE_DEFS) e pelo
   // de Toque de Midas (+15%/nível, permanente entre ascensões — ver
   // PRESTIGE_UPGRADE_DEFS/state.pOreRateMult).
   totalOrePerSecond(){
     let total = 0;
     for(const def of PROSPECTOR_DEFS) total += def.orePerSec * state.prospectors[def.key];
-    total *= (1 + state.cavernUpgrades.oreRatePct * 0.20);
+    const rate = CAVERN_UPGRADE_DEFS.find(u => u.key === 'oreRatePct');
+    total *= (1 + state.cavernUpgrades.oreRatePct * ((rate && rate.pct) || 0.10));
     total *= (1 + state.pOreRateMult);
     return total;
   },
@@ -54,7 +60,8 @@ const CavernModule = {
   // tudo que não é 'comum' (+15% por nível), então raro/épico/lendário
   // ficam relativamente mais prováveis sem nunca ultrapassar comum/incomum.
   rollMineral(){
-    const luck = state.cavernUpgrades.oreLuck * 0.15;
+    const luckDef = CAVERN_UPGRADE_DEFS.find(u => u.key === 'oreLuck');
+    const luck = state.cavernUpgrades.oreLuck * ((luckDef && luckDef.pct) || 0.10);
     const weights = MINERAL_DEFS.map(d => d.rarity === 'comum' ? d.weight : d.weight * (1+luck));
     const totalWeight = weights.reduce((a,b)=>a+b, 0);
     let r = Math.random() * totalWeight;

@@ -38,6 +38,7 @@
      cheia e configurações. -->
 <div class="hud-corner" id="hudCorner">
   <div class="hud-coins" id="hudCoins" title="Moedas"><span class="icon icon-coin"></span><span id="hudGold">0</span></div>
+  <button class="hud-btn" id="missionsBtn" title="Missões" aria-label="Missões"><span class="hud-icon hud-icon-missions"></span><span class="hud-alert" aria-hidden="true">!</span></button>
   <button class="hud-btn" id="bestiaryBtn" title="Bestiário" aria-label="Bestiário"><span class="hud-icon hud-icon-bestiary"></span></button>
   <button class="hud-btn" id="inventoryToggleBtn" title="Perfil do jogador" aria-label="Perfil do jogador"><span class="hud-icon hud-icon-backpack"></span></button>
   <button class="hud-btn" id="fullscreenBtn" title="Tela cheia" aria-label="Tela cheia"><span class="hud-icon hud-icon-fullscreen"></span></button>
@@ -90,6 +91,17 @@
         </div>
       </div>
       <div class="settings-row">
+        <div class="settings-label">Texto dos diálogos</div>
+        <div class="settings-actions">
+          <select id="textSpeedSelect" class="settings-select">
+            <option value="lenta">Lento</option>
+            <option value="normal">Normal</option>
+            <option value="rapida">Rápido</option>
+            <option value="instantanea">Instantâneo</option>
+          </select>
+        </div>
+      </div>
+      <div class="settings-row">
         <div class="settings-label">Idioma</div>
         <div class="settings-actions">
           <select id="languageSelect" class="settings-select">
@@ -98,7 +110,7 @@
           </select>
         </div>
       </div>
-      <div class="footer-note" style="margin-top:6px;">Áudio e idioma ainda não fazem nada além de guardar sua preferência — reservados para uma próxima atualização.</div>
+      <div class="footer-note" style="margin-top:6px;">O áudio controla a voz dos personagens nos diálogos. O idioma ainda só guarda sua preferência.</div>
     </div>
   </div>
 </div>
@@ -150,6 +162,15 @@
     </div>
   </div>
 </div>
+<!-- Zoom da arte de um monstro do Bestiário (ver BestiaryModule.openZoom).
+     Depois do bestiaryModal no DOM pra ficar por cima (e o Esc fechar ele primeiro). -->
+<div class="modal-overlay" id="bestiaryZoomModal">
+  <div class="bestiary-zoom-box">
+    <button class="modal-close bestiary-zoom-close" id="bestiaryZoomCloseBtn">✕</button>
+    <div class="bestiary-zoom-art" id="bestiaryZoomArt"></div>
+    <div class="bestiary-zoom-name pixel" id="bestiaryZoomName"></div>
+  </div>
+</div>
 
 <!-- Sem botão de fechar de propósito: o jogador precisa escolher tentar de
      novo ou voltar pra cidade, não só fechar e ficar sem monstro ativo. -->
@@ -197,7 +218,6 @@
         <button class="modal-close" id="ferreiroCloseBtn">✕</button>
       </div>
       <div class="modal-body">
-        <div class="quest-banner" id="ferreiroQuestBanner"></div>
         <div class="modal-tabs">
           <button class="modal-tab-btn active" data-tab="ferreiroTabBuy">Comprar</button>
           <button class="modal-tab-btn" data-tab="ferreiroTabForge">Forjar</button>
@@ -228,12 +248,22 @@
     </div>
     <div class="help-popover" id="academiaHelpPopover">Scroll do mouse: zoom. Clique e arraste no espaço vazio: navegar pelo mapa.</div>
     <div class="modal-body">
-      <div class="tree-wrap" id="upgradeTreeWrap">
-        <button class="small-btn tree-reset-btn" id="upgradeTreeResetBtn" title="Centralizar view">Centralizar</button>
-        <div class="tree-canvas" id="upgradeTreeCanvas">
-          <svg class="tree-lines" id="upgradeTreeLines" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
-          <div class="tree-nodes" id="upgradeTreeNodes"></div>
+      <div class="modal-tabs">
+        <button class="modal-tab-btn active" data-tab="academiaTabTree">Árvore de Combate</button>
+        <button class="modal-tab-btn" data-tab="academiaTabArcane">Habilidades Arcanas</button>
+      </div>
+      <div class="modal-tab-content active" id="academiaTabTree">
+        <div class="tree-wrap" id="upgradeTreeWrap">
+          <button class="small-btn tree-reset-btn" id="upgradeTreeResetBtn" title="Centralizar view">Centralizar</button>
+          <div class="tree-canvas" id="upgradeTreeCanvas">
+            <svg class="tree-lines" id="upgradeTreeLines" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+            <div class="tree-nodes" id="upgradeTreeNodes"></div>
+          </div>
         </div>
+      </div>
+      <!-- Habilidades Arcanas (ver ArcaneModule/UI.renderArcaneTab) -->
+      <div class="modal-tab-content" id="academiaTabArcane">
+        <div id="arcaneTab"></div>
       </div>
     </div>
   </div>
@@ -296,7 +326,6 @@
       <div class="modal-body">
         <!-- <div class="panel-title">Loja da Cidade</div> -->
         <div class="footer-note" style="margin:0 0 10px;">Venda os itens coletados nas Dungeons e na Caverna por moedas.</div>
-        <div class="quest-banner" id="lojaQuestBanner"></div>
         <div class="modal-tabs">
           <button class="modal-tab-btn active" data-tab="lojaTabDrops">Drops</button>
           <button class="modal-tab-btn" data-tab="lojaTabWeapons">Armas</button>
@@ -338,15 +367,18 @@
       <button class="modal-close" id="igrejaCloseBtn">✕</button>
     </div>
     <div class="modal-body">
-      <div class="quest-banner" id="clericQuestBanner"></div>
-      <div class="panel-title">Ascensão (Prestígio)</div>
-      <div class="prestige-box">
-        <div>Essência atual: <b id="essenceCount">0</b></div>
-        <div class="gain">Ganho ao ascender agora: +<span id="essenceGain">0</span></div>
-        <div class="gain" id="ascendProgress">Mortes neste run: 0/60</div>
-        <button class="ascend-btn" id="ascendBtn">ASCENDER</button>
+      <!-- Ascensão: escondida enquanto CONFIG.ascensionEnabled for false (ver UI.renderPrestigeTab) -->
+      <div id="ascensionSection" style="display:none;">
+        <div class="panel-title">Ascensão (Prestígio)</div>
+        <div class="prestige-box">
+          <div>Essência atual: <b id="essenceCount">0</b></div>
+          <div class="gain">Ganho ao ascender agora: +<span id="essenceGain">0</span></div>
+          <div class="gain" id="ascendProgress">Mortes neste run: 0/60</div>
+          <button class="ascend-btn" id="ascendBtn">ASCENDER</button>
+        </div>
+        <div id="prestigeUpgradeList"></div>
       </div>
-      <div id="prestigeUpgradeList"></div>
+      <div class="footer-note" id="igrejaQuietNote">A igreja está em silêncio. Irmão Anselmo reza pela cidade.</div>
     </div>
   </div>
 </div>
@@ -440,116 +472,39 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="shopUnlockModal">
-  <div class="modal-group">
-    <div class="npc-side-panel">
-      <img class="npc-portrait" src="assets/portraits/anselmo.png" alt="Irmão Anselmo">
-      <div class="npc-speech">O Clérigo</div>
-    </div>
-    <div class="modal-box">
-      <div class="modal-header">
-        <span class="pixel">IRMÃO ANSELMO</span>
-      </div>
-      <div class="modal-body" style="text-align:center;">
-        <div class="cleric-text">A notícia já chegou aos meus ouvidos: alguém teve coragem de enfrentar os monstros lá fora! Vá até a Loja da cidade e venda o que você encontrou por lá — ouvi dizer que o dono ainda consegue negociar alguns produtos.</div>
-        <button class="ascend-btn" id="shopUnlockOkBtn" style="margin-top:14px;">Entendi</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Aparece 1x quando a Academia libera (5ª entrada na Dungeon, ver
-     OnboardingModule.announceAcademiaIfNeeded). -->
-<div class="modal-overlay" id="academiaUnlockModal">
-  <div class="modal-group">
-    <div class="npc-side-panel">
-      <img class="npc-portrait" src="assets/portraits/anselmo.png" alt="Irmão Anselmo">
-      <div class="npc-speech">O Clérigo</div>
-    </div>
-    <div class="modal-box">
-      <div class="modal-header">
-        <span class="pixel">IRMÃO ANSELMO</span>
-      </div>
-      <div class="modal-body" style="text-align:center;">
-        <div class="cleric-text">Vejo que você já enfrentou a dungeon várias vezes — tenho boas notícias: a antiga Academia de Combate da cidade está de portas abertas de novo. Lá você pode estudar técnicas pra lutar melhor. Vá conferir quando quiser.</div>
-        <button class="ascend-btn" id="academiaUnlockOkBtn" style="margin-top:14px;">Entendi</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Sem botão de fechar de propósito: mesmo padrão dos outros diálogos de
-     NPC — só aparece 1x, no 1º clique na Loja (ver QuestModule.openBarnabeIntro). -->
-<div class="modal-overlay" id="barnabeModal">
-  <div class="modal-group">
-    <div class="npc-side-panel">
-      <img class="npc-portrait" src="assets/portraits/barnabe.png" alt="Barnabé">
-      <div class="npc-speech">Dono da Loja da cidade.</div>
-    </div>
-    <div class="modal-box">
-      <div class="modal-header">
-        <span class="pixel">BARNABÉ</span>
-      </div>
-      <div class="modal-body" style="text-align:center;">
-        <div class="cleric-text">Ah, um forasteiro por essas bandas! Sou Barnabé, dono desta loja. Os negócios andam fracos desde que a dungeon apareceu, mas de vez em quando ainda consigo negociar alguns produtos. Aliás... meu irmão Creiton é ferreiro, mas fugiu quando os monstros surgiram. Ele quer voltar, mas precisa de material — se você me trouxer 10 Geleias de Slime, eu repasso pra ele e o convenço a reabrir a forja.</div>
-        <button class="ascend-btn" id="barnabeContinueBtn" style="margin-top:14px;">Continuar</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Sem botão de fechar de propósito: mesmo padrão do barnabeModal — só
-     aparece 1x, no 1º clique no Ferreiro (ver metCreiton em UI.init). -->
-<div class="modal-overlay" id="creitonModal">
-  <div class="modal-group">
-    <div class="npc-side-panel">
-      <img class="npc-portrait" src="assets/portraits/creiton.png" alt="Creiton">
-      <div class="npc-speech">Dono do Ferreiro da cidade.</div>
-    </div>
-    <div class="modal-box">
-      <div class="modal-header">
-        <span class="pixel">CREITON</span>
-      </div>
-      <div class="modal-body" style="text-align:center;">
-        <div class="cleric-text">Então é você quem convenceu meu irmão a me mandar aquele material... Sou Creiton, o ferreiro desta cidade. Aqui eu forjo armas novas do zero e conserto as armas brutas que você trouxer da dungeon, deixando-as prontas pro combate. Já que está aqui, tenho um pedido: pra equipar uma tropa de defesa de verdade, preciso de 3 coisas de você — 8 Compostos de Slime pra temperar o metal, prova de que já derrotou o chefe de algum ciclo lá na dungeon, e que já tem pelo menos 2 armas iniciais diferentes (compre a 2ª aqui na forja). Traga tudo isso e a Guilda pode finalmente armar uma tropa de verdade.</div>
-        <button class="ascend-btn" id="creitonContinueBtn" style="margin-top:14px;">Continuar</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Sem botão de fechar de propósito: mesmo padrão do barnabeModal/creitonModal
-     — só aparece 1x, no 1º clique na Igreja (ver state.caveQuestAnnounced em
-     UI.init), apresentando a missão da Caverna em vez de deixar só o banner
-     passivo dentro do igrejaModal. -->
-<div class="modal-overlay" id="anselmoCaveModal">
-  <div class="modal-group">
-    <div class="npc-side-panel">
-      <img class="npc-portrait" src="assets/portraits/anselmo.png" alt="Irmão Anselmo">
-      <div class="npc-speech">Clérigo da cidade.</div>
-    </div>
-    <div class="modal-box">
-      <div class="modal-header">
-        <span class="pixel">IRMÃO ANSELMO</span>
-      </div>
-      <div class="modal-body" style="text-align:center;">
-        <div class="cleric-text">Já que está aqui, tenho um pedido. A Caverna ao norte da cidade está fechada há anos, e os poucos mineradores que restaram têm medo demais de voltar sozinhos. Se você me trouxer 20 Geleias de Slime e 15 Compostos de Slime, e provar que já derrotou o chefe de algum ciclo lá na dungeon, eu os convenço a voltar ao trabalho e reabrir a Caverna pra você.</div>
-        <button class="ascend-btn" id="anselmoCaveContinueBtn" style="margin-top:14px;">Continuar</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Genérico, reaproveitado por TODA missão (ver QuestModule.deliver) — título
-     e texto preenchidos dinamicamente a partir de QUEST_DEFS.completeTitle/completeText. -->
-<div class="modal-overlay" id="questCompleteModal">
-  <div class="modal-box">
+<!-- Janela de Missões (botão no canto, ver QuestModule.renderMissions):
+     capítulo da história + pedidos dos NPCs + concluídas. -->
+<div class="modal-overlay" id="missionsModal">
+  <div class="modal-box missions-box">
     <div class="modal-header">
-      <span class="pixel" id="questCompleteTitle">BARNABÉ</span>
+      <span class="pixel">MISSÕES</span>
+      <button class="modal-close" id="missionsCloseBtn" aria-label="Fechar">✕</button>
     </div>
-    <div class="modal-body" style="text-align:center;">
-      <div class="cleric-text" id="questCompleteText"></div>
-      <button class="ascend-btn" id="questCompleteOkBtn" style="margin-top:14px;">Entendi</button>
+    <div class="modal-body" id="missionsBody"></div>
+  </div>
+</div>
+
+<!-- Conversa com personagem (ver DialogueModule, roteiros em js/dialogues-data.js).
+     Sem botão de fechar de propósito: avança clicando em qualquer lugar. -->
+<div class="modal-overlay dialogue-overlay" id="dialogueModal">
+  <div class="modal-group dialogue-group">
+    <div class="npc-side-panel" id="dialoguePortraitPanel">
+      <div class="dialogue-portrait-frame"><img class="npc-portrait" id="dialoguePortrait" src="" alt=""></div>
+      <div class="npc-speech" id="dialogueRole"></div>
+    </div>
+    <div class="modal-box dialogue-box" id="dialogueBox">
+      <div class="modal-header">
+        <span class="pixel" id="dialogueName"></span>
+      </div>
+      <div class="modal-body">
+        <div class="dialogue-chapter" id="dialogueChapter" style="display:none;">
+          <div class="dialogue-chapter-num" id="dialogueChapterNum"></div>
+          <div class="dialogue-chapter-title" id="dialogueChapterTitle"></div>
+        </div>
+        <div class="cleric-text dialogue-text" id="dialogueText"></div>
+        <div class="dialogue-choices" id="dialogueChoices"></div>
+        <div class="dialogue-hint" id="dialogueHint">clique para continuar ▼</div>
+      </div>
     </div>
   </div>
 </div>
@@ -595,7 +550,7 @@
         <div class="stat-row"><div class="label">DPS</div><div class="value" id="invStatDps">0</div></div>
         <div class="stat-row"><div class="label">Chance de Crítico</div><div class="value" id="invStatCrit">0%</div></div>
         <div class="stat-row"><div class="label">Minério/seg</div><div class="value" id="invStatOrePerSec">0.00</div></div>
-        <div class="stat-row"><div class="label">Essência</div><div class="value" id="invStatEssence">0</div></div>
+        <div class="stat-row" id="invStatEssenceRow"><div class="label">Essência</div><div class="value" id="invStatEssence">0</div></div>
         <div class="stat-row"><div class="label">Mortes Totais</div><div class="value" id="invStatKills">0</div></div>
         <div class="stat-row"><div class="label">Clique Automático</div><div class="value" id="invStatAutoClick">—</div></div>
       </div>
@@ -645,7 +600,7 @@
         <button class="building-card map-sign building-guilda" id="openGuildaBtn" aria-label="Guilda - Tropas automáticas"><span class="map-sign-name">Guilda</span></button>
         <button class="building-card map-sign building-caverna" id="openCavernaBtn" aria-label="Caverna - Minere minérios"><span class="map-sign-name">Caverna</span></button>
         <button class="building-card map-sign building-loja" id="openLojaBtn" aria-label="Loja - Venda itens"><span class="map-sign-name">Loja</span></button>
-        <button class="building-card map-sign building-igreja" id="openIgrejaBtn" aria-label="Igreja - Ascensão"><span class="map-sign-name">Igreja</span></button>
+        <button class="building-card map-sign building-igreja" id="openIgrejaBtn" aria-label="Igreja"><span class="map-sign-name">Igreja</span></button>
         <button class="building-card map-sign building-dungeon" id="openDungeonBtn" aria-label="Dungeons - Batalhe monstros"><span class="map-sign-name">Dungeon</span></button>
         <button class="building-card map-sign building-academia" id="openAcademiaBtn" aria-label="Academia - Upgrades de combate">
           <span class="map-sign-name">Academia</span>
@@ -666,6 +621,7 @@
         <div class="monster-name" id="monsterName">SLIME</div>
         <div class="monster-stage" id="monsterStage">
           <canvas id="monsterCanvas" width="128" height="128"></canvas>
+          <div class="arcane-bolt" id="arcaneBolt"></div>
         </div>
         <div class="hp-wrap">
           <div class="hp-fill" id="hpFill"></div>
@@ -680,6 +636,9 @@
           <div class="timer-text" id="dungeonTimerText">5:00</div>
         </div>
         <div class="golden-tag" id="goldenTag"><div class="icon icon-golden" style="display:inline-block;"></div> MONSTRO DOURADO! CLIQUE RÁPIDO!</div>
+        <!-- Habilidades Arcanas aprendidas: disparam sozinhas, a barra mostra
+             a recarga de cada uma (ver UI.renderArcaneBar) -->
+        <div class="arcane-bar" id="arcaneBar" style="display:none;"></div>
       </div>
       <div class="footer-note">Clique no monstro para atacar manualmente.</div>
       <div class="footer-note" id="autoClickNote" style="display:none;"></div>
@@ -698,6 +657,7 @@
 
 <!-- Ordem importa: cada módulo depende de globais definidos nos anteriores -->
 <script src="js/config.js"></script>
+<script src="js/dialogues-data.js"></script>
 <script src="js/overrides-data.js"></script>
 <script src="js/overrides.js"></script>
 <script src="js/progression.js"></script>
@@ -707,8 +667,11 @@
 <script src="js/monster.js"></script>
 <script src="js/dungeons.js"></script>
 <script src="js/onboarding.js"></script>
+<script src="js/dialogue.js"></script>
+<script src="js/story.js"></script>
 <script src="js/quests.js"></script>
 <script src="js/player.js"></script>
+<script src="js/arcane.js"></script>
 <script src="js/troops.js"></script>
 <script src="js/guild.js"></script>
 <script src="js/cavern.js"></script>

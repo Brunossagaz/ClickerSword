@@ -61,10 +61,11 @@
   .portrait{flex:none; width:96px; height:136px; object-fit:cover; object-position:top; border:2px solid var(--stone); border-radius:4px; background:var(--stone-dark);}
   .meta{font-size:18px; color:var(--parchment-dim);}
   .meta b{color:var(--parchment); font-weight:normal;}
-  .kv{display:grid; grid-template-columns:max-content 1fr; gap:2px 8px; align-items:center; font-size:18px; color:var(--parchment-dim);}
+  .kv{display:grid; grid-template-columns:max-content minmax(0, 1fr); gap:2px 8px; align-items:center; font-size:18px; color:var(--parchment-dim);}
   .kv > span{min-width:0;}
   .kv-icon{display:flex; align-items:center; gap:8px; font-size:18px; color:var(--parchment-dim); margin-bottom:4px;}
   .kv input.ed[type=text]{width:100%;}
+  .kv select.ed{width:100%; max-width:100%;}
   .icon{display:inline-block; flex:none; width:24px; height:24px; vertical-align:middle; margin-right:6px; image-rendering:pixelated; background:var(--stone-dark); border-radius:3px;}
   .icon.missing{outline:2px dashed var(--blood); outline-offset:-2px;}
   .tag{display:inline-block; font-size:16px; padding:0 6px; border-radius:3px; border:1px solid var(--stone); color:var(--parchment-dim); margin:2px 4px 2px 0;}
@@ -101,7 +102,55 @@
   .create{display:flex; gap:8px; flex-wrap:wrap; align-items:center; background:var(--bg-panel); border:2px dashed var(--stone); border-radius:6px; padding:8px 10px; margin-bottom:12px;}
   .create b{color:var(--arcane); font-weight:normal;}
   .hint{font-size:17px; color:var(--parchment-dim); margin:0 0 12px;}
+  /* aba Curvas (tools/compendio-curves.js) */
+  .curve-section{background:var(--bg-panel); border:2px solid var(--stone); border-radius:6px; padding:12px 14px; margin-bottom:16px;}
+  .curve-section h2{margin:0 0 8px;}
+  .curve-chart{position:relative;}
+  .curve-chart svg{width:100%; height:auto; display:block; font-family:'VT323', monospace;}
+  .c-grid{stroke:#3a3350; stroke-width:1;}
+  .c-divider{stroke:#4a4264; stroke-width:1; stroke-dasharray:3 4;}
+  .c-group{stroke:#6a6484; stroke-width:1;}
+  .c-ref{stroke:#a89d84; stroke-width:1; stroke-dasharray:6 4;}
+  .c-cross{stroke:#e8ddc4; stroke-width:1; opacity:0.5;}
+  .c-tick{fill:#a89d84; font-size:15px;}
+  .c-group-label{fill:#e8ddc4;}
+  .c-axis-title{fill:#a89d84; font-size:14px;}
+  .c-direct{fill:#e8ddc4; font-size:16px;}
+  .curve-legend{display:flex; flex-wrap:wrap; gap:4px 16px; margin:4px 0 2px; font-size:17px; color:var(--parchment);}
+  .curve-leg-item{display:inline-flex; align-items:center; gap:6px;}
+  .curve-swatch{display:inline-block; width:14px; height:4px; border-radius:2px; flex:none;}
+  .curve-tip{position:absolute; display:none; pointer-events:none; background:#120e1a; border:2px solid #4a4264; padding:4px 8px; font-size:17px; color:var(--parchment); min-width:180px; box-shadow:0 4px 10px rgba(0,0,0,.5); z-index:3;}
+  .curve-tip-title{color:var(--gold-glow); margin-bottom:2px;}
+  .curve-tip-row{display:flex; align-items:center; gap:6px;}
+  .curve-table{margin:6px 0; font-size:16px;}
+  .curve-table summary{cursor:pointer; color:var(--arcane);}
+  .curve-table table{margin-top:4px; font-size:16px;}
+  .curve-table td, .curve-table th{padding:2px 8px;}
+  .curve-analysis{margin-top:8px; padding:8px 10px; background:var(--stone-dark); border-left:4px solid var(--ember); border-radius:3px;}
+  .curve-analysis-title{font-family:'Press Start 2P', monospace; font-size:11px; color:var(--ember); margin-bottom:4px;}
+  .curve-analysis ul{margin:0; padding-left:20px; font-size:18px; line-height:1.3;}
+  .curve-analysis li{margin:3px 0;}
+  .curve-analysis li b{color:var(--parchment); font-weight:normal; text-decoration:underline;}
+  .curve-analysis li.lvl-bad::marker{content:'✖ '; color:#e66767;}
+  .curve-analysis li.lvl-warn::marker{content:'▲ '; color:#c98500;}
+  .curve-analysis li.lvl-ok::marker{content:'✔ '; color:#199e70;}
   .hint b{color:var(--parchment); font-weight:normal;}
+  /* aba To-do (tools/compendio-todo.js) */
+  .todo-new-desc{flex:1; min-width:220px;}
+  .todo-summary{display:flex; flex-wrap:wrap; gap:6px 14px; margin:0 0 10px; font-size:18px;}
+  .todo-summary button{font-family:inherit; font-size:17px; background:var(--bg-panel); color:var(--parchment); border:2px solid var(--stone); border-radius:4px; padding:2px 10px; cursor:pointer;}
+  .todo-summary button.on{border-color:var(--arcane);}
+  .todo-item{display:grid; grid-template-columns:minmax(0, 1fr) auto; gap:6px 12px; background:var(--bg-panel); border:2px solid var(--stone); border-left-width:6px; border-radius:6px; padding:8px 10px; margin-bottom:8px;}
+  .todo-item input.todo-title{width:100%; font-family:'Press Start 2P', monospace; font-size:11px; color:var(--gold-glow); background:transparent; border:1px solid transparent; padding:4px;}
+  .todo-item textarea{grid-column:1 / -1; width:100%; min-height:44px; resize:vertical; font-family:inherit; font-size:18px; color:var(--parchment); background:var(--stone-dark); border:1px solid var(--stone); border-radius:3px; padding:4px 6px;}
+  .todo-item input.todo-title:hover, .todo-item input.todo-title:focus{border-color:var(--stone);}
+  .todo-actions{display:flex; gap:6px; align-items:center;}
+  .todo-item.st-done{border-left-color:#199e70;} .todo-item.st-done input.todo-title{color:var(--parchment-dim); text-decoration:line-through;}
+  .todo-item.st-todo{border-left-color:#3987e5;}
+  .todo-item.st-think{border-left-color:#c98500;}
+  .todo-item.st-nonsense{border-left-color:#6a6484; opacity:.7;}
+  .todo-meta{grid-column:1 / -1; font-size:15px; color:var(--parchment-dim);}
+  @media (max-width:600px){ .todo-item{grid-template-columns:1fr;} }
   .tree-card{margin-bottom:10px;}
   .tree-cols{display:grid; grid-template-columns:minmax(0, 300px) minmax(0, 1fr); gap:16px;}
   @media (max-width:700px){ .tree-cols{grid-template-columns:1fr;} .tree-card{margin-left:0 !important;} }
@@ -131,7 +180,10 @@
     <button data-tab="itens">Itens</button>
     <button data-tab="armas">Armas</button>
     <button data-tab="arvore">Árvore</button>
+    <button data-tab="caverna">Caverna</button>
+    <button data-tab="curvas">Curvas</button>
     <button data-tab="personagens">Personagens</button>
+    <button data-tab="todo">To-do</button>
   </nav>
 </header>
 <main>
@@ -145,8 +197,11 @@
   </section>
 
   <section id="vida">
-    <p class="hint">Os valores gerais abaixo valem para todos os monstros; o multiplicador de cada um fica na aba Monstros. Cada andar tem seu multiplicador de vida (hpScale em js/config.js).</p>
+    <p class="hint">Vida = vida base × <b>escala do andar</b> × crescimento por ciclo<sup>ciclo−1</sup> × crescimento por abate<sup>abate</sup> × multiplicador do monstro (aba Monstros) × chefe. Os valores gerais valem para todos os monstros.</p>
     <div class="stats" id="hpStats"></div>
+    <h2>Escala de vida por andar</h2>
+    <p class="hint">Calibrada com <code>node tools/balance_sim.js --calibrar</code>. Veja o efeito na aba Curvas (gráficos 1 e 2).</p>
+    <div class="stats" id="hpScaleStats"></div>
     <div class="toolbar">
       <label>Dungeon <select id="hpDungeon"></select></label>
       <label>Ciclo <select id="hpCycle"></select></label>
@@ -210,20 +265,53 @@
       </select>
       <button id="newWeaponBtn">Criar</button>
     </div>
-    <p class="hint">Bônus vazio = arma não tem esse bônus. Para uma arma forjada vir de um drop, crie antes um item do tipo "Arma bruta", coloque-o nos drops de um monstro e na receita.</p>
+    <p class="hint">Bônus vazio = arma não tem esse bônus. <b>Forje antes</b> trava a ordem: a arma só pode ser forjada depois da escolhida (o Ferreiro mostra "Forje antes: X"); ciclos (A pede B e B pede A) são recusados. Para uma arma forjada vir de um drop, crie antes um item do tipo "Arma bruta", coloque-o nos drops de um monstro e na receita.</p>
     <h2>Armas básicas</h2>
     <div class="grid" id="weaponGrid"></div>
     <h2>Armas forjadas</h2>
     <div class="grid" id="forgedGrid"></div>
   </section>
 
+  <section id="curvas">
+    <p class="hint">Curvas de progressão calculadas com os valores atuais (inclusive os editados aqui) pelo mesmo simulador de <code>tools/balance_sim.js</code>. As análises embaixo de cada gráfico se ajustam sozinhas quando você muda um número. Clique/s do jogador simulado: <select id="curvesCps"><option>3</option><option selected>4</option><option>5</option><option>8</option></select> (4 = jogador típico, referência do orçamento de tempo por andar)</p>
+    <div id="curvesBody"></div>
+  </section>
+
   <section id="arvore">
     <p class="hint">Árvore de habilidades da Academia de Combate, na ordem dos ramos. Cada efeito é somado <b>por nível comprado</b>; "teto" limita o total do atributo.
-      Mudanças nos efeitos valem para os próximos níveis comprados — níveis já comprados num save continuam com o valor antigo (use um save novo para testar).</p>
+      Os atributos são recalculados a partir dos níveis comprados toda vez que o jogo carrega, então mudar um efeito vale também para saves antigos.</p>
     <div class="toolbar">
       <input type="search" id="treeSearch" placeholder="Buscar habilidade…">
     </div>
     <div id="treeList"></div>
+  </section>
+
+  <section id="caverna">
+    <p class="hint">Cada minerador soma minério/seg; o minério sai com raridade sorteada e é vendido na Loja. Mineradores com <b>Libera com</b> só podem ser comprados depois de desbloquear aquele andar. O tempo pra se pagar de cada compra está na aba Curvas (gráfico 4).</p>
+    <div class="stats" id="cavernStats"></div>
+    <h2>Mineradores</h2>
+    <div class="grid" id="prospectorGrid"></div>
+    <h2>Melhorias da Caverna</h2>
+    <p class="hint">Picareta Reforçada: cada nível soma o % na velocidade total de mineração. Faro de Minérios: cada nível soma o % no peso de toda raridade acima de comum.</p>
+    <div class="grid" id="cavernUpgradeGrid"></div>
+  </section>
+
+  <section id="todo">
+    <p class="hint">Lista de tarefas do projeto. Salva sozinha em <code>tools/todo-data.json</code> (pelo <code>tools/dev_server.py</code>); sem o servidor, fica guardada só neste navegador.</p>
+    <div class="create">
+      <b>Nova tarefa:</b>
+      <input id="todoNewTitle" placeholder="Título" maxlength="120">
+      <input id="todoNewDesc" placeholder="O que deve ser feito" maxlength="2000" class="todo-new-desc">
+      <select id="todoNewStatus"></select>
+      <button id="todoAddBtn">Incluir</button>
+    </div>
+    <div class="toolbar">
+      <input type="search" id="todoSearch" placeholder="Buscar tarefa…">
+      <label>Situação <select id="todoFilter"></select></label>
+      <span class="count" id="todoSaveStatus"></span>
+    </div>
+    <div class="todo-summary" id="todoSummary"></div>
+    <div id="todoList"></div>
   </section>
 
   <section id="personagens">
@@ -234,8 +322,6 @@
     <div class="grid" id="cityNpcGrid"></div>
     <h2>Tropas (Guilda)</h2>
     <div class="grid" id="troopGrid"></div>
-    <h2>Mineradores (Caverna)</h2>
-    <div class="grid" id="prospectorGrid"></div>
   </section>
 </main>
 <div id="toast"></div>
@@ -246,16 +332,25 @@
 // base pra calcular o que mudou na hora de salvar (ConfigOverrides.diff).
 const BASE = JSON.parse(JSON.stringify({
   config: Object.fromEntries(Object.entries(CONFIG).filter(([, v]) => typeof v === 'number')),
-  monsters: MONSTER_TYPES, items: ITEM_DEFS, weapons: WEAPON_DEFS, forgedWeapons: FORGED_WEAPON_DEFS, troops: TROOP_DEFS, upgrades: UPGRADE_DEFS
+  monsters: MONSTER_TYPES, items: ITEM_DEFS, weapons: WEAPON_DEFS, forgedWeapons: FORGED_WEAPON_DEFS, troops: TROOP_DEFS, upgrades: UPGRADE_DEFS,
+  prospectors: PROSPECTOR_DEFS, cavernUpgrades: CAVERN_UPGRADE_DEFS,
+  maps: DUNGEON_ORDER.map(k => ({ key: k, hpScale: MAPS[k].hpScale }))
 }));
 </script>
 <script src="js/overrides-data.js"></script>
 <script src="js/overrides.js"></script>
+<script src="tools/balance-core.js"></script>
+<script src="tools/compendio-curves.js"></script>
+<script src="tools/compendio-todo.js"></script>
 <script>
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = n => n.toLocaleString('pt-BR');
 const round = (n, d = 4) => Math.round(n * 10 ** d) / 10 ** d;
-const LISTS = { monsters: MONSTER_TYPES, items: ITEM_DEFS, weapons: WEAPON_DEFS, forgedWeapons: FORGED_WEAPON_DEFS, troops: TROOP_DEFS, upgrades: UPGRADE_DEFS };
+// MAPS é um objeto no config.js: aqui vira lista (mesmos objetos, com key) pra
+// editar/comparar igual às outras coleções — ConfigOverrides trata o objeto no jogo
+DUNGEON_ORDER.forEach(k => { MAPS[k].key = k; });
+const LISTS = { monsters: MONSTER_TYPES, items: ITEM_DEFS, weapons: WEAPON_DEFS, forgedWeapons: FORGED_WEAPON_DEFS, troops: TROOP_DEFS, upgrades: UPGRADE_DEFS,
+  prospectors: PROSPECTOR_DEFS, cavernUpgrades: CAVERN_UPGRADE_DEFS, maps: DUNGEON_ORDER.map(k => MAPS[k]) };
 const current = () => ({ config: CONFIG, ...LISTS });
 const itemDef = key => ITEM_DEFS.find(d => d.key === key);
 const monDef = key => MONSTER_TYPES.find(m => m.key === key);
@@ -315,7 +410,13 @@ function setValue(bind, raw){
   let v;
   if(kind === 'str'){
     v = String(raw).trim();
-    if(!v) return false;
+    if(!v){
+      if(!optional) return false;
+      delete parent[last];
+      afterSet(coll, obj, path, old);
+      return true;
+    }
+    if(path === 'requiresWeapon' && forgeChainLoops(obj.key, v)) return false;
     if(path === 'icon' && !ConfigOverrides.ICON_RE.test(v)) return false;
   } else {
     const s = String(raw).trim().replace(',', '.');
@@ -335,9 +436,26 @@ function setValue(bind, raw){
   afterSet(coll, obj, path, old);
   return true;
 }
+// A pede B, B pede A = nenhuma das duas pode ser forjada: recusa
+function forgeChainLoops(key, req){
+  const seen = new Set([key]);
+  for(let k = req; k; ){
+    if(seen.has(k)) return true;
+    seen.add(k);
+    const w = FORGED_WEAPON_DEFS.find(x => x.key === k);
+    k = w && w.requiresWeapon;
+  }
+  return false;
+}
 // efeitos colaterais que mantêm os dados coerentes com o que o jogo espera
 function afterSet(coll, obj, path, old){
   if(coll === 'troops' && path === 'dps' && obj.desc === `+${old} DPS`) obj.desc = `+${obj.dps} DPS`;
+  if(coll === 'prospectors' && path === 'orePerSec' && obj.desc === `+${old} minério/seg`) obj.desc = `+${obj.orePerSec} minério/seg`;
+  if(coll === 'cavernUpgrades' && path === 'pct'){
+    const o = `+${round(old * 100, 3)}%`;
+    if(obj.desc.startsWith(o + ' ')) obj.desc = `+${round(obj.pct * 100, 3)}%` + obj.desc.slice(o.length);
+  }
+  if(coll === 'cavernUpgrades' && path === 'maxLevel' && obj.maxLevel < 1) obj.maxLevel = 1;
   if(coll === 'items' && path === 'type') normalizeItemType(obj);
   const m = path.match(/^drops\.(\d+)\.(qtyMin|qtyMax)$/);
   if(m && coll === 'monsters'){
@@ -397,6 +515,9 @@ document.addEventListener('change', e => {
   if(setValue(el.dataset.bind, el.value)){
     if(autoDesc && upg.effects.length) upg.desc = describeEffects(upg.effects);
     queueRender();
+  } else if(el.dataset.bind.includes('|requiresWeapon|')){
+    toast('Essa ordem cria um ciclo (uma arma pedindo a outra de volta) e nenhuma poderia ser forjada.', true);
+    queueRender(); // volta o select pro valor que ficou
   } else { el.classList.add('bad'); toast('Valor inválido — use um número ≥ 0 (ou texto não vazio; ícone só com letras, números, - e _).', true); }
 });
 document.addEventListener('keydown', e => {
@@ -447,6 +568,8 @@ function deleteCustom(coll, key){
     for(const w of FORGED_WEAPON_DEFS) w.recipe.materials = w.recipe.materials.filter(m => m.itemKey !== key);
   } else if(!confirm(`Excluir "${e.name}"?`)) return;
   list.splice(list.indexOf(e), 1);
+  // quem pedia a arma excluída na ordem da forja fica sem pré-requisito
+  if(coll === 'forgedWeapons') for(const w of FORGED_WEAPON_DEFS) if(w.requiresWeapon === key) delete w.requiresWeapon;
   refreshMinerals();
 }
 
@@ -674,6 +797,8 @@ function renderHpStats(){
     stat('×' + field('config', '', 'goldenRewardMult', 'num'), 'Itens do monstro dourado'),
     stat(field('config', '', 'goldenChancePerTick', 'pct'), 'Chance dourado por tick (200ms)', '%'),
   ].join('');
+  document.getElementById('hpScaleStats').innerHTML = DUNGEON_ORDER.map(k =>
+    stat('×' + field('maps', k, 'hpScale', 'num'), MAPS[k].name.replace(/^Andar d[aoe]s? /, ''))).join('');
 }
 
 // ---------------------------------------------------------------------
@@ -772,7 +897,9 @@ function weaponCard(coll, w){
         <span class="d-qty">×${field(coll, w.key, `recipe.materials.${i}.qty`, 'int', { cls: 'w-sm' })}
         <button class="x" data-action="del-mat|${esc(w.key)}|${i}" title="Remover material">×</button></span></li>`;
     }).join('');
-    extra = `<div class="kv" style="margin-top:6px"><span>Receita: moedas</span><span>${field(coll, w.key, 'recipe.coinCost', 'int')}</span></div>
+    const reqOpts = [['', '— nenhuma —'], ...FORGED_WEAPON_DEFS.filter(x => x.key !== w.key).map(x => [x.key, x.name])];
+    extra = `<div class="kv" style="margin-top:6px"><span title="Só libera a forja depois de ter esta arma (trava de ordem)">Forje antes</span><span>${field(coll, w.key, 'requiresWeapon', 'str?', { options: reqOpts })}</span>
+      <span>Receita: moedas</span><span>${field(coll, w.key, 'recipe.coinCost', 'int')}</span></div>
       <ul class="drops">${mats}</ul><button data-action="add-mat|${esc(w.key)}" style="margin-top:6px">+ material</button>`;
   }
   return `<div class="card${w.custom ? ' custom' : ''}">
@@ -922,9 +1049,27 @@ function renderTroops(){
       <span>Crescimento</span><span>×${field('troops', t.key, 'costGrowth', 'num')} por compra</span>
     </div></div>`).join('');
 }
-document.getElementById('prospectorGrid').innerHTML = PROSPECTOR_DEFS.map(p => `<div class="card"><h3>${esc(p.name)}</h3>
-  <div class="meta">${esc(p.desc || '')}</div>
-  <div class="meta">Custo inicial: <b>${fmt(p.baseCost)}</b> · cresce <b>×${p.costGrowth}</b> por compra</div></div>`).join('');
+function renderCavern(){
+  document.getElementById('cavernStats').innerHTML =
+    `<div class="stat"><div class="v">${field('config', '', 'cavernOfflineEfficiency', 'pct')}%</div><div class="l">Rendimento da mineração offline</div></div>`;
+  const unlockOpts = [['', 'Desde o início'], ...dungeonChoices];
+  document.getElementById('prospectorGrid').innerHTML = PROSPECTOR_DEFS.map(p => `<div class="card"><h3>${field('prospectors', p.key, 'name', 'str', { cls: 'w-name' })}</h3>
+    <div class="kv">
+      <span>Descrição</span><span>${field('prospectors', p.key, 'desc', 'str', { cls: 'w-name' })}</span>
+      <span>Minério/seg</span><span>${field('prospectors', p.key, 'orePerSec', 'num')}</span>
+      <span>Custo inicial</span><span>${field('prospectors', p.key, 'baseCost', 'int')}</span>
+      <span>Crescimento</span><span>×${field('prospectors', p.key, 'costGrowth', 'num')} por compra</span>
+      <span>Libera com</span><span>${field('prospectors', p.key, 'requiresDungeon', 'str?', { options: unlockOpts })}</span>
+    </div></div>`).join('');
+  document.getElementById('cavernUpgradeGrid').innerHTML = CAVERN_UPGRADE_DEFS.map(u => `<div class="card"><h3>${field('cavernUpgrades', u.key, 'name', 'str', { cls: 'w-name' })}</h3>
+    <div class="kv">
+      <span>Descrição</span><span>${field('cavernUpgrades', u.key, 'desc', 'str', { cls: 'w-name' })}</span>
+      <span>Por nível</span><span>+${field('cavernUpgrades', u.key, 'pct', 'pct')}%</span>
+      <span>Nível máximo</span><span>${field('cavernUpgrades', u.key, 'maxLevel', 'int')}</span>
+      <span>Custo inicial</span><span>${field('cavernUpgrades', u.key, 'baseCost', 'int')}</span>
+      <span>Crescimento</span><span>×${field('cavernUpgrades', u.key, 'costGrowth', 'num')} por nível</span>
+    </div></div>`).join('');
+}
 
 // ---------------------------------------------------------------------
 // Salvar
@@ -999,7 +1144,9 @@ function renderAll(){
   renderItems();
   renderWeapons();
   renderTroops();
+  renderCavern();
   renderTree();
+  if(typeof CurvesView !== 'undefined') CurvesView.schedule();
   renderSaveStatus();
 }
 renderAll();

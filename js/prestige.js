@@ -16,6 +16,7 @@ const PrestigeModule = {
     return Math.floor(Math.sqrt(state.goldEarnedThisRun/500));
   },
   canAscend(){
+    if(!CONFIG.ascensionEnabled) return false;
     return state.totalKillsAll >= this.currentAscendThreshold() && this.potentialEssence() > 0;
   },
   ascend(){
@@ -36,10 +37,14 @@ const PrestigeModule = {
     const keepOnboarding = {
       playerName: state.playerName,
       quests: state.quests,
+      dialogueMemory: state.dialogueMemory,
+      story: state.story,
       metBarnabe: state.metBarnabe,
       metCreiton: state.metCreiton,
       shopUnlockAnnounced: state.shopUnlockAnnounced,
       academiaAnnounced: state.academiaAnnounced,
+      arcaneAnnounced: state.arcaneAnnounced,
+      arcaneSkills: state.arcaneSkills,
       dungeonEntriesCount: state.dungeonEntriesCount,
       firstCycleEverCompleted: state.firstCycleEverCompleted,
       totalCyclesCompleted: state.totalCyclesCompleted,

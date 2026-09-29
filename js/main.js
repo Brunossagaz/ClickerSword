@@ -11,15 +11,15 @@ let dpsFloatElapsedMs = 0;
 // sem evento de mouse) a cada `autoClickIntervalMs`.
 let autoClickElapsedMs = 0;
 
-// Conversas com personagem (Clérigo, apresentações do Barnabé/Creiton/
-// Anselmo, avisos de Loja/Academia liberadas): enquanto qualquer uma estiver
+// Conversas com personagem (introdução do Clérigo e toda conversa da janela
+// de diálogo — ver DialogueModule): enquanto qualquer uma estiver
 // aberta o jogo fica pausado — tick() não roda nada. Loja/Ferreiro também
 // mostram o retrato do NPC mas são painéis de compra, não entram aqui.
 // Os relógios que usam Date.now() (tempo do monstro, dourado, queimadura,
 // expedição da Guilda) são empurrados pra frente pelo tempo pausado ao
 // fechar a conversa; o resto (tempo da Dungeon, DPS, Caverna) é por tick e
 // já para sozinho.
-const DIALOG_MODAL_IDS = ['clericModal', 'shopUnlockModal', 'academiaUnlockModal', 'barnabeModal', 'creitonModal', 'anselmoCaveModal'];
+const DIALOG_MODAL_IDS = ['clericModal', 'dialogueModal'];
 const PauseModule = {
   pausedAt: null,
   isDialogOpen(){
@@ -49,13 +49,18 @@ function tick(){
   if(PauseModule.update()) return;
   MonsterModule.checkGoldenExpiry();
   MonsterModule.maybeTriggerGolden();
+  // Gelo (Habilidades Arcanas): enquanto o monstro está congelado, o tempo
+  // do monstro e o da Dungeon andam mais devagar (ver ArcaneModule.timeScale)
+  // — o do monstro usa Date.now(), então é empurrado pra frente o que "sobrou".
+  const timeScale = ArcaneModule.timeScale();
+  if(timeScale < 1) state.monsterSpawnedAt += CONFIG.tickMs * (1 - timeScale);
   MonsterModule.checkTimeUp();
-  DungeonModule.tickRunTimer(CONFIG.tickMs);
+  DungeonModule.tickRunTimer(CONFIG.tickMs * timeScale);
   MonsterModule.checkBurnTick();
+  ArcaneModule.tick(CONFIG.tickMs);
   const dps = TroopsModule.totalDps();
   if(dps > 0 && MonsterModule.current){
-    const dmg = dps * (CONFIG.tickMs/1000);
-    MonsterModule.applyDamage(dmg);
+    const dmg = MonsterModule.applyDamage(dps * (CONFIG.tickMs/1000));
     dpsFloatAccum += dmg;
     dpsFloatElapsedMs += CONFIG.tickMs;
     if(dpsFloatElapsedMs >= 1000){
@@ -85,6 +90,7 @@ function tick(){
   UI.renderStats();
   UI.renderTimer();
   UI.renderAutoClickStatus();
+  UI.renderArcaneBar();
 }
 
 function boot(){

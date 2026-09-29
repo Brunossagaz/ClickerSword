@@ -126,8 +126,7 @@ const MonsterModule = {
     burn.ticksLeft -= 1;
     burn.nextTickAt += CONFIG.burnTickMs;
     const dmg = Math.max(1, Math.round(burn.dmgPerTick));
-    UI.showFloatingBurnDamage(dmg);
-    this.applyDamage(dmg);
+    UI.showFloatingBurnDamage(this.applyDamage(dmg));
   },
   retryCycle(){
     const d = state.dungeons[state.currentDungeon];
@@ -212,6 +211,7 @@ const MonsterModule = {
     state.isGolden = false;
     state.monsterSpawnedAt = Date.now();
     UI.setGoldenVisible(false);
+    ArcaneModule.onMonsterSpawn(); // queimadura/congelamento eram do monstro anterior
 
     UI.renderMonsterSprite();
     UI.renderMonsterInfo();
@@ -251,12 +251,16 @@ const MonsterModule = {
     }
     return results;
   },
+  // Retorna o dano efetivamente aplicado (Gelo aumenta o dano recebido, ver
+  // ArcaneModule.damageTakenMult) — quem mostra número flutuante usa esse valor.
   applyDamage(dmg){
+    dmg *= ArcaneModule.damageTakenMult();
     state.monsterHp -= dmg;
     UI.renderHpBar();
     if(state.monsterHp <= 0){
       this.onDeath();
     }
+    return dmg;
   },
   onDeath(){
     const d = state.dungeons[state.currentDungeon];
@@ -322,8 +326,18 @@ const MonsterModule = {
       // até aqui depois (ver DungeonModule.startAtCycle/UI.openCyclePicker)
       const kpc = this.killsPerCycleFor(state.currentDungeon);
       const justFinishedCycle = Math.floor((d.killCount - 1) / kpc) + 1;
-      d.maxCycleCompleted = Math.max(d.maxCycleCompleted || 0, justFinishedCycle);
+      const prevMaxCycle = d.maxCycleCompleted || 0;
+      d.maxCycleCompleted = Math.max(prevMaxCycle, justFinishedCycle);
+      // 1ª vitória contra o chefe deste ciclo = +1 ponto arcano (ver
+      // ArcaneModule.pointsEarned, que deriva de maxCycleCompleted). Antes da
+      // conversa do Professor o ponto conta calado — ele é quem apresenta.
+      if(justFinishedCycle > prevMaxCycle && justFinishedCycle <= CONFIG.maxCycleNum && state.arcaneAnnounced){
+        UI.showToast('+1 PONTO ARCANO', 'Use-o na Academia, aba Habilidades Arcanas.');
+      }
       this.current = null;
+      const dungeonKey = state.currentDungeon;
+      // 1ª vez que vence o último ciclo do andar: andar concluído (libera o próximo)
+      const floorCleared = justFinishedCycle >= CONFIG.maxCycleNum && prevMaxCycle < CONFIG.maxCycleNum;
 
       if(isFirstCycleEver){
         // 1º chefe da vida do personagem: nada de escolha, marca concluído e
@@ -332,7 +346,8 @@ const MonsterModule = {
         // próximo autosave "esquece" que já rolou esse auto-retorno.
         state.firstCycleEverCompleted = true;
         SaveModule.save();
-        DungeonModule.leaveToCity();
+        // nunca volta pra cidade calado: resumo do que foi obtido
+        DungeonModule.leaveWithSummary('CICLO CONCLUÍDO', 'Você derrotou seu primeiro chefe! Itens obtidos nesta entrada:');
       } else if(d.repeatRemaining > 0 && d.repeatCycleNum === justFinishedCycle){
         // "Repetir Ciclo" ativo pra ESTE ciclo (ver DungeonModule.
         // startAtCycleRepeat/UI.openRepeatCycleModal): conta essa vitória e,
@@ -365,6 +380,19 @@ const MonsterModule = {
         // "próximo" — volta pro monstro 1 DESSE MESMO ciclo, que passa a se
         // repetir pra sempre (ver também o clamp de saves antigos no topo de
         // spawn()).
+        if(floorCleared){
+          // andar concluído pela 1ª vez: encerra a entrada com o aviso de
+          // conclusão (e do andar que foi liberado) + o loot da entrada
+          const idx = DUNGEON_ORDER.indexOf(dungeonKey);
+          const next = DUNGEON_ORDER.slice(idx + 1).find(k => MAPS[k] && MAPS[k].unlockRequirement && MAPS[k].unlockRequirement.dungeon === dungeonKey);
+          d.killCount = kpc * (CONFIG.maxCycleNum - 1);
+          d.pendingSlot = null;
+          // cena de fim de capítulo antes do resumo (ver StoryModule)
+          StoryModule.onFloorCleared(dungeonKey, () => DungeonModule.leaveWithSummary('ANDAR CONCLUÍDO', next
+            ? `Você venceu o ciclo ${CONFIG.maxCycleNum}! ${MAPS[next].name} foi liberado. Itens obtidos:`
+            : `Você venceu o ciclo ${CONFIG.maxCycleNum} do último andar! Itens obtidos:`));
+          return;
+        }
         if(justFinishedCycle >= CONFIG.maxCycleNum){
           d.killCount = kpc * (CONFIG.maxCycleNum - 1);
           d.pendingSlot = null;

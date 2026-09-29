@@ -3,12 +3,13 @@
    Baixar/carregar save como arquivo, e preferências globais de áudio/idioma.
    Globais = fora de qualquer save, valem pra todos os personagens/slots (ver
    CONFIG.settingsKey) — evita a estranheza de mudar o volume num personagem
-   e outro continuar com o valor antigo. Áudio e idioma são só placeholders
-   por enquanto — guardam a preferência, mas não existe sistema de áudio nem
-   tradução ainda no jogo.
+   e outro continuar com o valor antigo. Áudio controla a voz dos
+   personagens nos diálogos (ver DialogueModule.voiceBlip); textSpeed é a
+   velocidade em que as falas aparecem. Idioma ainda é só placeholder.
 --------------------------------------------------------------------- */
 const SettingsModule = {
-  current: { audioEnabled:true, volume:70, language:'pt-BR' },
+  current: { audioEnabled:true, volume:70, language:'pt-BR', textSpeed:'normal' },
+  TEXT_SPEEDS: ['lenta', 'normal', 'rapida', 'instantanea'],
   LANGUAGES: ['pt-BR', 'en-US'],
   MAX_SAVE_FILE_BYTES: 2 * 1024 * 1024,
 
@@ -23,6 +24,7 @@ const SettingsModule = {
       if(typeof p.audioEnabled === 'boolean') this.current.audioEnabled = p.audioEnabled;
       if(typeof p.volume === 'number' && isFinite(p.volume)) this.current.volume = Math.min(100, Math.max(0, p.volume));
       if(this.LANGUAGES.includes(p.language)) this.current.language = p.language;
+      if(this.TEXT_SPEEDS.includes(p.textSpeed)) this.current.textSpeed = p.textSpeed;
     }catch(e){ console.warn('Falha ao carregar configurações', e); }
   },
   saveGlobalSettings(){
@@ -32,6 +34,10 @@ const SettingsModule = {
   setVolume(vol){
     if(typeof vol !== 'number' || !isFinite(vol)) return;
     this.current.volume = Math.min(100, Math.max(0, vol)); this.saveGlobalSettings();
+  },
+  setTextSpeed(speed){
+    if(!this.TEXT_SPEEDS.includes(speed)) return;
+    this.current.textSpeed = speed; this.saveGlobalSettings();
   },
   setLanguage(lang){
     if(!this.LANGUAGES.includes(lang)) return;

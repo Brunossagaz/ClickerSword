@@ -1407,3 +1407,101 @@
     padding:4px 6px;
   }
   #volumeSlider{flex:1; min-width:80px;}
+
+  /* ===== Habilidades Arcanas (aba da Academia + barra na arena) =====
+     ver UI.renderArcaneTab/renderArcaneBar e js/arcane.js. Cada card/slot
+     recebe a cor da habilidade em --skill-color (ARCANE_SKILL_DEFS.color). */
+  .arcane-header{ text-align:center; margin-bottom:12px; }
+  .arcane-points{ font-family:'Press Start 2P', monospace; font-size:13px; color:var(--arcane); margin-bottom:6px; }
+  .arcane-points-value{ font-size:22px; color:var(--gold-glow); text-shadow:2px 2px 0 #000; }
+  .arcane-locked-note{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    background:var(--stone-dark); border:2px dashed var(--stone);
+    padding:10px; margin-bottom:12px; color:var(--parchment-dim); text-align:center;
+  }
+  .arcane-grid{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px; }
+  .arcane-grid.locked{ opacity:.45; filter:grayscale(.7); pointer-events:none; }
+  .arcane-card{
+    display:flex; flex-direction:column; gap:6px;
+    background:linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.45));
+    border:3px solid var(--stone);
+    border-top:4px solid var(--skill-color);
+    padding:12px;
+    min-width:0;
+  }
+  .arcane-card.learned{ box-shadow:0 0 12px -4px var(--skill-color) inset; }
+  .arcane-card-top{ display:flex; align-items:center; gap:10px; }
+  .arcane-card-icon{
+    width:52px; height:52px; flex:0 0 52px;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--stone-dark); border:2px solid var(--skill-color);
+  }
+  .arcane-card-icon .arcane-icon{ width:38px; height:38px; }
+  .arcane-card-name{ font-size:12px; color:var(--skill-color); text-shadow:1px 1px 0 #000; }
+  .arcane-card-level{ font-size:16px; color:var(--parchment-dim); }
+  .arcane-card-desc{ font-size:17px; line-height:1.1; min-height:38px; }
+  .arcane-stat{ font-size:16px; color:var(--parchment); line-height:1.1; }
+  .arcane-stat::before{ content:'• '; color:var(--skill-color); }
+  .arcane-learn-btn{ margin-top:auto; font-size:11px; }
+  .arcane-branches{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:auto; padding-top:8px; border-top:2px dashed var(--stone); }
+  .arcane-branch{ display:flex; flex-direction:column; gap:4px; min-width:0; }
+  .arcane-branch-title{ font-family:'Press Start 2P', monospace; font-size:9px; color:var(--skill-color); display:flex; flex-direction:column; gap:3px; }
+  .arcane-branch-title span{ color:var(--parchment-dim); }
+  .arcane-branch-next{ font-size:14px; color:var(--parchment-dim); line-height:1.05; flex:1; }
+  .arcane-branch .buy-btn{ width:100%; justify-content:center; white-space:nowrap; font-size:12px; padding:4px 2px; }
+  .arcane-unlock-points{ margin-top:10px; color:var(--arcane); }
+  @media (max-width:760px){
+    .arcane-grid{ grid-template-columns:1fr; }
+  }
+
+  /* barra na arena: 1 slot por habilidade aprendida, com a recarga
+     escurecendo de cima pra baixo */
+  .arcane-bar{ display:flex; justify-content:center; gap:10px; margin-top:10px; }
+  .arcane-slot{
+    position:relative; width:44px; height:44px;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--stone-dark); border:2px solid var(--skill-color);
+    overflow:hidden;
+  }
+  .arcane-slot .arcane-icon{ width:30px; height:30px; position:relative; z-index:0; }
+  .arcane-slot-cd{
+    position:absolute; left:0; right:0; top:0;
+    background:rgba(8,6,12,.72);
+    transition:height .2s linear;
+    z-index:1;
+  }
+  .arcane-slot-lvl{
+    position:absolute; right:2px; bottom:0; z-index:2;
+    font-family:'Press Start 2P', monospace; font-size:8px; color:#fff; text-shadow:1px 1px 0 #000;
+  }
+  .arcane-slot.active{ box-shadow:0 0 10px var(--skill-color); animation:arcanePulse .5s infinite alternate; }
+  @keyframes arcanePulse{ to{ box-shadow:0 0 18px var(--skill-color); } }
+
+  /* efeitos no monstro — .flash (clique) tem !important e continua ganhando */
+  .monster-stage.arcane-burning #monsterCanvas{
+    filter:drop-shadow(0 0 10px #ff6a1a) drop-shadow(0 6px 6px rgba(0,0,0,0.6)) sepia(.25) saturate(1.4);
+  }
+  .monster-stage.arcane-frozen #monsterCanvas{
+    filter:drop-shadow(0 0 10px #7fd8ff) drop-shadow(0 6px 6px rgba(0,0,0,0.6)) hue-rotate(160deg) saturate(.6) brightness(1.15);
+  }
+  .monster-stage.arcane-burning.arcane-frozen #monsterCanvas{
+    filter:drop-shadow(0 0 8px #ff6a1a) drop-shadow(0 0 12px #7fd8ff) saturate(.8) brightness(1.1);
+  }
+  /* raio: faixa vertical que pisca por cima do monstro */
+  .arcane-bolt{
+    position:absolute; left:50%; top:-30px; bottom:10%; width:26px;
+    transform:translateX(-50%); opacity:0; pointer-events:none;
+    background:linear-gradient(90deg, transparent, #fff8c4 35%, #ffffff 50%, #fff8c4 65%, transparent);
+    clip-path:polygon(40% 0, 70% 0, 52% 38%, 80% 38%, 30% 100%, 44% 52%, 18% 52%);
+    filter:drop-shadow(0 0 8px #ffe066);
+    z-index:3;
+  }
+  .arcane-bolt.strike{ animation:arcaneBolt .35s ease-out; }
+  @keyframes arcaneBolt{
+    0%{ opacity:1; } 30%{ opacity:.3; } 45%{ opacity:1; } 100%{ opacity:0; }
+  }
+  .float-dmg.arcane-fire{ color:#ff8a3d; }
+  .float-dmg.arcane-lightning{ color:#ffe066; }
+  .float-dmg.arcane-ice{ color:#7fd8ff; }
+  .arcane-reset-btn{ margin-top:8px; }
+  .arcane-reset-btn.confirm{ color:#fff; background:var(--blood); border-color:var(--blood); }

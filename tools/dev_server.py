@@ -6,7 +6,9 @@ Uso:  python tools/dev_server.py [porta]      (padrão 8123)
 
 - Serve a raiz do projeto sem cache (sempre a versão atual dos arquivos).
 - POST /api/overrides grava js/overrides-data.js (ver js/overrides.js).
-  Só aceita Content-Type application/json vindo da própria página
+- POST /api/todo grava tools/todo-data.json (aba To-do do Compêndio) — só
+  uma lista de tarefas { id, title, desc, status }, validada campo a campo.
+  Os dois só aceitam Content-Type application/json vindo da própria página
   (Origin obrigatório e igual ao host), pra outro site aberto no navegador
   não conseguir alterar o arquivo.
 - Só responde a Host localhost/127.0.0.1 (bloqueia DNS rebinding: um site
@@ -21,6 +23,9 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_PATH = os.path.join(ROOT, 'js', 'overrides-data.js')
+TODO_PATH = os.path.join(ROOT, 'tools', 'todo-data.json')
+TODO_STATUSES = {'todo', 'done', 'think', 'nonsense'}
+TODO_MAX_ITEMS = 1000
 MAX_BYTES = 2 * 1024 * 1024
 HEADER = ('// Gerado pelo Compêndio (tools/compendio.html) — valores customizados por\n'
           '// cima de js/config.js (ver js/overrides.js). Vazio = jogo original.\n')
@@ -67,7 +72,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_POST(self):
-        if self.path != '/api/overrides':
+        if self.path not in ('/api/overrides', '/api/todo'):
             return self._reply(404, {'error': 'rota desconhecida'})
         if not self._host_ok():
             return self._reply(403, {'error': 'host não permitido'})
@@ -86,6 +91,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             data = json.loads(self.rfile.read(length).decode('utf-8'))
         except ValueError:
             return self._reply(400, {'error': 'JSON inválido'})
+        if self.path == '/api/todo':
+            return self._save_todo(data)
         if not isinstance(data, dict):
             return self._reply(400, {'error': 'esperado um objeto'})
         text = HEADER + 'window.CONFIG_OVERRIDES = ' + json.dumps(data, ensure_ascii=False, indent=2) + ';\n'
@@ -93,6 +100,32 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         with open(tmp, 'w', encoding='utf-8', newline='\n') as f:
             f.write(text)
         os.replace(tmp, OUT_PATH)
+        self._reply(200, {'ok': True})
+
+    def _save_todo(self, data):
+        items = data.get('items') if isinstance(data, dict) else None
+        if not isinstance(items, list) or len(items) > TODO_MAX_ITEMS:
+            return self._reply(400, {'error': 'esperado { items: [...] }'})
+        clean = []
+        for it in items:
+            if not isinstance(it, dict):
+                return self._reply(400, {'error': 'tarefa inválida'})
+            tid, title, desc, status = it.get('id'), it.get('title'), it.get('desc', ''), it.get('status')
+            created = it.get('created', '')
+            if not (isinstance(tid, str) and 0 < len(tid) <= 40 and tid.replace('-', '').replace('_', '').isalnum()):
+                return self._reply(400, {'error': 'id inválido'})
+            if not (isinstance(title, str) and 0 < len(title.strip()) <= 120):
+                return self._reply(400, {'error': 'título inválido'})
+            if not (isinstance(desc, str) and len(desc) <= 2000) or status not in TODO_STATUSES:
+                return self._reply(400, {'error': 'descrição ou situação inválida'})
+            if not (isinstance(created, str) and len(created) <= 10):
+                created = ''
+            clean.append({'id': tid, 'title': title.strip(), 'desc': desc, 'status': status, 'created': created})
+        tmp = TODO_PATH + '.tmp'
+        with open(tmp, 'w', encoding='utf-8', newline='\n') as f:
+            json.dump({'version': 1, 'items': clean}, f, ensure_ascii=False, indent=2)
+            f.write('\n')
+        os.replace(tmp, TODO_PATH)
         self._reply(200, {'ok': True})
 
 

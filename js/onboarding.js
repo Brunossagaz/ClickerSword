@@ -75,10 +75,17 @@ const OnboardingModule = {
   },
   showStep(stepId){
     document.querySelectorAll('#clericModal .cleric-step').forEach(el => el.classList.remove('active'));
-    document.getElementById(stepId).classList.add('active');
+    const step = document.getElementById(stepId);
+    step.classList.add('active');
+    // falas do Clérigo aparecem aos poucos, igual às conversas (ver DialogueModule.typeInto)
+    const text = step.querySelector('.cleric-text');
+    if(text){
+      if(text.dataset.full === undefined) text.dataset.full = text.textContent;
+      DialogueModule.typeInto(text, text.dataset.full, DialogueModule.voiceFor('anselmo'));
+    }
   },
   showStoryStep(){
-    document.getElementById('clericStoryText').textContent =
+    document.getElementById('clericStoryText').dataset.full =
       `Prazer, ${state.playerName}. Esta cidade já foi cheia de vida e prosperidade. Mas, há pouco tempo, uma dungeon surgiu misteriosamente além dos portões. Dela passaram a sair criaturas terríveis que espalharam medo por toda a região. Muitos moradores fugiram, e os que ficaram vivem trancados em suas casas. Precisamos de alguém capaz de enfrentar essa ameaça e devolver a esperança ao nosso povo.`;    this.showStep('clericStepStory');
   },
   renderWeaponChoices(){
@@ -105,6 +112,7 @@ const OnboardingModule = {
     SaveModule.save();
     document.getElementById('clericModal').classList.remove('open');
     UI.renderAll();
+    StoryModule.onGameStart(); // cartão do Capítulo I
   },
   // Chamado por DungeonModule.leaveToCity() — na 1ª vez que o jogador volta
   // pra cidade já tendo enfrentado a dungeon (matado ao menos 1 monstro), o
@@ -114,7 +122,7 @@ const OnboardingModule = {
     if(!this.hasFacedDungeon() || state.shopUnlockAnnounced) return;
     state.shopUnlockAnnounced = true;
     SaveModule.save();
-    document.getElementById('shopUnlockModal').classList.add('open');
+    DialogueModule.play('shopUnlock');
   },
   // Chamado por DungeonModule.enter() — dispara 1x quando a Academia libera
   // (ver CONFIG.academiaUnlockEntries).
@@ -122,7 +130,17 @@ const OnboardingModule = {
     if(state.dungeonEntriesCount < CONFIG.academiaUnlockEntries || state.academiaAnnounced) return;
     state.academiaAnnounced = true;
     SaveModule.save();
-    document.getElementById('academiaUnlockModal').classList.add('open');
+    DialogueModule.play('academiaUnlock');
+  },
+  // Chamado por DungeonModule.leaveToCity() — na 1ª volta pra cidade depois
+  // de concluir o andar CONFIG.arcaneUnlockDungeon, o Professor da Academia
+  // apresenta as Habilidades Arcanas. Espera o resumo de loot da entrada
+  // fechar (ver DialogueModule.BLOCKERS).
+  announceArcaneIfNeeded(){
+    if(state.arcaneAnnounced || !ArcaneModule.isUnlocked()) return;
+    state.arcaneAnnounced = true;
+    SaveModule.save();
+    DialogueModule.play('arcaneIntro');
   },
   init(){
     const nameInput = document.getElementById('clericNameInput');
@@ -148,11 +166,5 @@ const OnboardingModule = {
       this.showStep('clericStepWeapon');
     });
 
-    document.getElementById('shopUnlockOkBtn').addEventListener('click', () => {
-      document.getElementById('shopUnlockModal').classList.remove('open');
-    });
-    document.getElementById('academiaUnlockOkBtn').addEventListener('click', () => {
-      document.getElementById('academiaUnlockModal').classList.remove('open');
-    });
   }
 };

@@ -11,29 +11,36 @@
      { config: { baseHp: 20, ... },
        monsters: { patch: { slime: { name:'...', hpMult:2, drops:[...] } } },
        items: { patch: {...}, add: [ { key, name, type, ... } ] },
-       weapons / forgedWeapons: { patch, add }, troops / upgrades: { patch } }
+       weapons / forgedWeapons: { patch, add }, troops / upgrades: { patch },
+       prospectors / cavernUpgrades: { patch }, maps: { patch: { slimes: { hpScale } } } }
    `null` num campo do patch remove o campo (ex.: tirar um bônus de arma).
 --------------------------------------------------------------------- */
 const WEAPON_BONUS_KEYS = ['clickDamageBonus', 'dpsBonus', 'critChanceBonus', 'critDamageBonus', 'extraDropChance', 'burnChance', 'burnDamagePercent'];
 const ConfigOverrides = {
   // só números simples de CONFIG — o resto (chaves de save, etc.) não é editável
   CONFIG_KEYS: ['baseHp', 'hpCycleGrowth', 'hpKillGrowth', 'bossHpMult', 'monsterTimeLimitMs', 'bossTimeLimitMs', 'dungeonTimeLimitMs',
-    'goldenChancePerTick', 'goldenDurationMs', 'goldenRewardMult'],
+    'goldenChancePerTick', 'goldenDurationMs', 'goldenRewardMult', 'cavernOfflineEfficiency'],
   COLLECTIONS: {
     monsters:      { target: 'MONSTER_TYPES',      fields: ['name', 'hpMult', 'drops'], canAdd: false },
     items:         { target: 'ITEM_DEFS',          fields: ['name', 'icon', 'sellPrice', 'type', 'dungeon', 'weight', 'rarity'], canAdd: true },
     weapons:       { target: 'WEAPON_DEFS',        fields: ['name', 'icon', 'buyCost', ...WEAPON_BONUS_KEYS], canAdd: true },
-    forgedWeapons: { target: 'FORGED_WEAPON_DEFS', fields: ['name', 'icon', 'recipe', ...WEAPON_BONUS_KEYS], canAdd: true },
+    forgedWeapons: { target: 'FORGED_WEAPON_DEFS', fields: ['name', 'icon', 'recipe', 'requiresWeapon', ...WEAPON_BONUS_KEYS], canAdd: true },
     troops:        { target: 'TROOP_DEFS',         fields: ['name', 'desc', 'baseCost', 'costGrowth', 'dps'], canAdd: false },
     // efeitos por nível (ver UPGRADE_DEFS/UPGRADE_STATS em config.js) — o apply
     // de cada upgrade lê def.effects na hora da compra
     upgrades:      { target: 'UPGRADE_DEFS',       fields: ['name', 'desc', 'baseCost', 'costGrowth', 'maxLevel', 'effects'], canAdd: false },
+    // Caverna: mineradores (requiresDungeon = andar que libera) e upgrades (pct por nível)
+    prospectors:   { target: 'PROSPECTOR_DEFS',    fields: ['name', 'desc', 'baseCost', 'costGrowth', 'orePerSec', 'requiresDungeon'], canAdd: false },
+    cavernUpgrades:{ target: 'CAVERN_UPGRADE_DEFS', fields: ['name', 'desc', 'baseCost', 'costGrowth', 'maxLevel', 'pct'], canAdd: false },
+    // MAPS é um objeto { chave: andar }, não uma lista — ver _entry
+    maps:          { target: 'MAPS', object: true, fields: ['hpScale'], canAdd: false },
   },
   KEY_RE: /^[a-zA-Z][a-zA-Z0-9_]{0,39}$/,
   ICON_RE: /^[a-zA-Z0-9_-]{1,60}$/,
 
   // `t` = { CONFIG, MONSTER_TYPES, ITEM_DEFS, WEAPON_DEFS, FORGED_WEAPON_DEFS,
-  // TROOP_DEFS, UPGRADE_DEFS, MINERAL_DEFS } — as próprias listas de config.js, alteradas no lugar
+  // TROOP_DEFS, UPGRADE_DEFS, MINERAL_DEFS, PROSPECTOR_DEFS, CAVERN_UPGRADE_DEFS,
+  // MAPS } — as próprias listas de config.js, alteradas no lugar
   apply(t, ov){
     if(!ov || typeof ov !== 'object') return;
     const cfg = ov.config || {};
@@ -42,9 +49,10 @@ const ConfigOverrides = {
     }
     for(const [name, spec] of Object.entries(this.COLLECTIONS)){
       const list = t[spec.target];
+      if(!list) continue;
       const c = ov[name] || {};
       for(const [key, patch] of Object.entries(c.patch || {})){
-        const entry = list.find(e => e.key === key);
+        const entry = this._entry(list, spec, key);
         if(entry && patch && typeof patch === 'object') this._assign(entry, patch, spec.fields);
       }
       if(!spec.canAdd) continue;
@@ -63,7 +71,7 @@ const ConfigOverrides = {
   // innerHTML/atributos class na UI do jogo, então valor fora do formato é
   // ignorado em vez de aplicado.
   TEXT_FIELDS: ['name', 'desc'],
-  TOKEN_FIELDS: ['type', 'dungeon', 'rarity'],
+  TOKEN_FIELDS: ['type', 'dungeon', 'rarity', 'requiresWeapon', 'requiresDungeon'],
   STRUCT_FIELDS: ['drops', 'recipe', 'effects'],
   TOKEN_RE: /^[a-zA-Z][a-zA-Z0-9_-]{0,39}$/,
   _valid(f, v){
@@ -72,6 +80,10 @@ const ConfigOverrides = {
     if(this.TOKEN_FIELDS.includes(f)) return typeof v === 'string' && this.TOKEN_RE.test(v);
     if(this.STRUCT_FIELDS.includes(f)) return v !== null && typeof v === 'object';
     return typeof v === 'number' && isFinite(v);
+  },
+  _entry(list, spec, key){
+    if(spec.object) return Object.prototype.hasOwnProperty.call(list, key) ? list[key] : undefined;
+    return list.find(e => e.key === key);
   },
   _assign(entry, patch, fields){
     for(const f of fields){
@@ -92,6 +104,7 @@ const ConfigOverrides = {
     for(const k of this.CONFIG_KEYS) if(cur.config[k] !== base.config[k]) out.config[k] = cur.config[k];
     for(const [name, spec] of Object.entries(this.COLLECTIONS)){
       const baseList = base[name], curList = cur[name];
+      if(!baseList || !curList) continue;
       const patch = {};
       for(const b of baseList){
         const e = curList.find(x => x.key === b.key);
@@ -144,7 +157,8 @@ const ConfigOverrides = {
 };
 
 (function applyToGame(){
-  const target = { CONFIG, MONSTER_TYPES, ITEM_DEFS, WEAPON_DEFS, FORGED_WEAPON_DEFS, TROOP_DEFS, UPGRADE_DEFS, MINERAL_DEFS };
+  const target = { CONFIG, MONSTER_TYPES, ITEM_DEFS, WEAPON_DEFS, FORGED_WEAPON_DEFS, TROOP_DEFS, UPGRADE_DEFS, MINERAL_DEFS,
+    PROSPECTOR_DEFS, CAVERN_UPGRADE_DEFS, MAPS };
   const allDefs = () => [...ITEM_DEFS, ...WEAPON_DEFS, ...FORGED_WEAPON_DEFS];
   const knownIcons = new Set(allDefs().map(d => d.icon));
   try{

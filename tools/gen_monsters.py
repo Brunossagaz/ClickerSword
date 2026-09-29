@@ -8,8 +8,8 @@ afuniladas (membros, caudas, cabos) e polígonos com bisel (armas, roupas,
 asas) — e sombreado em faixas com luz de cima/esquerda. Contorno externo
 automático + linha interna na parte de trás quando duas partes de grupos
 diferentes se encostam. Pose frontal: a maioria é desenhada pela
-metade esquerda e espelhada (Monster.sym). O Lagarto de Fogo é o único de
-perfil — quadrúpede baixo de frente vira uma bolha difícil de ler.
+metade esquerda e espelhada (Monster.sym). O Lagarto de Fogo não sai mais
+daqui: é pixel art à mão (art/monster-fire-lizard/ + grid_monster_sheet.js).
 
 Saída: assets/sprites/<arquivo>.png, spritesheet horizontal de 3 quadros de
 128x128 (arte 64x64 ampliada 2x): [ parado | piscando | flash de dano ].
@@ -785,7 +785,9 @@ MONSTERS = {
     'goblin_greater': make_goblin_greater,
     'orc': make_orc,
     'troll': make_troll,
-    'fire_lizard': make_fire_lizard,
+    # 'fire_lizard' agora é desenhado à mão em art/monster-fire-lizard/ e
+    # montado por tools/grid_monster_sheet.js. make_fire_lizard fica acima só
+    # como referência — não entra aqui, senão sobrescreveria a arte nova.
     'dragon': make_dragon,
     'shadow': make_shadow,
     'mini_servo': make_mini_servo,

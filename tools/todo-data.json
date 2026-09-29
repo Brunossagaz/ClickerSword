@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": "tropas-fracas",
+      "title": "Tropas fracas no fim do jogo",
+      "desc": "As tropas são só ~2% do dano no fim (aba Curvas, gráfico 1). Subir o DPS das tropas mais caras ou reduzir os upgrades de clique em %, até elas ficarem entre 20% e 40% do dano.",
+      "status": "todo",
+      "created": "2026-09-27"
+    },
+    {
+      "id": "renda-goblin",
+      "title": "Reino Goblin rende menos que o Pântano",
+      "desc": "Farmar Goblin dá 3,8 moedas/s contra 7,2 no Pântano: o andar novo é pior que o anterior. Subir o preço de venda dos materiais goblin ou a quantidade dropada.",
+      "status": "todo",
+      "created": "2026-09-27"
+    },
+    {
+      "id": "recuo-vida",
+      "title": "Vida volta a cair ao trocar de andar",
+      "desc": "Goblin ciclo 1 tem 24% menos vida que Slimes ciclo 5; Demônio 1 tem 60% menos que Dragão 5; e há um salto de ×9,3 entre Goblin 5 e Selvagens 1 (aba Curvas, gráfico 2). Suavizar as escalas de vida por andar (aba Vida dos Monstros).",
+      "status": "todo",
+      "created": "2026-09-27"
+    },
+    {
+      "id": "armas-basicas",
+      "title": "Diferenciar as 3 armas básicas",
+      "desc": "As três dão +1 de dano por clique. Dar a cada uma um bônus diferente (crítico, DPS, drop extra) ou preços e danos crescentes.",
+      "status": "think",
+      "created": "2026-09-27"
+    },
+    {
+      "id": "armas-depois-slime",
+      "title": "Armas forjadas depois dos materiais de slime",
+      "desc": "Não existe arma nova com material de Goblin, Selvagens, Dragão ou Demônio, e os saltos entre as forjadas são desiguais (×50, ×3, ×2,7). Criar uma arma forjada por andar, em ordem (Forje antes).",
+      "status": "think",
+      "created": "2026-09-27"
+    },
+    {
+      "id": "caverna-curva",
+      "title": "Rebalancear a caverna",
+      "desc": "Mineradores mais caros e liberados por andar, upgrades mais caros (×1,8) e mineração offline a 25%. O 1º de cada tipo se paga em 15–30 min.",
+      "status": "done",
+      "created": "2026-09-27"
+    },
+    {
+      "id": "forja-ordem",
+      "title": "Trava de ordem na forja",
+      "desc": "Machado pede a Espada do Slime Guerreiro e o Grande Machado pede o Machado. Editável em Armas → Forje antes.",
+      "status": "done",
+      "created": "2026-09-27"
+    },
+    {
+      "id": "aba-curvas",
+      "title": "Gráficos de progressão no Compêndio",
+      "desc": "Aba Curvas com dano, vida, tropas, caverna e armas, cada um com análise automática que acompanha os valores editados.",
+      "status": "done",
+      "created": "2026-09-27"
+    },
+    {
+      "id": "bestiario-drops",
+      "title": "Drops no bestiário",
+      "desc": "Bestiário mostra o que cada monstro dropa e a chance, só depois de derrotá-lo uma vez.",
+      "status": "done",
+      "created": "2026-09-27"
+    },
+    {
+      "id": "aviso-fim-dungeon",
+      "title": "Aviso ao terminar andar ou ciclo",
+      "desc": "A dungeon mostra ANDAR CONCLUÍDO / CICLO CONCLUÍDO antes de fechar.",
+      "status": "done",
+      "created": "2026-09-27"
+    }
+  ]
+}

@@ -127,7 +127,7 @@ const SaveModule = {
       out.equippedWeapon = raw.equippedWeapon;
     }
 
-    for(const k of ['troops', 'prospectors', 'cavernUpgrades', 'cavernChest', 'upgrades', 'inventory', 'weapons', 'prestige']){
+    for(const k of ['troops', 'prospectors', 'cavernUpgrades', 'cavernChest', 'upgrades', 'inventory', 'weapons', 'prestige', 'arcaneSkills']){
       if(isObj(raw[k])) out[k] = numMap(raw[k], Object.keys(fresh[k]));
     }
     if(isObj(raw.quests)) out.quests = boolMap(raw.quests, Object.keys(fresh.quests));
@@ -135,6 +135,20 @@ const SaveModule = {
     if(isObj(raw.achievements)) out.achievements = boolMap(raw.achievements, Object.keys(fresh.achievements));
     if(isObj(raw.monsterKills)) out.monsterKills = numMap(raw.monsterKills, Object.keys(fresh.monsterKills));
     if(isObj(raw.npcsMet)) out.npcsMet = boolMap(raw.npcsMet, Object.keys(fresh.npcsMet));
+    // respostas dos diálogos: só chave/id curtos de letras e números (vão pra texto, nunca HTML)
+    if(isObj(raw.dialogueMemory)){
+      out.dialogueMemory = {};
+      const ok = v => typeof v === 'string' && /^[A-Za-z0-9_]{1,40}$/.test(v);
+      for(const k of Object.keys(raw.dialogueMemory).slice(0, 100)) if(ok(k) && ok(raw.dialogueMemory[k])) out.dialogueMemory[k] = raw.dialogueMemory[k];
+    }
+    if(isObj(raw.story)){
+      const s = raw.story;
+      out.story = {
+        chapter: isNum(s.chapter) ? Math.max(0, Math.min(STORY_CHAPTERS.length, Math.floor(s.chapter))) : 0,
+        pendingCity: typeof s.pendingCity === 'string' && has(fresh.dungeons, s.pendingCity) ? s.pendingCity : null,
+        cardShown: isNum(s.cardShown) ? Math.floor(s.cardShown) : -1,
+      };
+    }
 
     if(isObj(raw.guild)){
       const g = raw.guild;
@@ -206,7 +220,9 @@ const SaveModule = {
     state.achievements = Object.assign(Object.fromEntries(ACHIEVEMENT_DEFS.map(d => [d.key, false])), loaded.achievements||{});
     state.monsterKills = Object.assign(Object.fromEntries(MONSTER_TYPES.map(d => [d.key, 0])), loaded.monsterKills||{});
     state.npcsMet = Object.assign(Object.fromEntries(CITY_MAP.npcs.map(n => [n.key, false])), loaded.npcsMet||{});
+    state.dialogueMemory = Object.assign({}, loaded.dialogueMemory||{});
     state.prestige = Object.assign({pClick:0,pDps:0,pOreRate:0,pCrit:0}, loaded.prestige||{});
+    state.arcaneSkills = Object.assign(freshState().arcaneSkills, loaded.arcaneSkills||{});
     state.guild = Object.assign({active:false,cycleKey:null,startedAt:0,durationMs:0}, loaded.guild||{});
     state.dungeonRun = Object.assign({elapsedMs:0}, loaded.dungeonRun||{});
     if(!state.dungeonRun.loot || typeof state.dungeonRun.loot !== 'object') state.dungeonRun.loot = {};
@@ -322,6 +338,11 @@ const SaveModule = {
       state.totalCyclesCompleted = Object.values(state.dungeons).reduce((sum,d)=>sum+(d.maxCycleCompleted||0), 0);
     }
 
+    // Save de antes da história por capítulos: começa no capítulo do 1º
+    // andar ainda não concluído (ver StoryModule.migrate).
+    state.story = Object.assign(freshState().story, loaded.story||{});
+    StoryModule.migrate(loaded);
+
     // atributos de upgrade/prestígio: sempre recalculados dos níveis
     // comprados (ver UpgradesModule.recalcStats) — nunca do valor salvo
     UpgradesModule.recalcStats();
@@ -377,7 +398,7 @@ const SaveModule = {
     // acima) — fica lá esperando o jogador coletar, não aparece no toast de
     // boas-vindas (ver mainmenu.js), só na próxima vez que abrir a Caverna.
     const ops = CavernModule.totalOrePerSecond();
-    if(ops > 0) CavernModule.mineOreAmount(ops * seconds * CONFIG.offlineEfficiency);
+    if(ops > 0) CavernModule.mineOreAmount(ops * seconds * CONFIG.cavernOfflineEfficiency);
     return {gains, totalItems, seconds};
   }
 };

@@ -13,12 +13,17 @@ const CONFIG = {
   hpKillGrowth: 1.04,  // multiplicador a cada abate dentro do ciclo
   cycleLength: 10,          // monstros por ciclo; o último da fileira é sempre o chefe
   bossHpMult: 7,
+  // Cliques por segundo do "jogador típico" — referência do orçamento de
+  // tempo por andar (MAPS[andar].timeBudgetH), medido pelo simulador
+  // (tools/balance_sim.js e aba Curvas do Compêndio). Só usado pelas ferramentas.
+  balanceRefCps: 4,
   // Ciclo máximo de qualquer Dungeon — ao bater o chefe do Ciclo 5, o jogo
   // não avança pro Ciclo 6: volta pro monstro 1 do próprio Ciclo 5, que
   // passa a se repetir pra sempre (ver MonsterModule.onDeath/spawn).
   maxCycleNum: 5,
   offlineCapHours: 8,
   offlineEfficiency: 0.5,
+  cavernOfflineEfficiency: 0.25, // mineração offline rende 25% (Guilda continua em offlineEfficiency)
   goldenChancePerTick: 0.0025, // per 200ms tick
   goldenDurationMs: 8000,
   goldenRewardMult: 3,
@@ -49,7 +54,18 @@ const CONFIG = {
   // some do modal da Guilda e não dá pra começar expedição nova. Uma que já
   // estava em andamento num save antigo ainda termina e entrega os itens
   // (ver GuildModule.resolveIfDone). Volte pra true pra reativar.
-  guildExpeditionsEnabled: false
+  guildExpeditionsEnabled: false,
+  // Ascensão (Prestígio) fora do jogo por enquanto: o painel some da Igreja
+  // e a linha de Essência some das Estatísticas (ver UI.renderPrestigeTab).
+  // Todo o código continua lá — volte pra true pra reativar.
+  ascensionEnabled: false,
+  // Habilidades Arcanas (aba da Academia, ver ArcaneModule/ARCANE_SKILL_DEFS):
+  // liberam ao concluir este andar (vencer o último ciclo dele) e voltar pra
+  // cidade — o Professor da Academia avisa (ver OnboardingModule.announceArcaneIfNeeded).
+  arcaneUnlockDungeon: 'goblins',
+  // Cada ponto gasto custa isso (aprender a habilidade, ou 1 nível num ramo).
+  // Pontos: 1 por ciclo cujo chefe foi derrotado pela 1ª vez (ver ArcaneModule.pointsEarned).
+  arcanePointCost: 1
 };
 
 // Todo monstro é um spritesheet PNG (3 frames de 128x128: idle, piscando,
@@ -266,8 +282,17 @@ const MAPS = {
   // MESMA Dungeon — o formato/Nº de posições pode variar de ciclo pra ciclo,
   // só o total de mortes precisa ser sempre igual (ver MonsterModule.
   // killsPerCycleFor, que lê só o Ciclo 1 pra saber esse total).
+  // `timeBudgetH`: horas que a 1ª passagem pelo andar deve levar (do fim do
+  // andar anterior até vencer o último ciclo deste) — meta de ritmo validada
+  // pelo simulador (tools/balance_sim.js) a CONFIG.balanceRefCps cliques/s.
+  // `cycleHpMult` (opcional): multiplicador de vida só daquele ciclo, em cima
+  // de hpScale (ver monsterHp).
   slimes: {
-    name: 'Andar do Pântano dos Slimes', hpScale: 1.5,
+    name: 'Andar do Pântano dos Slimes', hpScale: 1.5, timeBudgetH: 0.75,
+    // Ciclo 1 com metade da vida: o 1º slime (27 → 14 de vida) morre nos 10s
+    // com o dano inicial (1 por clique) a ~1.4 cliques/s. Antes pedia 2.7
+    // cliques/s e quem clicava devagar travava no 1º monstro do jogo.
+    cycleHpMult: { 1: 0.5 },
     cycles: {
       // Ciclo 1: só slime verde, do início ao fim.
       1: ['slime', 'slime', 'slime', 'slime',
@@ -310,7 +335,7 @@ const MAPS = {
   // troca a dupla forte por uma TRIPLA — todo ciclo aqui soma exatamente 12
   // mortes (killsPerCycle), igual ao Ciclo 1 (ver comentário no topo de MAPS).
   goblins: {
-    name: 'Andar do Reino Goblin', hpScale: 11,
+    name: 'Andar do Reino Goblin', hpScale: 11, timeBudgetH: 1,
     unlockRequirement: { dungeon: 'slimes', cycle: 5 },
     cycles: {
       // Ciclo 1: verde dominante, vermelho estreando.
@@ -351,7 +376,7 @@ const MAPS = {
   // Só Orc e Troll (Dragão e Demônio agora têm andar próprio — ver
   // MAPS.dragons/MAPS.demons). Todo ciclo soma 12 mortes, igual ao Ciclo 1.
   wilds: {
-    name: 'Andar das Terras Selvagens', hpScale: 1400,
+    name: 'Andar das Terras Selvagens', hpScale: 1400, timeBudgetH: 1.5,
     unlockRequirement: { dungeon: 'goblins', cycle: 5 },
     cycles: {
       // Ciclo 1: padrão básico, 2 duplas (posições 5 e 9).
@@ -392,7 +417,7 @@ const MAPS = {
   // Selvagens pra virar o destaque deste andar, ver ITEM_DEFS.dragonScale).
   // Só 3 ciclos: killsPerCycle = 5 (3 avulsos + 1 dupla), fixo nos 3.
   dragons: {
-    name: 'Andar do Dragão', hpScale: 5400,
+    name: 'Andar do Dragão', hpScale: 5400, timeBudgetH: 2,
     unlockRequirement: { dungeon: 'wilds', cycle: 5 },
     cycles: {
       // Ciclo 1: 3 Lagartos de Fogo avulsos + 1 DUPLA de Lagartos de Fogo
@@ -415,7 +440,7 @@ const MAPS = {
   // propósito — todo ciclo tem 10 posições únicas, igual ao Goblin/Slime
   // originais. É o andar mais avançado do jogo hoje.
   demons: {
-    name: 'Andar do Demônio', hpScale: 6200,
+    name: 'Andar do Demônio', hpScale: 6200, timeBudgetH: 2.5,
     unlockRequirement: { dungeon: 'dragons', cycle: 5 },
     cycles: {
       // Ciclo 1: só Mini Servo, do início ao fim.
@@ -439,6 +464,7 @@ const MAPS = {
 //   vida = CONFIG.baseHp × MAPS[andar].hpScale
 //        × CONFIG.hpCycleGrowth^(ciclo-1)       (cada ciclo do andar fica mais duro)
 //        × CONFIG.hpKillGrowth^(abate no ciclo)  (sobe um pouco dentro do ciclo)
+//        × MAPS[andar].cycleHpMult[ciclo]        (opcional, ajuste de um ciclo só)
 //        × CONFIG.bossHpMult (chefe) × hpMult do monstro × 1.5 (grupo forte)
 // hpScale de cada andar foi calibrado com o simulador pra que o dano que o
 // jogador consegue comprar alcance a vida com um farm razoável.
@@ -446,6 +472,7 @@ const DUNGEON_ORDER = ['slimes', 'goblins', 'wilds', 'dragons', 'demons'];
 function monsterHp(dungeonKey, cycle, killIdxInCycle, isBoss, hpMult){
   const map = MAPS[dungeonKey];
   let hp = CONFIG.baseHp * ((map && map.hpScale) || 1)
+    * ((map && map.cycleHpMult && map.cycleHpMult[cycle]) || 1)
     * Math.pow(CONFIG.hpCycleGrowth, Math.max(0, cycle - 1))
     * Math.pow(CONFIG.hpKillGrowth, Math.max(0, killIdxInCycle));
   if(isBoss) hp *= CONFIG.bossHpMult;
@@ -528,25 +555,31 @@ const MINERAL_DEFS = ITEM_DEFS.filter(d => d.type === 'mineral');
 // acumulado (ver CavernModule.mineOreAmount), um minério é sorteado por
 // raridade e cai no baú — por isso não há "goldPerSec" fixo por minerador
 // aqui, e sim uma taxa compartilhada entre todos os tipos de minério.
+// Rebalanceado (ver aba Curvas do Compêndio): antes o 1º de cada minerador se
+// pagava em 4-14 min e o custo subia só ×1.3 — com a Picareta e o ganho
+// offline a Caverna rendia mais que jogar a Dungeon e comprava a árvore
+// inteira. Agora o 1º de cada um se paga em ~15/20/25/30 min (1 minério vale
+// ~13.7 moedas na média), o custo sobe ×1.45 e cada tier só libera junto com
+// o andar (campo requiresDungeon: o andar precisa estar desbloqueado).
 const PROSPECTOR_DEFS = [
-  { key: 'apprentice', name: 'Aprendiz de Minerador', desc: '+0.1 minério/seg', baseCost: 300, costGrowth: 1.30, orePerSec: 0.1 },
-  { key: 'veteranMiner', name: 'Minerador Veterano', desc: '+0.5 minério/seg', baseCost: 2200, costGrowth: 1.30, orePerSec: 0.5 },
-  { key: 'blaster', name: 'Explosivista', desc: '+2 minério/seg', baseCost: 15000, costGrowth: 1.32, orePerSec: 2 },
-  { key: 'excavatorGolem', name: 'Golem Escavador', desc: '+8 minério/seg', baseCost: 90000, costGrowth: 1.35, orePerSec: 8 },
+  { key: 'apprentice', name: 'Aprendiz de Minerador', desc: '+0.05 minério/seg', baseCost: 600, costGrowth: 1.45, orePerSec: 0.05 },
+  { key: 'veteranMiner', name: 'Minerador Veterano', desc: '+0.25 minério/seg', baseCost: 4000, costGrowth: 1.45, orePerSec: 0.25, requiresDungeon: 'goblins' },
+  { key: 'blaster', name: 'Explosivista', desc: '+1 minério/seg', baseCost: 20000, costGrowth: 1.45, orePerSec: 1, requiresDungeon: 'wilds' },
+  { key: 'excavatorGolem', name: 'Golem Escavador', desc: '+4 minério/seg', baseCost: 100000, costGrowth: 1.45, orePerSec: 4, requiresDungeon: 'dragons' },
 ];
 
 // Upgrades da Caverna — mesmo formato de nível máximo/custo
 // exponencial de UPGRADE_DEFS, mas SEM passar pela árvore/ProgressionModule:
 // é uma lista simples, comprada direto com moeda (ver CavernModule.buyUpgrade),
 // igual à lista de upgrades permanentes do Prestígio (PRESTIGE_UPGRADE_DEFS).
-// `oreRatePct`: cada nível soma +20% multiplicativo na taxa total de
+// `oreRatePct`: cada nível soma `pct` na taxa total de
 // mineração (ver CavernModule.totalOrePerSecond). `oreLuck`: cada nível soma
-// +15% no peso relativo de toda raridade acima de 'comum' no sorteio (ver
+// `pct` no peso relativo de toda raridade acima de 'comum' no sorteio (ver
 // CavernModule.rollMineral) — não tem `apply`, os efeitos são lidos
 // dinamicamente a partir de state.cavernUpgrades[key] onde são usados.
 const CAVERN_UPGRADE_DEFS = [
-  { key: 'oreRatePct', name: 'Picareta Reforçada', desc: '+20% velocidade de mineração', baseCost: 600, costGrowth: 1.6, maxLevel: 10 },
-  { key: 'oreLuck', name: 'Faro de Minérios', desc: '+15% chance de minérios raros', baseCost: 900, costGrowth: 1.7, maxLevel: 10 },
+  { key: 'oreRatePct', name: 'Picareta Reforçada', desc: '+10% velocidade de mineração', baseCost: 1500, costGrowth: 1.8, maxLevel: 10, pct: 0.10 },
+  { key: 'oreLuck', name: 'Faro de Minérios', desc: '+10% chance de minérios raros', baseCost: 2000, costGrowth: 1.8, maxLevel: 10, pct: 0.10 },
 ];
 
 // Falas soltas do Barnabé — sorteada 1 por vez toda vez que a Loja é aberta
@@ -714,6 +747,7 @@ const FORGED_WEAPON_DEFS = [
   },
   {
     key: 'slimeWarriorAxe', name: 'Machado do Guerreiro Slime', icon: 'weapon-slimewarrioraxe',
+    requiresWeapon: 'slimeWarriorSword', // forja em ordem (ver ForgeModule.canForge)
     clickDamageBonus: 150, dpsBonus: 60,
     recipe: {
       coinCost: 2000, materials: [
@@ -728,6 +762,7 @@ const FORGED_WEAPON_DEFS = [
   },
   {
     key: 'slimeKingGreatAxe', name: 'Machado Ancestral do Rei Slime', icon: 'weapon-slimekinggreataxe',
+    requiresWeapon: 'slimeWarriorAxe',
     clickDamageBonus: 400, dpsBonus: 150,
     recipe: {
       coinCost: 5000, materials: [
@@ -749,18 +784,19 @@ const FORGED_WEAPON_DEFS = [
 // `deliverItem` consomem o item do inventário ao concluir (ação irreversível,
 // por isso `state.quests[key]=true` fica persistido, nunca recomputado — ver
 // js/onboarding.js). `unlocksBuilding` é o prédio liberado ao concluir.
-// `modalElId`/`bannerElId` dizem em qual modal e em qual <div> o banner de
-// progresso da missão é renderizado (ver QuestModule.renderAllQuestBanners);
-// `bannerLabel` é o texto curto do banner; `completeTitle`/`completeText`
-// preenchem o `questCompleteModal` genérico ao concluir (ver QuestModule.deliver).
+// Todas ficam na janela de Missões (botão no canto da tela, ver
+// QuestModule.renderMissions), não mais dentro da Loja/Ferreiro/Igreja:
+// `title`/`desc` são o nome e o resumo do pedido; `announcedFlag` é o campo
+// de state que marca que o NPC já fez o pedido (a missão só aparece depois);
+// `speaker` (chave de DIALOGUE_SPEAKERS) fala `completeText` na conversa de
+// conclusão (ver QuestModule.deliver).
 const QUEST_DEFS = [
   {
-    key: 'slimeGelDelivery', npc: 'Barnabé', unlocksBuilding: 'ferreiro',
-    modalElId: 'lojaModal', bannerElId: 'lojaQuestBanner', bannerLabel: 'Encomenda do Creiton',
+    key: 'slimeGelDelivery', npc: 'Barnabé', speaker: 'barnabe', unlocksBuilding: 'ferreiro', announcedFlag: 'metBarnabe',
+    title: 'Encomenda do Creiton', desc: 'O Barnabé repassa o material pro irmão, que volta a abrir o Ferreiro.',
     objectives: [
       { type: 'deliverItem', itemKey: 'slimeGel', itemQty: 10 },
     ],
-    completeTitle: 'BARNABÉ',
     completeText: 'Ótima notícia! Isso é exatamente o que o Creiton precisava — ele já está a caminho de volta. Pode ir até o Ferreiro quando quiser.'
   },
   {
@@ -772,28 +808,26 @@ const QUEST_DEFS = [
     // da Caverna — e a Caverna é liberada por uma missão totalmente separada
     // (caveClearance), então exigir arma forjada aqui criaria uma dependência
     // escondida entre 2 missões que hoje podem ser feitas em qualquer ordem.
-    key: 'creitonMilitia', npc: 'Creiton', unlocksBuilding: 'guilda',
-    modalElId: 'ferreiroModal', bannerElId: 'ferreiroQuestBanner', bannerLabel: 'Material pra Tropas',
+    key: 'creitonMilitia', npc: 'Creiton', speaker: 'creiton', unlocksBuilding: 'guilda', announcedFlag: 'metCreiton',
+    title: 'Material pra Tropas', desc: 'Com metal temperado e um herói bem armado, a Guilda pode recrutar uma tropa.',
     objectives: [
       { type: 'deliverItem', itemKey: 'slimeCompound', itemQty: 8 },
       { type: 'defeatCycle', count: 1, label: 'Derrotar o chefe de um ciclo em qualquer Dungeon' },
       { type: 'ownWeapons', count: 2, label: 'Possuir 2 armas iniciais diferentes (compre a 2ª no Ferreiro)' },
     ],
-    completeTitle: 'CREITON',
     completeText: 'Perfeito — material temperado, você já provou que aguenta a dungeon e ainda chegou armado até os dentes. Já mandei um recado pra Guilda — pode ir até lá quando quiser armar sua tropa.'
   },
   {
     // Anunciada pelo próprio Anselmo ao abrir a Igreja (ver
     // QuestModule.openAnselmoCaveIntro/state.caveQuestAnnounced), igual ao
     // padrão de Barnabé/Creiton — não é mais só um banner passivo.
-    key: 'caveClearance', npc: 'Irmão Anselmo', unlocksBuilding: 'caverna',
-    modalElId: 'igrejaModal', bannerElId: 'clericQuestBanner', bannerLabel: 'Reabertura da Caverna',
+    key: 'caveClearance', npc: 'Irmão Anselmo', speaker: 'anselmo', unlocksBuilding: 'caverna', announcedFlag: 'caveQuestAnnounced',
+    title: 'Reabertura da Caverna', desc: 'Os mineradores voltam ao trabalho se alguém provar que a dungeon pode ser enfrentada.',
     objectives: [
       { type: 'deliverItem', itemKey: 'slimeGel', itemQty: 20 },
       { type: 'deliverItem', itemKey: 'slimeCompound', itemQty: 15 },
       { type: 'defeatCycle', count: 1, label: 'Derrotar o chefe de um ciclo em qualquer Dungeon' },
     ],
-    completeTitle: 'IRMÃO ANSELMO',
     completeText: 'Isso deve bastar pra convencer os poucos mineradores que restaram a voltar ao trabalho, e sua coragem lá fora acaba com a última dúvida deles. A Caverna está pronta pra ser explorada.'
   },
 ];
@@ -1083,6 +1117,33 @@ const PRESTIGE_UPGRADE_DEFS = [
   { key: 'pDps', name: 'Pacto das Tropas', desc: '+15% DPS das tropas (permanente)', baseCost: 1, costGrowth: 1.8, apply: s => s.pDpsMult += 0.15 },
   { key: 'pOreRate', name: 'Toque de Midas', desc: '+15% velocidade de mineração de minério (permanente)', baseCost: 1, costGrowth: 1.8, apply: s => s.pOreRateMult += 0.15 },
   { key: 'pCrit', name: 'Fúria Ancestral', desc: '+5% chance de crítico (permanente)', baseCost: 2, costGrowth: 2.0, apply: s => s.pCritChance += 0.05 },
+];
+
+// Habilidades Arcanas (aba da Academia, ver js/arcane.js/ArcaneModule).
+// Disparam sozinhas na batalha a cada `intervalMs`; cada nível no ramo de
+// Velocidade multiplica o intervalo por `speedStep` (até `minIntervalMs`),
+// cada nível no ramo de Dano soma `dmgPerLevel` no efeito. Dano é sempre
+// proporcional ao dano por clique atual (PlayerModule.clickDamage), pra
+// acompanhar a vida dos monstros andar após andar.
+//   fire      — queimadura: `dmgBase + dmgPerLevel*nív` × dano do clique,
+//               dividido em ticks ao longo de `durationMs` (reaplicar renova)
+//   lightning — raio: `dmgBase + dmgPerLevel*nív` × dano do clique, de uma vez
+//   ice       — congela por `durationMs`: o monstro recebe
+//               +(`dmgBase + dmgPerLevel*nív`) de dano (fração, 0.2 = +20%)
+//               e os relógios (monstro e Dungeon) andam a `slowFactor` da velocidade
+const ARCANE_SKILL_DEFS = [
+  { key: 'fire', name: 'Fogo', color: '#ff8a3d',
+    desc: 'Queima o inimigo, causando dano contínuo.',
+    intervalMs: 4000, minIntervalMs: 1000, speedStep: 0.85,
+    durationMs: 3000, tickMs: 500, dmgBase: 1.5, dmgPerLevel: 0.75 },
+  { key: 'lightning', name: 'Elétrico', color: '#ffe066',
+    desc: 'Um raio cai de tempos em tempos e causa dano.',
+    intervalMs: 5000, minIntervalMs: 1500, speedStep: 0.85,
+    dmgBase: 3, dmgPerLevel: 1.5 },
+  { key: 'ice', name: 'Gelo', color: '#7fd8ff',
+    desc: 'Congela o inimigo: ele recebe mais dano e o tempo passa mais devagar.',
+    intervalMs: 6000, minIntervalMs: 2500, speedStep: 0.85,
+    durationMs: 2500, slowFactor: 0.5, dmgBase: 0.2, dmgPerLevel: 0.08 },
 ];
 
 // Conquistas (ver AchievementsModule, js/achievements.js) — no fim do

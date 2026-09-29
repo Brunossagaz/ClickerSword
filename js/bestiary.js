@@ -2,8 +2,9 @@
    BESTIARY MODULE (bestiary.js)
    Bestiário: um cartão por espécie de MONSTER_TYPES (config.js) com a arte,
    a descrição (`desc`), onde aparece (Andares de MAPS) e quantos o jogador
-   já abateu (state.monsterKills, contado em MonsterModule.onDeath).
-   Espécie nunca abatida aparece como silhueta, sem nome nem descrição.
+   já abateu (state.monsterKills, contado em MonsterModule.onDeath) e os
+   drops com a chance de cada um. Espécie nunca abatida aparece como
+   silhueta, sem nome, descrição nem drops.
    Aberto pelo botão de livro no canto da tela (ver HudModule). Todo texto
    entra por textContent (nada de innerHTML).
 --------------------------------------------------------------------- */
@@ -13,6 +14,16 @@ const BestiaryModule = {
     document.getElementById('bestiaryBtn').addEventListener('click', () => this.open());
     document.getElementById('bestiaryCloseBtn').addEventListener('click', () => this.close());
     this.modal.addEventListener('click', (e) => { if(e.target === this.modal) this.close(); });
+    // zoom da arte: qualquer clique (fundo, arte, ✕) fecha
+    this.zoomModal = document.getElementById('bestiaryZoomModal');
+    this.zoomModal.addEventListener('click', () => this.zoomModal.classList.remove('open'));
+  },
+  // Arte ampliada de uma espécie já registrada (clique na arte do cartão)
+  openZoom(m){
+    const art = document.getElementById('bestiaryZoomArt');
+    art.style.backgroundImage = `url('${m.image}')`;
+    document.getElementById('bestiaryZoomName').textContent = this.displayName(m);
+    this.zoomModal.classList.add('open');
   },
   open(){
     this.render();
@@ -39,6 +50,55 @@ const BestiaryModule = {
     return DUNGEON_ORDER.filter(d => MAPS[d] && Object.values(MAPS[d].cycles || {}).some(cycle => cycle.some(inSlot)))
       .map(d => MAPS[d].name);
   },
+  // Chance efetiva de um drop: a mesma conta de MonsterModule.rollDrops — o
+  // bônus do ramo Sorte (state.rareDropChanceBonus) só soma nos drops raros
+  // (os que têm  própria); os garantidos são sempre 100%.
+  dropChance(d){
+    if(d.chance == null) return { value: 1, bonus: 0 };
+    const bonus = state.rareDropChanceBonus || 0;
+    return { value: Math.min(1, d.chance + bonus), bonus: Math.min(1, d.chance + bonus) - d.chance };
+  },
+  pct(v){
+    const p = v * 100;
+    return (Number.isInteger(Math.round(p * 10) / 10) ? Math.round(p) : (Math.round(p * 10) / 10).toString().replace('.', ',')) + '%';
+  },
+  // lista de drops (só pra espécie já abatida)
+  dropsBlock(m){
+    const wrap = document.createElement('div');
+    wrap.className = 'bestiary-drops';
+    const title = document.createElement('div');
+    title.className = 'bestiary-drops-title';
+    title.textContent = 'Drops';
+    wrap.appendChild(title);
+    for(const d of (m.drops || [])){
+      const it = ITEM_DEFS.find(i => i.key === d.item);
+      if(!it) continue;
+      const row = document.createElement('div');
+      row.className = 'bestiary-drop';
+      const icon = document.createElement('div');
+      icon.className = 'icon icon-' + it.icon;
+      const name = document.createElement('span');
+      name.className = 'bestiary-drop-name';
+      name.textContent = it.name + (d.qtyMin === d.qtyMax ? ` ×${d.qtyMin}` : ` ×${d.qtyMin}–${d.qtyMax}`);
+      const ch = this.dropChance(d);
+      const chance = document.createElement('span');
+      chance.className = 'bestiary-drop-chance' + (ch.value >= 1 ? ' sure' : '');
+      chance.textContent = this.pct(ch.value);
+      if(ch.bonus > 0){
+        chance.title = `${this.pct(d.chance)} + ${this.pct(ch.bonus)} do ramo Sorte`;
+        chance.classList.add('boosted');
+      }
+      row.append(icon, name, chance);
+      wrap.appendChild(row);
+    }
+    if(!(m.drops || []).length){
+      const none = document.createElement('div');
+      none.className = 'bestiary-drop-none';
+      none.textContent = 'Não dropa itens.';
+      wrap.appendChild(none);
+    }
+    return wrap;
+  },
   render(){
     const el = document.getElementById('bestiaryList');
     if(!el) return;
@@ -59,6 +119,11 @@ const BestiaryModule = {
       const art = document.createElement('div');
       art.className = 'bestiary-art';
       art.style.backgroundImage = `url('${m.image}')`;
+      if(known){
+        art.classList.add('zoomable');
+        art.title = 'Clique para ampliar';
+        art.addEventListener('click', () => this.openZoom(m));
+      }
       card.appendChild(art);
 
       const info = document.createElement('div');
@@ -82,6 +147,13 @@ const BestiaryModule = {
       count.className = 'bestiary-kills';
       count.textContent = `Abatidos: ${num(kills)}`;
       info.append(head, where, desc, count);
+      if(known) info.appendChild(this.dropsBlock(m));
+      else {
+        const hidden = document.createElement('div');
+        hidden.className = 'bestiary-drop-none';
+        hidden.textContent = 'Drops: ???';
+        info.appendChild(hidden);
+      }
       card.appendChild(info);
       el.appendChild(card);
     }

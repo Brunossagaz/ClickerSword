@@ -345,8 +345,11 @@ const CityMapModule = {
     const lines = n.def.lines || [];
     const name = document.createElement('b');
     name.textContent = n.def.name;
-    this.bubble.replaceChildren(name, lines.length ? `"${lines[Math.floor(Math.random() * lines.length)]}"` : '');
+    const text = document.createElement('span');
+    this.bubble.replaceChildren(name, text);
     this.bubble.classList.add('open');
+    // fala aparece aos poucos, com a "voz" do morador (ver DialogueModule)
+    if(lines.length) DialogueModule.typeInto(text, `"${lines[Math.floor(Math.random() * lines.length)]}"`, DialogueModule.voiceFor(n.def.key));
     this.talking = { npc: n, until: performance.now() + this.BUBBLE_MS };
     this.placeBubble(n);
   },

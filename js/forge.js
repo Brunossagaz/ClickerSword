@@ -8,7 +8,15 @@
    PlayerModule.equipWeapon).
 --------------------------------------------------------------------- */
 const ForgeModule = {
+  // forja em ordem: a arma anterior da linha precisa ter sido forjada antes
+  // (FORGED_WEAPON_DEFS.requiresWeapon) — sem isso dava pra pular pro
+  // Machado Ancestral antes do Machado
+  prerequisiteMissing(def){
+    return def.requiresWeapon && !state.weapons[def.requiresWeapon]
+      ? FORGED_WEAPON_DEFS.find(w => w.key === def.requiresWeapon) : null;
+  },
   canForge(def){
+    if(this.prerequisiteMissing(def)) return false;
     if(state.gold < (def.recipe.coinCost||0)) return false;
     return def.recipe.materials.every(m => state.inventory[m.itemKey] >= m.qty);
   },

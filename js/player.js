@@ -78,8 +78,8 @@ const PlayerModule = {
     if(weaponDef && weaponDef.burnChance && Math.random() < weaponDef.burnChance){
       MonsterModule.applyBurn(dmg * weaponDef.burnDamagePercent);
     }
-    MonsterModule.applyDamage(dmg);
-    UI.showFloatingDamage(dmg, isCrit, evt);
+    const dealt = MonsterModule.applyDamage(dmg);
+    UI.showFloatingDamage(dealt, isCrit, evt);
     UI.screenShake();
     UI.hitFlash();
 
