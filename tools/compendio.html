@@ -98,6 +98,9 @@
   .stat .v input.ed{font-size:26px; color:var(--gold-glow); width:110px; text-align:left;}
   .stat .l{font-size:16px; color:var(--parchment-dim);}
   .quote{font-style:italic; color:var(--parchment-dim); font-size:18px; margin:2px 0;}
+  ul.lines-edit{list-style:none; margin:6px 0 0; padding:0;}
+  ul.lines-edit .line-row{display:flex; align-items:center; gap:4px; margin:2px 0;}
+  ul.lines-edit input.ed{flex:1; min-width:0; font-style:italic; font-size:17px;}
   h2{font-family:'Press Start 2P', monospace; font-size:12px; color:var(--arcane); margin:22px 0 10px;}
   .create{display:flex; gap:8px; flex-wrap:wrap; align-items:center; background:var(--bg-panel); border:2px dashed var(--stone); border-radius:6px; padding:8px 10px; margin-bottom:12px;}
   .create b{color:var(--arcane); font-weight:normal;}
@@ -316,9 +319,10 @@
 
   <section id="personagens">
     <h2>Personagens da história</h2>
+    <p class="hint">Falas soltas: uma é sorteada cada vez que aparece. Clique numa fala pra editar, <b>×</b> remove, <b>+ fala</b> adiciona (cada personagem precisa de ao menos uma). As conversas da história ficam em <code>js/dialogues-data.js</code>.</p>
     <div class="grid" id="npcGrid"></div>
     <h2>Andando pela cidade</h2>
-    <p class="hint">Todos que aparecem no mapa da Cidade (<code>CITY_MAP.npcs</code> em <code>js/config.js</code>). Os novos moradores só dão vida ao ambiente, sem papel na história por enquanto.</p>
+    <p class="hint">Todos que aparecem no mapa da Cidade (<code>CITY_MAP.npcs</code> em <code>js/config.js</code>). Clicar num morador mostra uma das falas dele num balão.</p>
     <div class="grid" id="cityNpcGrid"></div>
     <h2>Tropas (Guilda)</h2>
     <div class="grid" id="troopGrid"></div>
@@ -334,7 +338,8 @@ const BASE = JSON.parse(JSON.stringify({
   config: Object.fromEntries(Object.entries(CONFIG).filter(([, v]) => typeof v === 'number')),
   monsters: MONSTER_TYPES, items: ITEM_DEFS, weapons: WEAPON_DEFS, forgedWeapons: FORGED_WEAPON_DEFS, troops: TROOP_DEFS, upgrades: UPGRADE_DEFS,
   prospectors: PROSPECTOR_DEFS, cavernUpgrades: CAVERN_UPGRADE_DEFS,
-  maps: DUNGEON_ORDER.map(k => ({ key: k, hpScale: MAPS[k].hpScale }))
+  maps: DUNGEON_ORDER.map(k => ({ key: k, hpScale: MAPS[k].hpScale })),
+  npcLines: Object.fromEntries(CITY_MAP.npcs.map(n => [n.key, n.lines || []]))
 }));
 </script>
 <script src="js/overrides-data.js"></script>
@@ -351,7 +356,7 @@ const round = (n, d = 4) => Math.round(n * 10 ** d) / 10 ** d;
 DUNGEON_ORDER.forEach(k => { MAPS[k].key = k; });
 const LISTS = { monsters: MONSTER_TYPES, items: ITEM_DEFS, weapons: WEAPON_DEFS, forgedWeapons: FORGED_WEAPON_DEFS, troops: TROOP_DEFS, upgrades: UPGRADE_DEFS,
   prospectors: PROSPECTOR_DEFS, cavernUpgrades: CAVERN_UPGRADE_DEFS, maps: DUNGEON_ORDER.map(k => MAPS[k]) };
-const current = () => ({ config: CONFIG, ...LISTS });
+const current = () => ({ config: CONFIG, ...LISTS, npcLines: Object.fromEntries(CITY_MAP.npcs.map(n => [n.key, n.lines || []])) });
 const itemDef = key => ITEM_DEFS.find(d => d.key === key);
 const monDef = key => MONSTER_TYPES.find(m => m.key === key);
 const baseEntry = (coll, key) => coll === 'config' ? BASE.config : (BASE[coll] || []).find(e => e.key === key);
@@ -1015,31 +1020,99 @@ document.getElementById('treeSearch').addEventListener('input', renderTree);
 // ---------------------------------------------------------------------
 // Personagens
 // ---------------------------------------------------------------------
-const NPCS = [
-  { name:'Irmão Anselmo', role:'Clérigo da Igreja — recebe o forasteiro e dá a primeira arma', portrait:'assets/portraits/anselmo.png', lines:ANSELMO_LINES },
-  { name:'Barnabé', role:'Dono da Loja — compra seus drops e minérios', portrait:'assets/portraits/barnabe.png', lines:BARNABE_LINES },
-  { name:'Creiton', role:'Ferreiro, irmão do Barnabé — vende e forja armas', portrait:'assets/portraits/creiton.png', lines:CREITON_LINES },
+// Falas soltas editáveis (salvas em js/overrides-data.js como npcLines, ver
+// ConfigOverrides). Os 3 da história são os mesmos moradores de CITY_MAP.npcs
+// (as falas deles são BARNABE_LINES/CREITON_LINES/ANSELMO_LINES).
+const STORY_NPCS = [
+  { key:'anselmo', role:'Clérigo da Igreja — recebe o forasteiro e dá a primeira arma', portrait:'assets/portraits/anselmo.png', where:'Balão na cidade' },
+  { key:'barnabe', role:'Dono da Loja — compra seus drops e minérios', portrait:'assets/portraits/barnabe.png', where:'Balão na cidade e ao abrir a Loja' },
+  { key:'creiton', role:'Ferreiro, irmão do Barnabé — vende e forja armas', portrait:'assets/portraits/creiton.png', where:'Balão na cidade e ao abrir o Ferreiro' },
+  { key:'aldo', role:'Professor da Academia de Combate — melhorias e Habilidades Arcanas', portrait:'assets/portraits/aldo.png', where:'Balão na cidade e ao abrir a Academia' },
 ];
-document.getElementById('npcGrid').innerHTML = NPCS.map(n => `
+// falas que o jogo não usa: a bruxa conversa pela janela de diálogo (ver WitchModule)
+const LINES_UNUSED = { witch: 'Não aparecem no jogo: clicar na Madame Morgana abre a conversa dela (js/dialogues-data.js).' };
+const npcOf = key => CITY_MAP.npcs.find(n => n.key === key);
+function linesEditor(key){
+  const n = npcOf(key);
+  const base = BASE.npcLines[key] || [];
+  const rows = (n.lines || []).map((l, i) => {
+    const changed = l !== base[i];
+    const title = changed && base[i] !== undefined ? ` title="Original: ${esc(base[i])}"` : '';
+    return `<li class="line-row">
+      <input class="ed w-name${changed ? ' changed' : ''}" data-npc-line="${esc(key)}|${i}" type="text" maxlength="200" value="${esc(l)}"${title}>
+      <button class="x" data-npc-action="del|${esc(key)}|${i}" title="Remover fala">×</button></li>`;
+  }).join('');
+  return `<ul class="lines-edit">${rows}</ul><button data-npc-action="add|${esc(key)}" style="margin-top:6px">+ fala</button>`;
+}
+const SCHEDULE_LABEL = { day: '☀ Só de dia', night: '☾ Só de noite' };
+// quando o morador volta pra cidade (CITY_MAP.npcs[].unlock, ver CityMapModule.isNpcUnlocked)
+function unlockLabel(def){
+  const u = def.unlock;
+  if(!u) return 'Sempre na cidade';
+  if(u.building) return u.building === 'loja' ? 'Volta quando a Loja abre' : 'Volta quando ' + u.building + ' abre';
+  if(u.quest){ const q = QUEST_DEFS.find(x => x.key === u.quest); return 'Volta com a missão "' + (q ? q.title : u.quest) + '"'; }
+  if(u.flag) return ({ academiaAnnounced: 'Aparece quando a Academia abre' })[u.flag] || 'Depende de ' + u.flag;
+  if(u.chapter != null){ const d = DUNGEON_ORDER[u.chapter - 1]; return 'Volta ao concluir o ' + (d && MAPS[d] ? MAPS[d].name : 'capítulo ' + u.chapter); }
+  return '';
+}
+function renderNpcs(){
+  document.getElementById('npcGrid').innerHTML = STORY_NPCS.map(st => { const n = npcOf(st.key); return `
   <div class="card"><h3>${esc(n.name)}</h3>
     <div class="row">
-      <img class="portrait" src="${esc(n.portrait)}" alt="">
-      <div><div class="meta">${esc(n.role)}</div>${n.lines.map(l => `<div class="quote">“${esc(l)}”</div>`).join('')}</div>
+      <img class="portrait" src="${esc(st.portrait)}" alt="">
+      <div style="flex:1; min-width:0"><div class="meta">${esc(st.role)}</div><div class="meta"><span class="tag">${esc(st.where)}</span><span class="tag">${esc(unlockLabel(n))}</span></div></div>
     </div>
-  </div>`).join('');
-// Todos que andam pelo mapa da cidade (CITY_MAP.npcs): sprite parado de
-// frente (frame 0 da folha 96x144, ampliado 2x), horário e falas
-const SCHEDULE_LABEL = { day: '☀ Só de dia', night: '☾ Só de noite' };
-document.getElementById('cityNpcGrid').innerHTML = CITY_MAP.npcs.map(n => `
+    ${linesEditor(st.key)}
+  </div>`; }).join('');
+  // Todos que andam pelo mapa da cidade (CITY_MAP.npcs): sprite parado de
+  // frente (frame 0 da folha 96x144, ampliado 2x), horário e falas
+  document.getElementById('cityNpcGrid').innerHTML = CITY_MAP.npcs.filter(n => !STORY_NPCS.some(st => st.key === n.key)).map(n => `
   <div class="card"><h3>${esc(n.name)}</h3>
     <div class="row">
       <div class="npc-sprite" style="background-image:url('${esc(n.sprite)}')"></div>
-      <div>
-        <div class="meta"><span class="tag">${esc(SCHEDULE_LABEL[n.schedule] || '☀☾ Dia e noite')}</span>${n.speed ? `<span class="tag">passo ${esc(n.speed)}</span>` : ''}</div>
-        ${(n.lines || []).map(l => `<div class="quote">“${esc(l)}”</div>`).join('')}
+      <div style="flex:1; min-width:0">
+        <div class="meta"><span class="tag">${esc(SCHEDULE_LABEL[n.schedule] || '☀☾ Dia e noite')}</span>${n.speed ? `<span class="tag">passo ${esc(n.speed)}</span>` : ''}<span class="tag">${esc(unlockLabel(n))}</span></div>
+        ${LINES_UNUSED[n.key] ? `<p class="hint">${esc(LINES_UNUSED[n.key])}</p>` : ''}
       </div>
     </div>
+    ${linesEditor(n.key)}
   </div>`).join('');
+}
+function focusLine(key, i){
+  const el = document.querySelector(`[data-npc-line="${key}|${i}"]`);
+  if(el){ el.focus(); el.select(); }
+}
+document.addEventListener('change', e => {
+  const el = e.target.closest('[data-npc-line]');
+  if(!el) return;
+  const [key, i] = el.dataset.npcLine.split('|');
+  const v = el.value.trim();
+  if(!v || v.length > 200 || /[<>]/.test(v)){
+    el.classList.add('bad');
+    toast('Fala inválida: não pode ficar vazia nem usar < ou >. Pra apagar, use o ×.', true);
+    return;
+  }
+  npcOf(key).lines[+i] = v;
+  renderNpcs(); renderSaveStatus();
+});
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-npc-action]');
+  if(!btn) return;
+  const [action, key, i] = btn.dataset.npcAction.split('|');
+  const n = npcOf(key);
+  if(!Array.isArray(n.lines)) n.lines = [];
+  if(action === 'add'){
+    if(n.lines.length >= ConfigOverrides.MAX_NPC_LINES){ toast(`No máximo ${ConfigOverrides.MAX_NPC_LINES} falas por personagem.`, true); return; }
+    n.lines.push('Nova fala');
+    renderNpcs(); renderSaveStatus();
+    focusLine(key, n.lines.length - 1);
+  } else if(action === 'del'){
+    if(n.lines.length <= 1){ toast('Cada personagem precisa de ao menos uma fala.', true); return; }
+    n.lines.splice(+i, 1);
+    renderNpcs(); renderSaveStatus();
+  }
+});
+renderNpcs();
 function renderTroops(){
   document.getElementById('troopGrid').innerHTML = TROOP_DEFS.map(t => `<div class="card"><h3>${field('troops', t.key, 'name', 'str', { cls: 'w-name' })}</h3>
     <div class="kv">

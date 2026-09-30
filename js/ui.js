@@ -130,7 +130,13 @@ const UI = {
     // sempre abre a Academia com a view centralizada (zoom 1, sem pan) —
     // sem isso o jogador podia reabrir o modal ainda deslocado/dado zoom de
     // uma visita anterior, o que é confuso.
-    document.getElementById('openAcademiaBtn').addEventListener('click', ()=>this.resetTreeView());
+    document.getElementById('openAcademiaBtn').addEventListener('click', ()=>{
+      this.resetTreeView();
+      // fala solta do Professor Aldo na faixa do topo (mesmo padrão da Loja/Ferreiro)
+      DialogueModule.typeInto(document.getElementById('academiaAldoLine'),
+        '"'+ALDO_LINES[Math.floor(Math.random()*ALDO_LINES.length)]+'"', DialogueModule.voiceFor('aldo'));
+      OnboardingModule.announceArcaneIfNeeded(); // 1º Ponto Arcano: o Aldo apresenta a aba nova
+    });
     this.initTreePanZoom();
 
     // Botão "?" (ajuda) — alterna o popover com as instruções de pan/zoom,
@@ -193,7 +199,6 @@ const UI = {
     document.getElementById('lojaDropsSellSelectedBtn').addEventListener('click', ()=>this.sellSelected(this.shopCategoryDefs().drops));
     document.getElementById('lojaWeaponsSellSelectedBtn').addEventListener('click', ()=>this.sellSelected(this.shopCategoryDefs().weapons));
     document.getElementById('lojaMineralsSellSelectedBtn').addEventListener('click', ()=>this.sellSelected(this.shopCategoryDefs().minerals));
-    DialogueModule.init();
     DialogueModule.init();
     QuestModule.init();
     WitchModule.init();
@@ -376,9 +381,6 @@ const UI = {
     for(const btnId in buildingByBtn){
       document.getElementById(btnId).disabled = !OnboardingModule.isBuildingUnlocked(buildingByBtn[btnId]);
     }
-    // Progresso de entradas na Dungeon, só enquanto a Academia estiver
-    // trancada (ver OnboardingModule.academiaProgressLabel).
-    document.getElementById('academiaProgress').textContent = OnboardingModule.academiaProgressLabel() || '';
   },
   // 1ª entrada na Dungeon da vida do personagem (ver
   // OnboardingModule.isFirstDungeonEntry): esconde o botão "Voltar pra
@@ -454,7 +456,6 @@ const UI = {
     });
     document.getElementById('volumeSlider').addEventListener('input', (e)=>SettingsModule.setVolume(Number(e.target.value)));
     document.getElementById('languageSelect').addEventListener('change', (e)=>SettingsModule.setLanguage(e.target.value));
-    document.getElementById('textSpeedSelect').addEventListener('change', (e)=>SettingsModule.setTextSpeed(e.target.value));
     document.getElementById('textSpeedSelect').addEventListener('change', (e)=>SettingsModule.setTextSpeed(e.target.value));
   },
   fmt(n){
@@ -1531,7 +1532,10 @@ const UI = {
     const maxPoints = DUNGEON_ORDER.length * CONFIG.maxCycleNum;
     const cost = CONFIG.arcanePointCost;
     const canSpend = ArcaneModule.canSpend();
-    const unlockFloor = DUNGEON_ORDER.indexOf(CONFIG.arcaneUnlockDungeon) + 1;
+    // aba escondida até o Professor Aldo apresentar as Arcanas (se estava nela, volta pra árvore)
+    const tabBtn = document.querySelector('#academiaModal .modal-tab-btn[data-tab="academiaTabArcane"]');
+    tabBtn.style.display = unlocked ? '' : 'none';
+    if(!unlocked && tabBtn.classList.contains('active')) this.showAcademiaTab('academiaTabTree');
 
     let html = `
       <div class="arcane-header">
@@ -1539,9 +1543,6 @@ const UI = {
         <div class="footer-note">Ganhe 1 ponto ao derrotar o chefe de cada ciclo pela 1ª vez (${earned}/${maxPoints} conquistados). As habilidades aprendidas disparam sozinhas durante a batalha.</div>
         ${unlocked && ArcaneModule.pointsSpent() > 0 ? `<button class="small-btn arcane-reset-btn" id="arcaneResetBtn" title="Devolve todos os pontos gastos, de graça">Reiniciar habilidades</button>` : ''}
       </div>`;
-    if(!unlocked){
-      html += `<div class="arcane-locked-note"><div class="icon icon-lock"></div>Conclua o ${unlockFloor}º andar (${MAPS[CONFIG.arcaneUnlockDungeon].name}) e volte à cidade para liberar.</div>`;
-    }
     html += `<div class="arcane-grid${unlocked ? '' : ' locked'}">`;
     for(const def of ARCANE_SKILL_DEFS){
       const learned = ArcaneModule.isLearned(def.key);

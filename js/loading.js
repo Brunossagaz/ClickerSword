@@ -30,7 +30,7 @@ const LoadingModule = {
       ...Object.values(CITY_MAP.images),
       ...CITY_MAP.npcs.map(n => n.sprite),
       ...MONSTER_TYPES.map(m => m.image),
-      'assets/portraits/anselmo.png', 'assets/portraits/barnabe.png', 'assets/portraits/creiton.png',
+      'assets/portraits/anselmo.png', 'assets/portraits/barnabe.png', 'assets/portraits/creiton.png', 'assets/portraits/aldo.png',
       ...ui, ...icons,
     ];
     return [...new Set(list.filter(Boolean))];

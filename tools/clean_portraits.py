@@ -26,11 +26,19 @@ from PIL import Image, ImageFilter
 ROOT = os.path.join(os.path.dirname(__file__), '..')
 SRC = os.path.join(ROOT, 'art', 'portraits', 'src')
 OUT = os.path.join(ROOT, 'assets', 'portraits')
-NAMES = ['anselmo', 'barnabe', 'creiton']
+NAMES = ['anselmo', 'barnabe', 'creiton', 'aldo']
+# Opções por retrato. template=False: a arte não tem o pontilhado azul do
+# gabarito — pula o passo 3, senão tons verde-azulados (casaco do Aldo, runa
+# do livro) seriam tratados como pontilhado e apagados. scale: reduz antes de
+# limpar pra ficar na mesma escala dos outros (~550 px de largura).
+OPTIONS = {'aldo': {'template': False, 'scale': 0.5}}
 
 
-def clean(path):
-    im = np.asarray(Image.open(path).convert('RGB')).astype(np.int16)
+def clean(path, template=True, scale=1.0):
+    src = Image.open(path).convert('RGB')
+    if scale != 1.0:
+        src = src.resize((round(src.width * scale), round(src.height * scale)), Image.LANCZOS)
+    im = np.asarray(src).astype(np.int16)
     h, w, _ = im.shape
     r, g, b = im[..., 0], im[..., 1], im[..., 2]
     # 1. borda laranja: linhas/colunas externas dominadas pelo laranja (230,142,68)
@@ -49,7 +57,7 @@ def clean(path):
     lum = 0.299 * r + 0.587 * g + 0.114 * b
     # 3 (antes do flood fill): quadradinhos azuis do gabarito viram fundo
     # inclui a borda suavizada dos quadradinhos (tons escuros de azul-esverdeado)
-    cyan = (g - r > 12) & (b - r > 12) & (abs(g - b) < 40)
+    cyan = ((g - r > 12) & (b - r > 12) & (abs(g - b) < 40)) if template else np.zeros((h, w), bool)
     near_black = (lum < 14) | cyan
     # 2. fundo = pixels quase pretos ligados à borda
     bg = np.zeros((h, w), bool)
@@ -89,7 +97,7 @@ def clean(path):
 
 def main():
     for n in NAMES:
-        img = clean(os.path.join(SRC, n + '.png'))
+        img = clean(os.path.join(SRC, n + '.png'), **OPTIONS.get(n, {}))
         img.save(os.path.join(OUT, n + '.png'), optimize=True)
         print('ok:', n, img.size)
 

@@ -29,8 +29,10 @@
  *     reais (com Faro de Minérios) enquanto ele joga;
  *   - monstro dourado: fração do tempo dourado (chance por tick) multiplica
  *     os drops; Faro de Caçador soma nas chances raras; extraDropChance da arma;
- *   - Habilidades Arcanas: pontos por ciclo vencido, gastos no que mais
- *     aumenta o dano (Gelo também estica os relógios);
+ *   - Habilidades Arcanas: liberam com o 1º Ponto Arcano (Academia aberta);
+ *     pontos por ciclo vencido, gastos no que mais aumenta o dano (Gelo
+ *     também estica os relógios);
+ *   - árvore da Academia: ramo libera com o anterior no CONFIG.treeUnlockLevel;
  *   - Expedições da Guilda só entram se CONFIG.guildExpeditionsEnabled.
  * Fora do modelo: ganho offline, Ascensão, queimadura das armas, grupos
  * (dupla/tripla usam a 1ª opção).
@@ -411,7 +413,7 @@
       if(isOpen(st, 'academia')) for(const u of UPGRADE_DEFS){
         const lvl = st.upgrades[u.key];
         if(lvl >= u.maxLevel) continue;
-        if(u.requires){ const r = UPGRADE_DEFS.find(x => x.key === u.requires); if(r && st.upgrades[r.key] < r.maxLevel) continue; }
+        if(u.requires){ const r = UPGRADE_DEFS.find(x => x.key === u.requires); if(r && st.upgrades[r.key] < Math.min(r.maxLevel, CONFIG.treeUnlockLevel || r.maxLevel)) continue; }
         out.push({ key: u.key, cost: Math.ceil(u.baseCost * Math.pow(u.costGrowth, lvl)), apply: s => { s.upgrades[u.key]++; } });
       }
       if(isOpen(st, 'guilda')) for(const t of TROOP_DEFS) out.push({ key: t.key, cost: Math.ceil(t.baseCost * Math.pow(t.costGrowth, st.troops[t.key])), apply: s => { s.troops[t.key]++; } });
@@ -484,7 +486,9 @@
       }
     }
     function arcaneOpen(st){
-      return !off.has('arcano') && ARCANE.length && CONFIG.arcaneUnlockDungeon && (st.maxCycle[CONFIG.arcaneUnlockDungeon] || 0) >= CONFIG.maxCycleNum;
+      // aba aparece com o 1º Ponto Arcano, na próxima visita à Academia
+      if(off.has('arcano') || !ARCANE.length || !isOpen(st, 'academia')) return false;
+      return DUNGEON_ORDER.reduce((s, k) => s + Math.min(CONFIG.maxCycleNum, st.maxCycle[k] || 0), 0) >= (CONFIG.arcaneUnlockPoints || 1);
     }
     function spendArcane(st){
       if(!arcaneOpen(st)) return;
@@ -599,7 +603,7 @@
           }
           doRun(st, list, false);
           if(c > (st.maxCycle[dKey] || 0)) st.maxCycle[dKey] = c;
-          if(c === CONFIG.maxCycleNum && dKey === CONFIG.arcaneUnlockDungeon && arcaneOpen(st)) mark(st, 'Habilidades Arcanas liberadas');
+          if(!st.arcaneMarked && arcaneOpen(st)){ st.arcaneMarked = true; mark(st, 'Habilidades Arcanas liberadas'); }
           lastCleared = { list, dKey, c };
           st.farm = { d: dKey, c };
           rows.push({ dungeon: dKey, cycle: c, minutes: (st.clock - start) / 60, totalHours: st.clock / 3600, farmRuns, detourRuns,

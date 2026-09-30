@@ -10,11 +10,17 @@
               conclui na hora (ver QuestModule.visitSpot/CityMapModule.onClick)
    Recompensa só em moeda, proporcional ao que foi pedido — calculada ao
    gerar e guardada no pedido (não muda depois).
-   Liberam depois do 1º ciclo vencido (a Loja já está aberta).
+   Liberam depois do 1º ciclo vencido, quando já há algum morador de volta
+   na cidade pra pedir (ver CityMapModule.isNpcUnlocked).
 --------------------------------------------------------------------- */
 const RequestsModule = {
+  // precisa de ao menos um morador de volta na cidade pra pedir alguma coisa
   unlocked(){
-    return !!state.firstCycleEverCompleted;
+    return !!state.firstCycleEverCompleted && this.givers().length > 0;
+  },
+  // moradores comuns que já voltaram (CityMapModule.isNpcUnlocked)
+  givers(){
+    return CITY_MAP.npcs.filter(n => !['anselmo', 'barnabe', 'creiton', 'aldo', 'witch'].includes(n.key) && CityMapModule.isNpcUnlocked(n));
   },
   floorsUnlocked(){
     return DUNGEON_ORDER.filter(k => MAPS[k] && DungeonModule.isUnlocked(k));
@@ -71,8 +77,7 @@ const RequestsModule = {
     // andar do pedido: um dos 2 mais altos liberados (pedido de andar velho vale pouco)
     const floor = this.pick(floors.slice(-2));
     const top = floors[floors.length - 1];
-    const givers = CITY_MAP.npcs.filter(n => !['anselmo', 'barnabe', 'creiton', 'witch'].includes(n.key));
-    const giver = (this.pick(givers) || { name: 'Um morador' }).name;
+    const giver = (this.pick(this.givers()) || { name: 'Um morador' }).name;
     const usedSpots = state.requests.slots.filter(Boolean).map(q => q.spot);
     const spots = (CITY_MAP.spots || []).filter(s => !usedSpots.includes(s.key));
     const w = REQUEST_CONFIG.weights;

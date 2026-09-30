@@ -889,21 +889,6 @@
     position:absolute;
     top:8px; right:8px;
   }
-  /* Progresso de desbloqueio (ex.: entradas na Dungeon pra Academia, ver
-     OnboardingModule.academiaProgressLabel) — só aparece com texto dentro
-     (JS deixa vazio/hidden depois de liberado). */
-  .building-progress{
-    position:absolute;
-    left:6px; right:6px; bottom:6px;
-    background:rgba(0,0,0,0.72);
-    color:var(--parchment);
-    font-family:'VT323', monospace;
-    font-size:13px;
-    text-align:center;
-    border-radius:4px;
-    padding:2px 4px;
-  }
-
   /* ---- Ícones pixel art (ver assets/icons/) ----
      Cada .icon-* aponta pra um PNG 64x64 (sprite 16x16 exportado em 4x,
      ou 32x32 em 2x nas armas — iniciais, de gosma e forjadas).
@@ -1181,7 +1166,6 @@
   .weapon-choice-card:active{ transform:translateY(2px); box-shadow:none; }
   .weapon-choice-card .weapon-icon{ width:32px; height:32px; }
   .weapon-choice-card .weapon-name{ font-size:10px; text-align:center; }
-  .weapon-choice-card .weapon-desc{ font-family:'VT323', monospace; font-size:13px; color:var(--arcane); }
 
   /* ---- Missões dos NPCs da cidade (banner dentro do prédio) ---- */
   .quest-banner{

@@ -32,7 +32,7 @@ const DIALOGUE_SPEAKERS = {
   anselmo:  { name: 'Irmão Anselmo', role: 'Clérigo da cidade', portrait: 'assets/portraits/anselmo.png', voice: { pitch: 185, wave: 'triangle', vary: 0.10 } },
   barnabe:  { name: 'Barnabé', role: 'Dono da Loja', portrait: 'assets/portraits/barnabe.png', voice: { pitch: 250, wave: 'square', vary: 0.18 } },
   creiton:  { name: 'Creiton', role: 'Ferreiro', portrait: 'assets/portraits/creiton.png', voice: { pitch: 125, wave: 'square', vary: 0.10 } },
-  aldo:     { name: 'Professor Aldo', role: 'Professor da Academia', portrait: 'assets/icons/academia.png', voice: { pitch: 310, wave: 'sine', vary: 0.14 } },
+  aldo:     { name: 'Professor Aldo', role: 'Professor da Academia de Combate', portrait: 'assets/portraits/aldo.png', voice: { pitch: 310, wave: 'sine', vary: 0.14 } },
   goblinRei:{ name: 'Goblin Maior', role: 'Chefe do Reino Goblin', portrait: 'assets/sprites/goblin_greater.png', sprite: true, voice: { pitch: 420, wave: 'sawtooth', vary: 0.30 } },
   dragao:   { name: 'Dragão', role: 'Senhor do andar em chamas', portrait: 'assets/sprites/dragon.png', sprite: true, voice: { pitch: 70, wave: 'sawtooth', vary: 0.08 } },
   morgana:  { name: 'Madame Morgana', role: 'Bruxa (só aparece à noite)', portrait: 'assets/sprites/npc-witch.png', frame: { w: 32, h: 48, cols: 3, rows: 3 }, voice: { pitch: 360, wave: 'triangle', vary: 0.22 } },
@@ -58,10 +58,19 @@ const DIALOGUES = {
     { speaker: 'anselmo', text: 'A notícia já chegou aos meus ouvidos: alguém teve coragem de enfrentar os monstros lá fora!' },
     { speaker: 'anselmo', text: 'Vá até a *Loja* da cidade e venda o que você encontrou por lá. Ouvi dizer que o dono ainda consegue negociar alguns produtos.' },
   ] },
+  // na volta da 3ª entrada na Dungeon (ver OnboardingModule.announceAcademiaIfNeeded)
   academiaUnlock: { lines: [
-    { speaker: 'anselmo', text: 'Vejo que você já enfrentou a dungeon várias vezes. Tenho boas notícias!' },
-    { speaker: 'anselmo', text: 'A antiga *Academia de Combate* da cidade está de portas abertas de novo. Lá você pode estudar técnicas pra lutar melhor.' },
-    { speaker: 'anselmo', text: 'Vá conferir quando quiser.' },
+    { speaker: 'anselmo', text: '{nome}! Voltou inteiro, graças aos céus. Mas parece que está sendo mais difícil do que você esperava, não é?', memory: 'academia', choices: [
+      { id: 'admite', text: 'Bem mais difícil.', reply: 'Não há vergonha nisso. Coragem sem preparo só enche cemitério.' },
+      { id: 'orgulho', text: 'Nada que eu não aguente.', reply: 'Hm. Seus arranhões dizem outra coisa.' },
+    ] },
+    { speaker: 'anselmo', text: 'Venha comigo. Vou te levar pra conhecer alguém que pode ajudar: o *Professor Aldo*.' },
+    { speaker: 'narrador', text: 'Vocês atravessam a praça até um casarão de pedra. Lá dentro, pilhas de livros, pergaminhos por todo lado e um cheiro forte de vela queimada.' },
+    { speaker: 'aldo', text: 'Anselmo! E este deve ser o forasteiro de quem a cidade toda fala. {nome}, não é?' },
+    { speaker: 'aldo', text: 'Sou Aldo. Esta é a *Academia de Combate*... ou o que sobrou dela depois que os instrutores fugiram.' },
+    { speaker: 'aldo', when: 'academia=orgulho', text: 'O Anselmo disse que você aguenta tudo. Ótimo! Então vai aguentar estudar.' },
+    { speaker: 'aldo', text: 'Força bruta só leva você até o primeiro chefe. Aqui a gente estuda técnica: golpes mais fortes, críticos, fôlego pra ficar mais tempo lá embaixo.' },
+    { speaker: 'aldo', text: 'Cada técnica custa algumas moedas. Livro não se paga sozinho. Vamos ver por onde você começa?' },
   ] },
   barnabeIntro: { lines: [
     { speaker: 'barnabe', text: 'Ah, um forasteiro por essas bandas! Sou Barnabé, dono desta loja.' },
@@ -90,14 +99,15 @@ const DIALOGUES = {
     { speaker: 'anselmo', text: 'Traga-me *20 Geleias de Slime* e *15 Compostos de Slime*, e prove que já derrotou o chefe de algum ciclo lá na dungeon.' },
     { speaker: 'anselmo', text: 'Com isso eu os convenço a voltar ao trabalho e reabrir a Caverna pra você.' },
   ] },
+  // ao abrir a Academia depois do 1º Ponto Arcano (1º chefe de ciclo vencido)
   arcaneIntro: { lines: [
-    { speaker: 'aldo', text: 'Então foi você quem limpou o segundo andar! Entre, entre, cuidado com os livros.' },
-    { speaker: 'aldo', text: 'Estudo há anos a magia que escorre daquela dungeon... e você já a carrega sem saber.' },
-    { speaker: 'aldo', text: 'Cada vez que derrota o chefe de um ciclo pela primeira vez, absorve um *Ponto Arcano*.' },
-    { speaker: 'aldo', text: 'Traga esses pontos até a Academia e eu te ensino a dominar o *Fogo*, o *Raio* e o *Gelo*. Essas habilidades lutam sozinhas ao seu lado.' },
-    { speaker: 'aldo', text: 'Você tem *{pontosArcanos}* Pontos Arcanos agora. Vamos começar?', choices: [
-      { id: 'ir', text: 'Ir para a Academia', action: 'openAcademiaArcane' },
-      { id: 'depois', text: 'Depois', reply: 'Sem pressa. A magia não vai a lugar nenhum... espero.' },
+    { speaker: 'aldo', text: 'Espere, {nome}. Chegue mais perto... Você derrotou um chefe lá embaixo, não foi?' },
+    { speaker: 'aldo', text: 'Estudo há anos a magia que escorre daquela dungeon, e agora ela está grudada em você. Dá pra sentir daqui.' },
+    { speaker: 'aldo', text: 'Cada vez que você derrota o chefe de um ciclo pela primeira vez, absorve um *Ponto Arcano*.' },
+    { speaker: 'aldo', text: 'Abri uma ala nova da Academia: as *Habilidades Arcanas*. Aqui eu te ensino a dominar o *Fogo*, o *Raio* e o *Gelo*. Elas lutam sozinhas ao seu lado.' },
+    { speaker: 'aldo', text: 'Você tem *{pontosArcanos}* Ponto(s) Arcano(s). Quer dar uma olhada?', choices: [
+      { id: 'ver', text: 'Mostre-me.', action: 'showArcaneTab' },
+      { id: 'depois', text: 'Depois.', reply: 'Sem pressa. A aba nova fica aberta pra quando você quiser. A magia não vai a lugar nenhum... espero.' },
     ] },
   ] },
 
@@ -134,7 +144,7 @@ const DIALOGUES = {
       { id: 'guardar', text: 'Guarde-o na igreja.', reply: 'É o que farei. Ninguém toca nele sem minha bênção.' },
       { id: 'perguntar', text: 'O que ele prende, afinal?', reply: 'Gostaria de saber. Os registros da minha ordem falam só "daquilo que espera além do portão".' },
     ] },
-    { speaker: 'anselmo', text: 'O Professor Aldo, da Academia, estuda a magia dessa dungeon há anos. Ele pediu pra falar com você.' },
+    { speaker: 'anselmo', text: 'Conte isso ao Professor Aldo. Ele estuda a magia dessa dungeon há anos, vai querer saber de cada detalhe.' },
   ] },
 
   // ---------------- capítulo III: Terras Selvagens ----------------

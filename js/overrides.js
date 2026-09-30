@@ -12,7 +12,11 @@
        monsters: { patch: { slime: { name:'...', hpMult:2, drops:[...] } } },
        items: { patch: {...}, add: [ { key, name, type, ... } ] },
        weapons / forgedWeapons: { patch, add }, troops / upgrades: { patch },
-       prospectors / cavernUpgrades: { patch }, maps: { patch: { slimes: { hpScale } } } }
+       prospectors / cavernUpgrades: { patch }, maps: { patch: { slimes: { hpScale } } },
+       npcLines: { barnabe: ['fala 1', 'fala 2'], kidBoy: [...] } }
+   npcLines troca a lista inteira de falas soltas de um morador de
+   CITY_MAP.npcs (balão na cidade; Barnabé/Creiton também na Loja/Ferreiro —
+   são os mesmos arrays BARNABE_LINES/CREITON_LINES/ANSELMO_LINES).
    `null` num campo do patch remove o campo (ex.: tirar um bônus de arma).
 --------------------------------------------------------------------- */
 const WEAPON_BONUS_KEYS = ['clickDamageBonus', 'dpsBonus', 'critChanceBonus', 'critDamageBonus', 'extraDropChance', 'burnChance', 'burnDamagePercent'];
@@ -36,6 +40,15 @@ const ConfigOverrides = {
     maps:          { target: 'MAPS', object: true, fields: ['hpScale'], canAdd: false },
   },
   KEY_RE: /^[a-zA-Z][a-zA-Z0-9_]{0,39}$/,
+  MAX_NPC_LINES: 40,
+  // falas soltas: texto de até 200 caracteres, sem < > (vira texto na UI, mas
+  // mesma regra dos outros campos de texto); lista nunca vazia
+  cleanLines(lines){
+    if(!Array.isArray(lines)) return null;
+    const out = lines.filter(l => typeof l === 'string').map(l => l.trim())
+      .filter(l => l && l.length <= 200 && !/[<>]/.test(l)).slice(0, this.MAX_NPC_LINES);
+    return out.length ? out : null;
+  },
   ICON_RE: /^[a-zA-Z0-9_-]{1,60}$/,
 
   // `t` = { CONFIG, MONSTER_TYPES, ITEM_DEFS, WEAPON_DEFS, FORGED_WEAPON_DEFS,
@@ -61,6 +74,16 @@ const ConfigOverrides = {
         const entry = { key: add.key, custom: true };
         this._assign(entry, add, spec.fields);
         list.push(entry);
+      }
+    }
+    // falas soltas dos moradores: troca o conteúdo do array NO LUGAR (Loja e
+    // Ferreiro usam BARNABE_LINES/CREITON_LINES, o mesmo array do morador)
+    if(t.CITY_MAP && ov.npcLines && typeof ov.npcLines === 'object'){
+      for(const n of t.CITY_MAP.npcs){
+        const lines = this.cleanLines(ov.npcLines[n.key]);
+        if(!lines) continue;
+        if(!Array.isArray(n.lines)) n.lines = [];
+        n.lines.splice(0, n.lines.length, ...lines);
       }
     }
     // MINERAL_DEFS é um filter de ITEM_DEFS feito em config.js — refaz em
@@ -127,6 +150,13 @@ const ConfigOverrides = {
       }
       if(Object.keys(c).length) out[name] = c;
     }
+    if(base.npcLines && cur.npcLines){
+      const lines = {};
+      for(const k of Object.keys(cur.npcLines)){
+        if(JSON.stringify(base.npcLines[k] || []) !== JSON.stringify(cur.npcLines[k])) lines[k] = cur.npcLines[k].slice();
+      }
+      if(Object.keys(lines).length) out.npcLines = lines;
+    }
     return out;
   },
   countChanges(ov){
@@ -136,6 +166,7 @@ const ConfigOverrides = {
       for(const p of Object.values(c.patch || {})) n += Object.keys(p).length;
       n += (c.add || []).length;
     }
+    n += Object.keys(ov.npcLines || {}).length; // 1 por morador com falas alteradas
     return n;
   },
 
@@ -158,7 +189,7 @@ const ConfigOverrides = {
 
 (function applyToGame(){
   const target = { CONFIG, MONSTER_TYPES, ITEM_DEFS, WEAPON_DEFS, FORGED_WEAPON_DEFS, TROOP_DEFS, UPGRADE_DEFS, MINERAL_DEFS,
-    PROSPECTOR_DEFS, CAVERN_UPGRADE_DEFS, MAPS };
+    PROSPECTOR_DEFS, CAVERN_UPGRADE_DEFS, MAPS, CITY_MAP };
   const allDefs = () => [...ITEM_DEFS, ...WEAPON_DEFS, ...FORGED_WEAPON_DEFS];
   const knownIcons = new Set(allDefs().map(d => d.icon));
   try{

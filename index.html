@@ -248,6 +248,13 @@
     </div>
     <div class="help-popover" id="academiaHelpPopover">Scroll do mouse: zoom. Clique e arraste no espaço vazio: navegar pelo mapa.</div>
     <div class="modal-body">
+      <div class="academia-host">
+        <img class="academia-host-portrait" src="assets/portraits/aldo.png" alt="Professor Aldo">
+        <div class="academia-host-text">
+          <div class="academia-host-name">PROFESSOR ALDO</div>
+          <div class="npc-speech" id="academiaAldoLine"></div>
+        </div>
+      </div>
       <div class="modal-tabs">
         <button class="modal-tab-btn active" data-tab="academiaTabTree">Árvore de Combate</button>
         <button class="modal-tab-btn" data-tab="academiaTabArcane">Habilidades Arcanas</button>
@@ -624,12 +631,10 @@
         <button class="building-card map-sign building-dungeon" id="openDungeonBtn" aria-label="Dungeons - Batalhe monstros"><span class="map-sign-name">Dungeon</span></button>
         <button class="building-card map-sign building-academia" id="openAcademiaBtn" aria-label="Academia - Upgrades de combate">
           <span class="map-sign-name">Academia</span>
-          <div class="building-progress" id="academiaProgress"></div>
         </button>
         <div class="city-map-bubble" id="cityMapBubble"></div>
       </div>
       </div>
-      <div class="footer-note">Clique numa placa para entrar no prédio, na fonte para jogar moedas, ou num morador para ouvir o que ele tem a dizer.</div>
     </div>
 
     <div class="view-content" id="view-dungeon">

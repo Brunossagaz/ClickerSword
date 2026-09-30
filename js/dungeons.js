@@ -25,10 +25,9 @@ const DungeonModule = {
     // por cima da arena depois de entrar
     document.getElementById('dungeonModal').classList.remove('open');
     // conta como "entrada nova" só aqui (não em startAtCycle, que é retomar
-    // um ciclo já limpo pelo seletor) — ver OnboardingModule (Academia libera
-    // na 5ª entrada)
+    // um ciclo já limpo pelo seletor) — ver OnboardingModule (a Academia é
+    // apresentada na volta da 3ª entrada)
     state.dungeonEntriesCount += 1;
-    OnboardingModule.announceAcademiaIfNeeded();
     state.dungeons[key].repeatCycleNum = null; // entrada manual cancela qualquer Repetir Ciclo pendente
     state.dungeons[key].repeatRemaining = 0;
     state.dungeons[key].repeatTotal = 0;
@@ -142,10 +141,11 @@ const DungeonModule = {
     UI.showCityView();
     UI.renderAll();
     // conversas da volta, nessa ordem (todas esperam o resumo de loot fechar):
-    // aviso da Loja, reação da cidade ao andar vencido, Arcanas, cartão do capítulo
+    // aviso da Loja, apresentação da Academia, reação da cidade ao andar
+    // vencido, cartão do capítulo (as Arcanas são apresentadas ao abrir a Academia)
     OnboardingModule.announceShopUnlockIfNeeded();
+    OnboardingModule.announceAcademiaIfNeeded();
     StoryModule.onReturnToCity();
-    OnboardingModule.announceArcaneIfNeeded();
     StoryModule.afterReturnToCity();
   }
 };

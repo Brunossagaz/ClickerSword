@@ -9,6 +9,7 @@
    - Respostas prontas: botões que aparecem no fim da fala; o NPC reage
      (choice.reply) e a escolha fica em state.dialogueMemory pra ser
      lembrada depois (linhas com `when`). Nunca mudam a história.
+   - opts.action: ação de DialogueModule.actions que roda no fim (depois da fila).
    - Fila: play() com outra conversa aberta espera ela acabar. Também espera
      telas que não podem ser cobertas (resumo de loot, tempo esgotado...) —
      ver BLOCKERS — a menos que venha com { immediate: true }.
@@ -23,13 +24,19 @@ const DialogueModule = {
   queue: [],
   cur: null,     // { script, idx, opts, endActions, pendingReply }
   typing: null,  // controlador da digitação atual (ver typeInto)
+  typers: new Set(), // textos soltos digitando agora (Clérigo, Loja, balões) — ver typeInto
   waitTimer: null,
   audioCtx: null,
 
   // ações que uma resposta pode disparar ao fim da conversa (choice.action)
   actions: {
-    openAcademiaArcane(){
+    openAcademia(){
+      document.getElementById('openAcademiaBtn').click(); // mesmo caminho do clique na placa
+      UI.showAcademiaTab('academiaTabTree');
+    },
+    showArcaneTab(){
       document.getElementById('academiaModal').classList.add('open');
+      UI.renderAll(); // mostra a aba que acabou de liberar
       UI.showAcademiaTab('academiaTabArcane');
     },
   },
@@ -54,6 +61,13 @@ const DialogueModule = {
       if(e.target.closest('.dialogue-choice')) return;
       this.advance();
     });
+    // Fora da janela de conversa, qualquer clique completa os textos que
+    // ainda estão digitando (introdução do Clérigo, fala da Loja/Ferreiro,
+    // balão do morador) — em captura, antes da ação normal do clique.
+    document.addEventListener('click', () => {
+      if(this.cur) return; // a janela de conversa trata o próprio clique (advance)
+      for(const t of [...this.typers]) if(t.el.isConnected && t.el.offsetParent !== null) t.finish();
+    }, true);
     document.addEventListener('keydown', (e) => {
       if(!this.cur || (e.key !== ' ' && e.key !== 'Enter')) return;
       if(document.activeElement && document.activeElement.closest && document.activeElement.closest('.dialogue-choice')) return;
@@ -87,7 +101,7 @@ const DialogueModule = {
       return;
     }
     const next = this.queue.shift();
-    this.cur = { script: next.script, opts: next.opts, idx: -1, endActions: [], pendingReply: null };
+    this.cur = { script: next.script, opts: next.opts, idx: -1, endActions: next.opts.action ? [next.opts.action] : [], pendingReply: null };
     this.el.modal.classList.add('open');
     this.next();
   },
@@ -244,15 +258,18 @@ const DialogueModule = {
     el.replaceChildren(ghost, live);
     let si = 0, ci = 0, timer = null, done = false, count = 0;
     const base = this.textDelayMs();
+    const typers = this.typers;
     const finishAll = () => {
       if(done) return;
       done = true; clearTimeout(timer);
       segs.forEach((s, i) => { nodes[i].textContent = s.t; });
       el._typing = null;
+      typers.delete(ctrl);
       if(onDone) onDone();
     };
-    const ctrl = { finish: finishAll, cancel(){ done = true; clearTimeout(timer); el._typing = null; } };
+    const ctrl = { el, finish: finishAll, cancel(){ done = true; clearTimeout(timer); el._typing = null; typers.delete(ctrl); } };
     el._typing = ctrl;
+    if(!this.el || el !== this.el.text) typers.add(ctrl); // o texto da janela de conversa é tratado pelo advance()
     if(!base || !segs.length){ finishAll(); return ctrl; }
     const step = () => {
       if(done) return;

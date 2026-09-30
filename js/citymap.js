@@ -66,6 +66,7 @@ const CityMapModule = {
     });
 
     new ResizeObserver(() => this.resize()).observe(this.mapEl);
+    this.initDragPan();
     this.canvas.addEventListener('click', (e) => this.onClick(e));
     this.canvas.addEventListener('mousemove', (e) => {
       const p = this.pointOf(e);
@@ -83,12 +84,52 @@ const CityMapModule = {
     this.active = on;
     if(!on) this.hideBubble();
     this.updateLoop();
-    // tela alta (celular em pé): o mapa é mais largo que a janela e rola na
-    // horizontal — abre centralizado na praça
-    if(on) requestAnimationFrame(() => {
-      const sc = this.mapEl.parentElement;
-      if(sc && sc.scrollWidth > sc.clientWidth) sc.scrollLeft = (sc.scrollWidth - sc.clientWidth) / 2;
+    // ao abrir a cidade, cada morador já começa no estado certo (quem ainda
+    // não voltou ou está fora do horário não "pisca" e some); quem voltar com
+    // a cidade aberta aparece aos poucos pelo fade normal de update()
+    if(on && this.dayEl) this.applyDaylight(true); // luz do dia atualizada antes de decidir quem aparece
+    if(on) for(const n of this.npcs) n.alpha = this.onSchedule(n) ? 1 : 0;
+    // tela mais estreita que a arte (celular em pé, monitor 4:3...): o mapa
+    // é mais largo que a janela — abre centralizado na praça
+    if(on) requestAnimationFrame(() => this.centerScroll());
+  },
+  centerScroll(){
+    const sc = this.mapEl.parentElement;
+    if(sc && sc.scrollWidth > sc.clientWidth) sc.scrollLeft = (sc.scrollWidth - sc.clientWidth) / 2;
+  },
+  // Sem barra de rolagem (ver .city-map-scroll no ui-skin.css): o mapa se
+  // arrasta com o mouse pra ver as bordas; no toque a rolagem é a nativa.
+  // Um arrasto de verdade (> DRAG_PX) não conta como clique em prédio/morador.
+  DRAG_PX: 6,
+  initDragPan(){
+    const sc = this.mapEl.parentElement;
+    if(!sc) return;
+    let drag = null, suppressClick = false;
+    sc.addEventListener('pointerdown', (e) => {
+      if(e.pointerType !== 'mouse' || e.button !== 0 || sc.scrollWidth <= sc.clientWidth) return;
+      drag = { x: e.clientX, left: sc.scrollLeft, moved: false };
     });
+    window.addEventListener('pointermove', (e) => {
+      if(!drag) return;
+      const dx = e.clientX - drag.x;
+      if(!drag.moved && Math.abs(dx) < this.DRAG_PX) return;
+      drag.moved = true;
+      sc.classList.add('dragging');
+      sc.scrollLeft = drag.left - dx;
+    });
+    window.addEventListener('pointerup', () => {
+      if(drag && drag.moved) suppressClick = true;
+      drag = null;
+      sc.classList.remove('dragging');
+    });
+    sc.addEventListener('click', (e) => {
+      if(!suppressClick) return;
+      suppressClick = false;
+      e.stopPropagation(); e.preventDefault();
+    }, true);
+    const recenter = () => { if(this.active) requestAnimationFrame(() => this.centerScroll()); };
+    window.addEventListener('resize', recenter);
+    document.addEventListener('fullscreenchange', recenter);
   },
   updateLoop(){
     const run = this.active && !document.hidden;
@@ -190,7 +231,18 @@ const CityMapModule = {
   },
 
   // ---- moradores ----
+  // já voltou pra cidade? (CITY_MAP.npcs[].unlock)
+  isNpcUnlocked(def){
+    const u = def.unlock;
+    if(!u) return true;
+    if(u.building) return OnboardingModule.isBuildingUnlocked(u.building);
+    if(u.quest) return !!state.quests[u.quest];
+    if(u.flag) return !!state[u.flag];
+    if(u.chapter != null) return !!state.story && state.story.chapter >= u.chapter;
+    return true;
+  },
   onSchedule(n){
+    if(!this.isNpcUnlocked(n.def)) return false;
     const s = n.def.schedule;
     if(s === 'day') return this.daylight >= 0.5;
     if(s === 'night') return this.daylight < 0.5;

@@ -355,8 +355,6 @@ body.screen-city .bg-scene__base{ filter:brightness(0.3) blur(3px); }
   text-shadow:1px 1px 0 #000;
   white-space:nowrap;
 }
-.city-map .building-progress{ position:static; display:block; margin:0; padding:0 4px 2px; font-size:13px; white-space:nowrap; background:none; }
-.city-map .building-progress:empty{ display:none; }
 /* balão de fala de NPC (CityMapModule.onClick) */
 .city-map-bubble{
   position:absolute;
@@ -451,7 +449,6 @@ body{ font-size:22px; }
 .chest-btn-hint{ font-size:16px; }
 .chest-breakdown-row{ font-size:18px; }
 .prestige-box .gain{ font-size:22px; }
-.building-progress, .city-map .building-progress{ font-size:17px; }
 
 .ascend-btn, .danger-btn{ font-size:13px; }
 .buy-btn{ font-size:13px; }
@@ -464,7 +461,6 @@ body{ font-size:22px; }
 .small-btn{ font-size:18px; }
 .bag-filter{ font-size:18px; }
 .weapon-choice-card .weapon-name{ font-size:12px; }
-.weapon-choice-card .weapon-desc{ font-size:17px; }
 
 .tier-label{ font-size:15px; }
 .monster-name{ font-size:17px; }
@@ -614,20 +610,17 @@ body.screen-city .city-map{
   top:calc(50vh - max(56.28vw, 100vh) / 2);
 }
 body.screen-city .city-map-clock{ position:fixed; left:12px; top:12px; }
-body.screen-city #view-city > .footer-note{
-  position:fixed; left:50%; bottom:10px; transform:translateX(-50%); z-index:5;
-  margin:0; padding:4px 12px;
-  background:rgba(13,10,18,0.7);
-  color:var(--parchment); pointer-events:none;
-  white-space:nowrap;
-}
+/* sem barra de rolagem: o mapa abre centralizado e se arrasta com o mouse
+   (ver CityMapModule.initDragPan); no toque a rolagem é a nativa */
+.city-map-scroll{ scrollbar-width:none; }
+.city-map-scroll::-webkit-scrollbar{ display:none; }
+.city-map-scroll.dragging, .city-map-scroll.dragging *{ cursor:grabbing !important; }
 
 /* dungeon: centralizada na tela, sem a caixa em volta */
 body.screen-dungeon #view-dungeon{ max-width:720px; margin:0 auto; padding:74px 12px 20px; }
 
 @media (max-width:600px){
   body.screen-city .city-map{ width:max(100vw, 177.68vh); }
-  body.screen-city #view-city > .footer-note{ display:none; }
   .hud-btn{ width:44px; height:44px; }
   .hud-icon, .hud-corner .gear-btn .icon-gear{ width:24px; height:24px; }
   .sidebar-inventory{ top:62px; }
@@ -661,7 +654,6 @@ body.screen-dungeon #view-dungeon{ max-width:720px; margin:0 auto; padding:74px 
 .chest-breakdown-row{ font-size:20px; }
 .weapon-choice-card .weapon-icon{ width:48px; height:48px; }
 .weapon-choice-card .weapon-name{ font-size:14px; }
-.weapon-choice-card .weapon-desc{ font-size:20px; }
 .achievement-row .icon{ width:48px; height:48px; }
 
 .buy-btn, .ascend-btn, .danger-btn{ font-size:15px; }
@@ -1074,3 +1066,9 @@ body:not(.screen-city):not(.screen-dungeon) #missionsBtn{ display:none; }
 .mission-request.is-waiting{ opacity:0.6; }
 .mission-request .mission-giver{ color:var(--parchment); }
 .alchemy-btns{ display:flex; flex-direction:column; gap:6px; flex:none; }
+
+/* Academia: o Professor Aldo numa faixa no topo (o modal é largo por causa da árvore) */
+.academia-host{ display:flex; align-items:center; gap:12px; margin:0 0 10px; }
+.academia-host-portrait{ width:56px; height:56px; flex:none; object-fit:cover; object-position:center top; image-rendering:pixelated; border:2px solid var(--stone); background:var(--stone-dark); }
+.academia-host-text{ flex:1; min-width:0; }
+.academia-host-name{ font-family:'Press Start 2P', monospace; font-size:10px; color:var(--ember); margin-bottom:4px; }

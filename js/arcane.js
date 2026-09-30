@@ -23,12 +23,14 @@ const ArcaneModule = {
   dmgLevel(key){ return state.arcaneSkills[key+'Dmg'] || 0; },
   spdLevel(key){ return state.arcaneSkills[key+'Spd'] || 0; },
 
-  // Libera ao vencer o último ciclo do andar CONFIG.arcaneUnlockDungeon.
-  // arcaneAnnounced mantém liberado mesmo se esse progresso um dia zerar.
+  // A aba (e os gastos) só existem depois que o Professor Aldo apresenta as
+  // Arcanas (state.arcaneAnnounced, ver OnboardingModule.announceArcaneIfNeeded).
   isUnlocked(){
-    if(state.arcaneAnnounced) return true;
-    const d = state.dungeons[CONFIG.arcaneUnlockDungeon];
-    return (d && d.maxCycleCompleted || 0) >= CONFIG.maxCycleNum;
+    return !!state.arcaneAnnounced;
+  },
+  // já tem pontos pra o Aldo apresentar? (o 1º vem do 1º chefe de ciclo vencido)
+  isReady(){
+    return this.pointsEarned() >= (CONFIG.arcaneUnlockPoints || 1);
   },
   pointsEarned(){
     return DUNGEON_ORDER.reduce((sum, key) => {

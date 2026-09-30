@@ -375,6 +375,10 @@ const SaveModule = {
       state.totalCyclesCompleted = Object.values(state.dungeons).reduce((sum,d)=>sum+(d.maxCycleCompleted||0), 0);
     }
 
+    // Academia antes da apresentação do Aldo: liberava sozinha na 5ª entrada,
+    // sem depender de academiaAnnounced — quem já passou disso não perde.
+    if(!state.academiaAnnounced && state.dungeonEntriesCount >= 5) state.academiaAnnounced = true;
+
     // Save de antes da história por capítulos: começa no capítulo do 1º
     // andar ainda não concluído (ver StoryModule.migrate).
     state.story = Object.assign(freshState().story, loaded.story||{});

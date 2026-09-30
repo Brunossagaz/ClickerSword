@@ -7,7 +7,8 @@
    - Igreja: sempre.
    - Dungeon: hasChosenWeapon() OU hasFacedDungeon() (computado, nunca
      guardado em flag própria, mesmo padrão de DungeonModule/ProgressionModule).
-   - Academia: 5ª entrada na Dungeon (state.dungeonEntriesCount).
+   - Academia: apresentada pelo Anselmo/Aldo na volta da 3ª entrada na
+     Dungeon (state.academiaAnnounced, ver announceAcademiaIfNeeded).
    - Loja: hasFacedDungeon() (computado).
    - Ferreiro/Guilda/Caverna: dependem de missão (ver QuestModule/
      state.quests) porque entregar itens é uma ação irreversível, não dá pra
@@ -44,19 +45,12 @@ const OnboardingModule = {
   isBuildingUnlocked(key){
     if(key === 'igreja') return true;
     if(key === 'dungeon') return this.hasChosenWeapon() || this.hasFacedDungeon();
-    if(key === 'academia') return state.dungeonEntriesCount >= CONFIG.academiaUnlockEntries;
+    if(key === 'academia') return !!state.academiaAnnounced;
     if(key === 'loja') return this.hasFacedDungeon();
     if(key === 'guilda') return !!state.quests.creitonMilitia;
     if(key === 'caverna') return !!state.quests.caveClearance;
     if(key === 'ferreiro') return !!state.quests.slimeGelDelivery; // ver QuestModule
     return false;
-  },
-  // Texto de progresso mostrado no próprio prédio enquanto a Academia ainda
-  // está trancada (ver UI.renderCityBuildingLocks) — null quando já liberou,
-  // pra não mostrar nada em cima do card.
-  academiaProgressLabel(){
-    if(this.isBuildingUnlocked('academia')) return null;
-    return `Entradas na Dungeon: ${state.dungeonEntriesCount}/${CONFIG.academiaUnlockEntries}`;
   },
 
   openClericIntro(){
@@ -93,15 +87,21 @@ const OnboardingModule = {
     el.innerHTML = '';
     for(const def of WEAPON_DEFS){
       if(def.custom) continue; // armas criadas no Compêndio ficam só no Ferreiro, não viram escolha grátis
+      // só ícone e nome; os bônus aparecem no tooltip ao passar o mouse (ou no foco)
       const btn = document.createElement('button');
       btn.className = 'weapon-choice-card';
+      btn.dataset.key = def.key;
+      btn.setAttribute('aria-label', `${def.name}: ${UI.weaponBonusText(def)}`);
       btn.innerHTML = `
         <div class="weapon-icon icon icon-${def.icon}"></div>
-        <div class="weapon-name">${def.name}</div>
-        <div class="weapon-desc">${UI.weaponBonusText(def)}</div>`;
+        <div class="weapon-name">${def.name}</div>`;
       btn.addEventListener('click', () => this.finishWeaponChoice(def.key));
       el.appendChild(btn);
     }
+    UI.bindGridTooltip(el, key => {
+      const d = WEAPON_DEFS.find(w => w.key === key);
+      return d ? { title: d.name, lines: UI.weaponBonusText(d).split(' · '), hint: 'Clique para escolher' } : null;
+    });
   },
   finishWeaponChoice(key){
     state.weapons[key] = 1;
@@ -111,6 +111,7 @@ const OnboardingModule = {
     state.equippedWeapon = key;
     SaveModule.save();
     document.getElementById('clericModal').classList.remove('open');
+    UI.gridTooltipEl().classList.remove('open'); // o tooltip do cartão escolhido não fica pra trás
     UI.renderAll();
     StoryModule.onGameStart(); // cartão do Capítulo I
   },
@@ -124,23 +125,32 @@ const OnboardingModule = {
     SaveModule.save();
     DialogueModule.play('shopUnlock');
   },
-  // Chamado por DungeonModule.enter() — dispara 1x quando a Academia libera
-  // (ver CONFIG.academiaUnlockEntries).
+  // Chamado por DungeonModule.leaveToCity() — na volta da
+  // CONFIG.academiaUnlockEntries-ésima entrada (depois do resumo de loot, ver
+  // DialogueModule.BLOCKERS) o Anselmo leva o herói até o Professor Aldo, que
+  // libera a Academia e ela abre no fim da conversa. O flag só marca no fim:
+  // se o jogo fechar no meio, a conversa repete na próxima volta.
   announceAcademiaIfNeeded(){
-    if(state.dungeonEntriesCount < CONFIG.academiaUnlockEntries || state.academiaAnnounced) return;
-    state.academiaAnnounced = true;
-    SaveModule.save();
-    DialogueModule.play('academiaUnlock');
+    if(state.dungeonEntriesCount < CONFIG.academiaUnlockEntries || state.academiaAnnounced || this._academiaQueued) return;
+    this._academiaQueued = true;
+    DialogueModule.play('academiaUnlock', { action: 'openAcademia', onEnd: () => {
+      this._academiaQueued = false;
+      state.academiaAnnounced = true;
+      SaveModule.save();
+    } });
   },
-  // Chamado por DungeonModule.leaveToCity() — na 1ª volta pra cidade depois
-  // de concluir o andar CONFIG.arcaneUnlockDungeon, o Professor da Academia
-  // apresenta as Habilidades Arcanas. Espera o resumo de loot da entrada
-  // fechar (ver DialogueModule.BLOCKERS).
+  // Chamado ao abrir a Academia (ver UI.init, placa openAcademiaBtn): com o
+  // 1º Ponto Arcano já ganho, o Professor Aldo apresenta as Habilidades
+  // Arcanas e a aba aparece no fim da conversa (antes disso fica escondida,
+  // ver UI.renderArcaneTab). Marca só no fim: fechou no meio, repete.
   announceArcaneIfNeeded(){
-    if(state.arcaneAnnounced || !ArcaneModule.isUnlocked()) return;
-    state.arcaneAnnounced = true;
-    SaveModule.save();
-    DialogueModule.play('arcaneIntro');
+    if(state.arcaneAnnounced || !ArcaneModule.isReady() || this._arcaneQueued) return;
+    this._arcaneQueued = true;
+    DialogueModule.play('arcaneIntro', { immediate: true, onEnd: () => {
+      this._arcaneQueued = false;
+      state.arcaneAnnounced = true;
+      SaveModule.save();
+    } });
   },
   init(){
     const nameInput = document.getElementById('clericNameInput');

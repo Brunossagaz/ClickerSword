@@ -43,7 +43,10 @@ const CONFIG = {
   // só corre enquanto há monstro ativo (pausa no modal de tempo esgotado do
   // monstro). Ao zerar, volta pra cidade e mostra o loot da entrada.
   dungeonTimeLimitMs: 30000,
-  academiaUnlockEntries: 5, // nº de entradas na Dungeon pra liberar a Academia — ver OnboardingModule
+  // Academia: ao voltar pra cidade depois da 3ª entrada na Dungeon (qualquer
+  // resultado), o Anselmo leva o herói até o Professor Aldo, que libera e abre
+  // a Academia (ver OnboardingModule.announceAcademiaIfNeeded)
+  academiaUnlockEntries: 3,
   // Queimadura (ver WEAPON_DEFS.burnChance/burnDamagePercent, MonsterModule.
   // applyBurn/checkBurnTick): dano total é dividido em ticks ao longo de
   // burnDurationMs, um a cada burnTickMs.
@@ -64,9 +67,14 @@ const CONFIG = {
   // Todo o código continua lá — volte pra true pra reativar.
   ascensionEnabled: false,
   // Habilidades Arcanas (aba da Academia, ver ArcaneModule/ARCANE_SKILL_DEFS):
-  // liberam ao concluir este andar (vencer o último ciclo dele) e voltar pra
-  // cidade — o Professor da Academia avisa (ver OnboardingModule.announceArcaneIfNeeded).
-  arcaneUnlockDungeon: 'goblins',
+  // a aba fica escondida até o jogador ter este nº de Pontos Arcanos (o 1º
+  // vem do 1º chefe de ciclo vencido); na próxima vez que abrir a Academia,
+  // o Professor Aldo apresenta a ala nova (ver OnboardingModule.announceArcaneIfNeeded).
+  arcaneUnlockPoints: 1,
+  // Árvore da Academia: um upgrade libera quando o pré-requisito chega neste
+  // nível (ou no nível máximo dele, se for menor — ramos de 1 nível só, como
+  // o Clique Automático). Antes era sempre o nível máximo (5).
+  treeUnlockLevel: 3,
   // Cada ponto gasto custa isso (aprender a habilidade, ou 1 nível num ramo).
   // Pontos: 1 por ciclo cujo chefe foi derrotado pela 1ª vez (ver ArcaneModule.pointsEarned).
   arcanePointCost: 1
@@ -380,7 +388,7 @@ const MAPS = {
   // Só Orc e Troll (Dragão e Demônio agora têm andar próprio — ver
   // MAPS.dragons/MAPS.demons). Todo ciclo soma 12 mortes, igual ao Ciclo 1.
   wilds: {
-    name: 'Andar das Terras Selvagens', hpScale: 1600, timeBudgetH: 1.5,
+    name: 'Andar das Terras Selvagens', hpScale: 1800, timeBudgetH: 1.5,
     unlockRequirement: { dungeon: 'goblins', cycle: 5 },
     cycles: {
       // Ciclo 1: padrão básico, 2 duplas (posições 5 e 9).
@@ -653,6 +661,15 @@ const CREITON_LINES = [
   'Cuidado lá fora, essas dungeons não perdoam ninguém.',
 ];
 
+// Falas soltas do Professor Aldo (Academia) — balão na cidade e fala ao abrir
+// a Academia, mesmo padrão de BARNABE_LINES/CREITON_LINES.
+const ALDO_LINES = [
+  'Técnica vence força. Quase sempre.',
+  'Já leu algum livro esta semana? Nem eu, estou ocupado demais escrevendo.',
+  'Cada golpe bem dado é uma aula de graça.',
+  'A magia daquela dungeon me tira o sono... e me dá ideias.',
+];
+
 const ANSELMO_LINES = [
   'Estou orando por você',
   'Que essas pragas do Dungeon desapareçam',
@@ -691,35 +708,42 @@ const CITY_MAP = {
     { btn: 'openCavernaBtn',  x: 1166, y: 206 },
     { btn: 'openFerreiroBtn', x: 1330, y: 470 },
   ],
+  // `unlock` (opcional): o morador só volta pra cidade quando a condição vale
+  // (ver CityMapModule.isNpcUnlocked) — { building } prédio liberado,
+  // { quest } missão concluída, { flag } campo true em state, { chapter } capítulos concluídos
+  // (state.story.chapter). Sem `unlock` = sempre na cidade. Na história,
+  // muitos fugiram quando a dungeon apareceu e vão voltando conforme ela avança.
   npcs: [
     { key: 'anselmo', name: 'Irmão Anselmo', sprite: 'assets/sprites/npc-anselmo.png', lines: ANSELMO_LINES,
       path: [[430, 760], [470, 690], [560, 665], [640, 700], [700, 770], [560, 760]] },
-    { key: 'barnabe', name: 'Barnabé', sprite: 'assets/sprites/npc-barnabe.png', lines: BARNABE_LINES,
+    { key: 'barnabe', name: 'Barnabé', sprite: 'assets/sprites/npc-barnabe.png', lines: BARNABE_LINES, unlock: { building: 'loja' },
       path: [[300, 742], [262, 700], [350, 680], [432, 720], [390, 768]] },
-    { key: 'creiton', name: 'Creiton', sprite: 'assets/sprites/npc-creiton.png', lines: CREITON_LINES,
+    { key: 'aldo', name: 'Professor Aldo', sprite: 'assets/sprites/npc-aldo.png', lines: ALDO_LINES, unlock: { flag: 'academiaAnnounced' },
+      path: [[150, 760], [230, 730], [300, 790], [200, 812]] },
+    { key: 'creiton', name: 'Creiton', sprite: 'assets/sprites/npc-creiton.png', lines: CREITON_LINES, unlock: { quest: 'slimeGelDelivery' },
       path: [[1150, 722], [1100, 782], [1222, 800], [1332, 772], [1252, 734]] },
     // --- moradores de ambiente (sem papel na história por enquanto) ---
     // `schedule`: 'day' só aparece de dia, 'night' só de noite, omitido = sempre.
     // `speed` (opcional) substitui walkSpeed.
-    { key: 'kidBoy', name: 'Pedrinho', sprite: 'assets/sprites/npc-kid-boy.png', schedule: 'day', speed: 62,
+    { key: 'kidBoy', name: 'Pedrinho', sprite: 'assets/sprites/npc-kid-boy.png', schedule: 'day', speed: 62, unlock: { chapter: 2 },
       lines: ['Pega-pega! Tá com você!', 'Um dia vou ser herói igual você!', 'Minha mãe disse que a dungeon é perigosa...'],
       path: [[660, 722], [700, 800], [860, 845], [1020, 805], [1062, 722], [1020, 812], [860, 852], [700, 808]] },
-    { key: 'kidGirl', name: 'Aninha', sprite: 'assets/sprites/npc-kid-girl.png', schedule: 'day', speed: 58,
+    { key: 'kidGirl', name: 'Aninha', sprite: 'assets/sprites/npc-kid-girl.png', schedule: 'day', speed: 58, unlock: { chapter: 2 },
       lines: ['Você viu um gatinho por aí?', 'Joguei uma moeda na fonte e fiz um pedido!', 'Tchau! Preciso correr!'],
       path: [[1062, 722], [1020, 812], [860, 852], [700, 808], [660, 722], [700, 800], [860, 845], [1020, 805]] },
-    { key: 'woman', name: 'Dona Clara', sprite: 'assets/sprites/npc-woman.png', schedule: 'day',
+    { key: 'woman', name: 'Dona Clara', sprite: 'assets/sprites/npc-woman.png', schedule: 'day', unlock: { quest: 'caveClearance' },
       lines: ['Que dia bonito, não?', 'O pão da padaria acabou de novo...', 'Cuidado lá fora, aventureiro.'],
       path: [[520, 822], [620, 852], [712, 862], [600, 782]] },
-    { key: 'oldWoman', name: 'Vó Zefa', sprite: 'assets/sprites/npc-old-woman.png', schedule: 'day', speed: 18,
+    { key: 'oldWoman', name: 'Vó Zefa', sprite: 'assets/sprites/npc-old-woman.png', schedule: 'day', speed: 18, unlock: { chapter: 1 },
       lines: ['No meu tempo essa praça vivia cheia.', 'Leve um casaco, a noite esfria.', 'Você está comendo direito, menino?'],
       path: [[560, 722], [622, 736], [684, 722]] },
-    { key: 'oldMan', name: 'Seu Tonico', sprite: 'assets/sprites/npc-old-man.png', schedule: 'day', speed: 18,
+    { key: 'oldMan', name: 'Seu Tonico', sprite: 'assets/sprites/npc-old-man.png', schedule: 'day', speed: 18, unlock: { chapter: 1 },
       lines: ['Ah, minhas costas...', 'Já fui aventureiro, sabia? Até levar uma flechada no joelho.', 'Essa bengala já viu muita coisa.'],
       path: [[1080, 842], [1180, 862], [1282, 852], [1180, 822]] },
-    { key: 'warrior', name: 'Sir Rodrigo', sprite: 'assets/sprites/npc-warrior.png', speed: 34,
+    { key: 'warrior', name: 'Sir Rodrigo', sprite: 'assets/sprites/npc-warrior.png', speed: 34, unlock: { quest: 'creitonMilitia' },
       lines: ['Mantenha a guarda alta.', 'Os monstros estão mais agitados esta noite.', 'Treine na Academia, faz diferença.'],
       path: [[460, 884], [860, 902], [1300, 892], [860, 880]] },
-    { key: 'witch', name: 'Madame Morgana', sprite: 'assets/sprites/npc-witch.png', schedule: 'night', speed: 26,
+    { key: 'witch', name: 'Madame Morgana', sprite: 'assets/sprites/npc-witch.png', schedule: 'night', speed: 26, unlock: { chapter: 1 },
       lines: ['Hehehe... a lua está perfeita.', 'Poções? Hoje não, querido.', 'A fonte guarda mais segredos do que você imagina...'],
       path: [[962, 602], [1012, 562], [1062, 602], [1002, 632]] },
   ],
@@ -973,7 +997,7 @@ const QUEST_DEFS = [
     completeText: 'Isso deve bastar pra convencer os poucos mineradores que restaram a voltar ao trabalho, e sua coragem lá fora acaba com a última dúvida deles. A Caverna está pronta pra ser explorada.'
   },
   {
-    key: 'witchMoonHerbs', npc: 'Madame Morgana', speaker: 'morgana', giver: 'witch', nightOnly: true, requiresChapter: 0,
+    key: 'witchMoonHerbs', npc: 'Madame Morgana', speaker: 'morgana', giver: 'witch', nightOnly: true, requiresChapter: 1,
     title: 'Ingredientes ao Luar', desc: 'Gosma de slime colhida na dungeon é a base de toda boa poção. Ela promete ensinar Alquimia.',
     objectives: [
       { type: 'deliverItem', itemKey: 'slimeGel', itemQty: 30 },
@@ -1073,11 +1097,15 @@ const GUILD_EXPEDITION_DEFS = [
 // partir disso logo abaixo da lista (ver UPGRADE_STATS). `effects: []` =
 // efeito dinâmico lido direto de state.upgrades (Clique Automático e
 // velocidades, ver PlayerModule.autoClickIntervalMs).
+// Custos: os ramos agora liberam com o anterior no nível 3 (CONFIG.treeUnlockLevel),
+// não mais no 5 — mais escolha, mas as técnicas baratas chegavam cedo demais e
+// encurtavam os 2 primeiros andares. As de custo inicial até 400 subiram ~30%
+// (60→80, 400→520, Fôlego 150→200), medido no simulador (mediana com sorteio).
 const UPGRADE_DEFS = [
   { key: 'battleClickDmg', name: 'Fúria do Guerreiro', desc: '+5 dano por clique', baseCost: 10, costGrowth: 1.3, effects: [{ stat: 'clickDamageFlat', add: 5 }], maxLevel: 5, requires: null },
-  { key: 'battleCritChance', name: 'Olho Certeiro', desc: '+3% chance de crítico', baseCost: 60, costGrowth: 1.35, effects: [{ stat: 'critChance', add: 0.03, cap: 0.75 }], maxLevel: 5, requires: 'battleClickDmg' },
-  { key: 'battleDmgPercent', name: 'Força Bruta', desc: '+5% de dano por clique', baseCost: 60, costGrowth: 1.4, effects: [{ stat: 'clickDamagePercent', add: 0.05 }], maxLevel: 5, requires: 'battleClickDmg' },
-  { key: 'battleCritDmgPercent', name: 'Golpe Devastador', desc: '+10% de dano crítico', baseCost: 60, costGrowth: 1.45, effects: [{ stat: 'critDamagePercent', add: 0.10 }], maxLevel: 5, requires: 'battleClickDmg' },
+  { key: 'battleCritChance', name: 'Olho Certeiro', desc: '+3% chance de crítico', baseCost: 80, costGrowth: 1.35, effects: [{ stat: 'critChance', add: 0.03, cap: 0.75 }], maxLevel: 5, requires: 'battleClickDmg' },
+  { key: 'battleDmgPercent', name: 'Força Bruta', desc: '+5% de dano por clique', baseCost: 80, costGrowth: 1.4, effects: [{ stat: 'clickDamagePercent', add: 0.05 }], maxLevel: 5, requires: 'battleClickDmg' },
+  { key: 'battleCritDmgPercent', name: 'Golpe Devastador', desc: '+10% de dano crítico', baseCost: 80, costGrowth: 1.45, effects: [{ stat: 'critDamagePercent', add: 0.10 }], maxLevel: 5, requires: 'battleClickDmg' },
   // Clique Automático — só 1 nível (compra única, sem escalar): liga um
   // clique automático periódico enquanto houver monstro ativo E o ciclo
   // atual já tiver sido concluído antes (ver PlayerModule.isAutoClickActive
@@ -1097,29 +1125,29 @@ const UPGRADE_DEFS = [
 
   // --- Nível 2 do ramo Crítico (requer Olho Certeiro nível 5) ---
   {
-    key: 'critChance2A', name: 'Visão de Falcão', desc: '+4% chance de crítico, +4 dano por clique', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritChance',
+    key: 'critChance2A', name: 'Visão de Falcão', desc: '+4% chance de crítico, +4 dano por clique', baseCost: 520, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritChance',
     effects: [{ stat: 'critChance', add: 0.04, cap: 0.75 }, { stat: 'clickDamageFlat', add: 4 }]
   },
   {
-    key: 'critChance2B', name: 'Reflexos Rápidos', desc: '+6% chance de crítico, +2 dano por clique', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritChance',
+    key: 'critChance2B', name: 'Reflexos Rápidos', desc: '+6% chance de crítico, +2 dano por clique', baseCost: 520, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritChance',
     effects: [{ stat: 'critChance', add: 0.06, cap: 0.75 }, { stat: 'clickDamageFlat', add: 2 }]
   },
   {
-    key: 'critChance2C', name: 'Instinto Selvagem', desc: '+2% chance de crítico, +7 dano por clique', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritChance',
+    key: 'critChance2C', name: 'Instinto Selvagem', desc: '+2% chance de crítico, +7 dano por clique', baseCost: 520, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritChance',
     effects: [{ stat: 'critChance', add: 0.02, cap: 0.75 }, { stat: 'clickDamageFlat', add: 7 }]
   },
 
   // --- Nível 2 do ramo Dano % (requer Força Bruta nível 5) ---
   {
-    key: 'dmgPercent2A', name: 'Impacto Brutal', desc: '+7% de dano por clique, +3 dano por clique', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleDmgPercent',
+    key: 'dmgPercent2A', name: 'Impacto Brutal', desc: '+7% de dano por clique, +3 dano por clique', baseCost: 520, costGrowth: 1.5, maxLevel: 5, requires: 'battleDmgPercent',
     effects: [{ stat: 'clickDamagePercent', add: 0.07 }, { stat: 'clickDamageFlat', add: 3 }]
   },
   {
-    key: 'dmgPercent2B', name: 'Força Titânica', desc: '+10% de dano por clique, +1 dano por clique', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleDmgPercent',
+    key: 'dmgPercent2B', name: 'Força Titânica', desc: '+10% de dano por clique, +1 dano por clique', baseCost: 520, costGrowth: 1.5, maxLevel: 5, requires: 'battleDmgPercent',
     effects: [{ stat: 'clickDamagePercent', add: 0.10 }, { stat: 'clickDamageFlat', add: 1 }]
   },
   {
-    key: 'dmgPercent2C', name: 'Golpe Pesado', desc: '+4% de dano por clique, +6 dano por clique', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleDmgPercent',
+    key: 'dmgPercent2C', name: 'Golpe Pesado', desc: '+4% de dano por clique, +6 dano por clique', baseCost: 520, costGrowth: 1.5, maxLevel: 5, requires: 'battleDmgPercent',
     effects: [{ stat: 'clickDamagePercent', add: 0.04 }, { stat: 'clickDamageFlat', add: 6 }]
   },
 
@@ -1161,15 +1189,15 @@ const UPGRADE_DEFS = [
   // --- Nível 2 do ramo Dano Crítico % (requer Golpe Devastador nível 5) —
   // só reforça a própria stat, sem somar dano por clique. ---
   {
-    key: 'critDmgPercent2A', name: 'Fragmentação', desc: '+12% de dano crítico', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritDmgPercent',
+    key: 'critDmgPercent2A', name: 'Fragmentação', desc: '+12% de dano crítico', baseCost: 520, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritDmgPercent',
     effects: [{ stat: 'critDamagePercent', add: 0.12 }]
   },
   {
-    key: 'critDmgPercent2B', name: 'Execução Brutal', desc: '+15% de dano crítico', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritDmgPercent',
+    key: 'critDmgPercent2B', name: 'Execução Brutal', desc: '+15% de dano crítico', baseCost: 520, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritDmgPercent',
     effects: [{ stat: 'critDamagePercent', add: 0.15 }]
   },
   {
-    key: 'critDmgPercent2C', name: 'Golpe Fatal', desc: '+18% de dano crítico', baseCost: 400, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritDmgPercent',
+    key: 'critDmgPercent2C', name: 'Golpe Fatal', desc: '+18% de dano crítico', baseCost: 520, costGrowth: 1.5, maxLevel: 5, requires: 'battleCritDmgPercent',
     effects: [{ stat: 'critDamagePercent', add: 0.18 }]
   },
 
@@ -1189,7 +1217,7 @@ const UPGRADE_DEFS = [
   // --- Ramo Tempo: cada nível soma +5s ao tempo de uma entrada na Dungeon
   // (CONFIG.dungeonTimeLimitMs, ver DungeonModule.runTimeLimitMs). Raiz de
   // 5 níveis + 1 nó encadeado de 5 níveis, mais caro — até +50s no total.
-  { key: 'dungeonTime', name: 'Fôlego do Explorador', desc: '+5s de tempo dentro da Dungeon', baseCost: 150, costGrowth: 1.5, maxLevel: 5, requires: 'battleClickDmg',
+  { key: 'dungeonTime', name: 'Fôlego do Explorador', desc: '+5s de tempo dentro da Dungeon', baseCost: 200, costGrowth: 1.5, maxLevel: 5, requires: 'battleClickDmg',
     effects: [{ stat: 'dungeonTimeBonusMs', add: 5000 }] },
   { key: 'dungeonTime2', name: 'Resistência Incansável', desc: '+5s de tempo dentro da Dungeon', baseCost: 2500, costGrowth: 1.6, maxLevel: 5, requires: 'dungeonTime',
     effects: [{ stat: 'dungeonTimeBonusMs', add: 5000 }] },
